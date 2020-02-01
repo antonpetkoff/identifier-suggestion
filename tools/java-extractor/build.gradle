@@ -4,3 +4,21 @@
  * This is a general purpose Gradle build.
  * Learn how to create Gradle builds at https://guides.gradle.org/creating-new-gradle-builds
  */
+
+apply plugin: 'java'
+apply plugin: 'application'
+mainClassName = 'extractor.Main'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'com.github.javaparser:javaparser-core:3.2.3'
+  // implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.15.10'
+}
+
+jar {
+  archiveBaseName = 'java-extractor'
+  archiveVersion = '0.1.0'
+}
