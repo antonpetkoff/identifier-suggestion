@@ -4,11 +4,11 @@ import java.io.File;
 
 public class Main {
   public static void main(String[] args) {
-    File sourceCodePath = new File(
-      "/home/tony/source/programming-tools/data/elasticsearch-master/"
-    );
+    if (args.length != 1) {
+      throw new IllegalArgumentException("Expecting a source directory");
+    }
 
-    ListClasses classNameCrawler = new ListClasses();
-    classNameCrawler.listClasses(sourceCodePath);
+    File sourceCodePath = new File(args[0]);
+    MethodNames.list(sourceCodePath);
   }
 }
