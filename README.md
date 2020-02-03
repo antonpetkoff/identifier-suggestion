@@ -1,6 +1,10 @@
-# programming-tools
+# Programming tools, built by learning from Big Code
 
-Programming tools, developed by learning from Big Code
+## Tasks
+
+- [ ] Make everything reproducible
+  - [ ] Write scripts for downloading the source code repositories (with wget)
+  - [ ] Write scripts for generating the data-sets
 
 ## Setup
 
@@ -15,4 +19,4 @@ Programming tools, developed by learning from Big Code
 
 1. `cd tools/java-extractor`
 1. Build the jar: `./gradlew clean shadowJar`
-1. Run the jar `time java -jar build/libs/java-extractor-all.jar ../../data/elasticsearch-master > output.csv`
+1. Run the jar `java -jar build/libs/java-extractor-all.jar ../../data/repos/elasticsearch-master/ > ../../data/method-names/elastic-search.csv`

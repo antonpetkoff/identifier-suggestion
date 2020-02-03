@@ -10,6 +10,8 @@ jupyter = "*"
 numpy = "*"
 pandas = "*"
 matplotlib = "*"
+spacy = "*"
+tqdm = ">4.33.0"
 
 [requires]
 python_version = "3.7"

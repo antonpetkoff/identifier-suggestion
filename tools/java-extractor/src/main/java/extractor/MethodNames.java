@@ -12,9 +12,18 @@ import com.github.javaparser.ParseProblemException;
 import extractor.utils.DirectoryCrawler;
 
 public class MethodNames {
+  public static final char DELIMITER = ';';
+
   public static void list(File projectDir) {
     PrintWriter printer = new PrintWriter(System.out);
-    printer.append("file,id,type\n");
+
+    printer
+      .append("file")
+      .append(DELIMITER)
+      .append("id")
+      .append(DELIMITER)
+      .append("type")
+      .append('\n');
 
     new DirectoryCrawler(
       (level, path, file) -> path.endsWith(".java"),
@@ -27,17 +36,20 @@ public class MethodNames {
 
               printer
                 .append(path)
-                .append(',')
-                .append(node.getName().toString())
-                .append(',')
+                .append(DELIMITER)
+                .append(node.getName().getIdentifier())
+                .append(DELIMITER)
                 .append(node.getType().toString())
                 .append('\n');
             }
           }.visit(JavaParser.parse(file), null);
         } catch (IOException | ParseProblemException e) {
-          System.out.println(e.getMessage());
+          // swallow exception
+//          System.err.println(e.getMessage());
         }
       }
     ).explore(projectDir);
+
+    printer.flush();
   }
 }
