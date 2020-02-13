@@ -12,6 +12,7 @@ pandas = "*"
 matplotlib = "*"
 spacy = "*"
 tqdm = ">4.33.0"
+seaborn = "*"
 
 [requires]
 python_version = "3.7"
