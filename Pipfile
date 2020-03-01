@@ -13,6 +13,8 @@ matplotlib = "*"
 spacy = "*"
 tqdm = ">4.33.0"
 seaborn = "*"
+javalang = "*"
+pipe = "*"
 
 [requires]
 python_version = "3.7"
