@@ -18,6 +18,7 @@ tqdm = ">4.33.0"
 seaborn = "*"
 javalang = "*"
 pipe = "*"
+tensorflow = "*"
 
 [requires]
 python_version = "3.7"
