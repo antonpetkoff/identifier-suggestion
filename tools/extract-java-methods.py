@@ -44,6 +44,9 @@ def get_method_body(text_lines, tokens, line, column):
     filtered_tokens, filtered_tokens_copy = itertools.tee(filtered_tokens)
     closing_bracket_position = get_matching_closing_bracket_position(filtered_tokens_copy)
 
+    if closing_bracket_position is None:
+        raise ValueError('cannot find closing bracket')
+
     return get_text_between_positions(
         text_lines,
         start_line=line,
@@ -59,14 +62,15 @@ def get_type_name(node):
 def get_arguments(node):
     return list(node.parameters | map(lambda param: [param.name, get_type_name(param.type)]))
 
-def get_attributes(class_name, text_lines, tokens, method_node):
+def get_attributes(file_name, class_name, text_lines, tokens, method_node):
     if not isinstance(method_node, javalang.tree.MethodDeclaration):
         raise ValueError('The given node is not of type MethodDeclaration')
 
     node = method_node
 
     return {
-        'name': node.name,
+        'file_name': file_name,
+        'method_name': node.name,
         'class_name': class_name,
         'body': get_method_body(text_lines, tokens, line=node.position.line, column=node.position.column),
         'return_type': get_type_name(node.return_type),
@@ -76,7 +80,7 @@ def get_attributes(class_name, text_lines, tokens, method_node):
         'annotations': list(node.annotations | map(lambda annotation: annotation.name)),
     }
 
-def parse_source_code(source_code_text):
+def parse_source_code(file_name, source_code_text):
     tree = javalang.parse.parse(source_code_text)
     tokens = list(javalang.tokenizer.tokenize(source_code_text))
     text_lines = source_code_text.splitlines()
@@ -86,14 +90,15 @@ def parse_source_code(source_code_text):
     for t, class_node in tree.filter(javalang.tree.ClassDeclaration):
         class_name = class_node.name
         parsed_methods_in_class = list(class_node.methods \
-            | map(lambda tree_node_tuple: get_attributes(class_name, text_lines, tokens, tree_node_tuple)))
+            | map(lambda tree_node_tuple: get_attributes(file_name, class_name, text_lines, tokens, tree_node_tuple)))
         parsed_methods = parsed_methods + parsed_methods_in_class
 
     return parsed_methods
 
 fieldnames = [
-    'name',
+    'file_name',
     'class_name',
+    'method_name',
     'return_type',
     'arguments',
     'body',
@@ -103,19 +108,22 @@ fieldnames = [
 ]
 
 def main():
-    filename = sys.stdin.readline().strip()
-
     try:
-        for filename in sys.stdin:
-            with open(filename.strip(), 'r') as source_code_file:
-                source_code_text = source_code_file.read()
-                parsed_data = parse_source_code(source_code_text)
+        writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+        writer.writeheader()
 
-                writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
-                writer.writeheader()
+        for file_name in sys.stdin:
+            source_code_file_name = file_name.strip()
 
-                for row in parsed_data:
-                    writer.writerow(row)
+            with open(source_code_file_name, 'r') as source_code_file:
+                try:
+                    source_code_text = source_code_file.read()
+                    parsed_data = parse_source_code(source_code_file_name, source_code_text)
+
+                    for row in parsed_data:
+                        writer.writerow(row)
+                except Exception as error:
+                    print(f'warn: cannot parse file {source_code_file_name}: {str(error)}', file=sys.stderr)
     except Exception as e:
         print(e.message, file=sys.stderr)
         exit(1)
