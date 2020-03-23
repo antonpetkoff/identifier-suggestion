@@ -21,6 +21,7 @@ pipe = "*"
 tensorflow = "*"
 sklearn = "*"
 jupyterthemes = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"
