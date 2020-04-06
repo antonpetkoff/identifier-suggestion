@@ -22,6 +22,10 @@ eggs/
 .eggs/
 lib/
 lib64/
+
+# but do not ignore our own library
+!/lib/
+
 parts/
 sdist/
 var/
