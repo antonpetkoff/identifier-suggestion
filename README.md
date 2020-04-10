@@ -15,6 +15,9 @@
 
 ## Scripts
 
+All scripts must be run from the project's top level directory.
+For example, in order to train the baseline model, run `./scripts/baseline/train.sh`.
+
 ### Java Method Name Extractor
 
 1. `cd tools/java-extractor`
