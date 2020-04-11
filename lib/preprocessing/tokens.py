@@ -1,3 +1,4 @@
+import javalang
 
 """
 
@@ -29,7 +30,7 @@ def tokenize_method_body(code):
     # TODO: fix the data, so that it can be parsed in the first place
     try:
         return list(map(lambda token: token.value, javalang.tokenizer.tokenize(code)))
-    except Exception as e:
+    except Exception:
         # invalid_body_count += 1
         # if invalid_body_count % 1000 == 0:
         #     print(f'invalid_body_count = {invalid_body_count}')
