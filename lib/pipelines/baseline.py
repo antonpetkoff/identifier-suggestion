@@ -1,7 +1,12 @@
 import argparse
 import pandas as pd
 
+from tqdm import tqdm
+
 from lib.evaluation.sequence import compute_f1_score
+from lib.preprocessing.tokens import tokenize_method_body, get_subtokens
+
+tqdm.pandas()
 
 parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 
@@ -26,10 +31,19 @@ parser.add_argument('--random_seed', type=int, help='Random Seed', required=True
 
 def main():
     args = parser.parse_args()
-    print(args)
+    #print(args) # TODO: persist configuration in experiment folter
 
     df = pd.read_csv(args.file_data_raw).dropna().head(1000)
     print(f'loaded dataset of size {len(df)}')
+
+    # dataset
+    df['body_tokens'] = df['body'].progress_apply(tokenize_method_body)
+
+    # the output sequences are marked with a <start> and <end> special tokens
+    df['method_name_subtokens'] = df['method_name'].progress_apply(get_subtokens)
+    df_clean = df[df.body_tokens.str.len() > 0] # remove invalid methods which cannot be parsed
+
+    print(df.head(5))
 
     # TODO: preprocess data from raw to model format?
     # TODO: use data iterator
