@@ -4,8 +4,25 @@ Models for source code identifier suggestion built by learning from Big Code
 
 ## Setup
 
-1. Have `pipenv` installed.
-1. Run `pipenv install`.
+### Requirements
+
+1. Have Python 3.7 or above installed.
+
+2. Have a Unix-like terminal with `bash`, `coreutils` and some other utilities like `wget` (required by some .sh scripts).
+
+### Installation
+
+1. Run `pip install -r requirements.txt` to install all Python package dependencies.
+
+### Installation with a virtual environment
+
+For example, you can use the standard `venv`:
+
+1. Run `python3 -m venv .venv` to create a virtual environment.
+
+1. Run `source .venv/bin/activate` to activate the virtual environment. This step must be executed on every new terminal session.
+
+1. Run `pip install -r requirements.txt` to install all Python package dependencies.
 
 ## Project Structure
 
@@ -67,7 +84,6 @@ Support:
 - [ ] Organize project structure to make it more easily reproducible
   - [ ] Write scripts for downloading the source code repositories (with wget)
   - [ ] Write scripts for generating the datasets
-- [ ] Consider replacing `pipenv` with virtualenv + requirements.txt
 
 Fundamentals:
 
