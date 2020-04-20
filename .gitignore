@@ -4,6 +4,9 @@ data/
 # Trained and serialized models, model predictions, or model summaries
 models/
 
+# Generated information like logs, figures, images, summaries, etc.
+reports/
+
 # VSCode
 .vscode/
 

@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 
@@ -162,12 +163,18 @@ def seq2seq_char_level(args, input_texts, target_texts):
         metrics=['accuracy']
     )
     model.summary()
+
+    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+    logdir = f'reports/logs/tensorboard/char-rnn-baseline-{timestamp}'
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
+
     model.fit(
         [encoder_input_data, decoder_input_data],
         decoder_target_data,
         batch_size=args.batch_size,
         epochs=args.epochs,
-        validation_split=0.2
+        validation_split=0.2,
+        callbacks=[tensorboard_callback],
     )
 
     # Save model
