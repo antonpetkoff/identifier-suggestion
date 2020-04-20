@@ -7,18 +7,15 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, LSTM, Dense
 
 # custom imports
+from src.utils.random import set_random_seeds
 from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
-
-# set random seeds for reproducible results
-from numpy.random import seed
-seed(1)
-# from tensorflow.random import set_seed
-tf.random.set_seed(1) # set TensorFlow's global seed
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
 tqdm.pandas()
+
+set_random_seeds(1)
 
 parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 

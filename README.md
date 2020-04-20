@@ -89,7 +89,7 @@ Fundamentals:
 
 - [ ] Create data input pipeline with tf.data Dataset API
 - [ ] Add Beam Search Decoder for making multiple suggestions
-- [ ] Fixate all random seeds for reproducible results
+- [*] Fixate all random seeds for reproducible results
 - [ ] Run one full experiment
   - [ ] Log training and evaluation
   - [ ] Save configuration
