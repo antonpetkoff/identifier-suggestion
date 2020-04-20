@@ -1,29 +1,89 @@
-# Programming tools, built by learning from Big Code
+# Identifier Suggestion
 
-## Tasks
-
-- [ ] Make everything reproducible
-  - [ ] Write scripts for downloading the source code repositories (with wget)
-  - [ ] Write scripts for generating the data-sets
+Models for source code identifier suggestion built by learning from Big Code
 
 ## Setup
 
 1. Have `pipenv` installed.
+1. Run `pipenv install`.
 
-`export PIPENV_VENV_IN_PROJECT="enabled"`
-<https://stackoverflow.com/questions/52540121/make-pipenv-create-the-virtualenv-in-the-same-folder>
+## Project Structure
 
-## Scripts
+Follows the [Cookiecutter Data Science project structure](https://drivendata.github.io/cookiecutter-data-science/).
 
-All scripts must be run from the project's top level directory.
-For example, in order to train the baseline model, run `./scripts/baseline/train.sh`.
+```text
+├── LICENSE
+├── Makefile           <- Makefile with commands like `make data` or `make train`
+├── README.md          <- The top-level README for developers using this project.
+├── data
+│   ├── external       <- Data from third party sources.
+│   ├── interim        <- Intermediate data that has been transformed.
+│   ├── processed      <- The final, canonical data sets for modeling.
+│   └── raw            <- The original, immutable data dump.
+│
+├── docs               <- A default Sphinx project; see sphinx-doc.org for details
+│
+├── models             <- Trained and serialized models, model predictions, or model summaries
+│
+├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
+│                         the creator's initials, and a short `-` delimited description, e.g.
+│                         `1.0-jqp-initial-data-exploration`.
+│
+├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+│
+├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+│   └── figures        <- Generated graphics and figures to be used in reporting
+│
+├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
+│                         generated with `pip freeze > requirements.txt`
+│
+├── setup.py           <- Make this project pip installable with `pip install -e`
+├── src                <- Source code for use in this project.
+│   ├── __init__.py    <- Makes src a Python module
+│   │
+│   ├── data           <- Scripts to download or generate data
+│   │   └── make_dataset.py
+│   │
+│   ├── features       <- Scripts to turn raw data into features for modeling
+│   │   └── build_features.py
+│   │
+│   ├── models         <- Scripts to train models and then use trained models to make
+│   │   │                 predictions
+│   │   ├── predict_model.py
+│   │   └── train_model.py
+│   │
+│   └── visualization  <- Scripts to create exploratory and results oriented visualizations
+│       └── visualize.py
+│
+├── Pipfile            <- Contains all installed packages
+└── Pipfile.lock       <- Declares all dependencies (and sub-dependencies) of the project
+                          and the current hashes for the downloaded files.
+```
 
-### Java Method Name Extractor
+## Tasks
 
-1. `cd tools/java-extractor`
-1. Build the jar: `./gradlew clean shadowJar`
-1. Run the jar `java -jar build/libs/java-extractor-all.jar ../../data/repos/elasticsearch-master/ > ../../data/method-names/elastic-search.csv`
+Support:
 
-### Java Method Data Extractor 2.0
+- [ ] Organize project structure to make it more easily reproducible
+  - [ ] Write scripts for downloading the source code repositories (with wget)
+  - [ ] Write scripts for generating the datasets
+- [ ] Consider replacing `pipenv` with virtualenv + requirements.txt
 
-`find data/repos/elasticsearch-master/ -name '*.java' | pipenv run extract-java-methods | pv -l -s 110000 > data/method-names-rich/elasticsearch.csv`
+Fundamentals:
+
+- [ ] Create data input pipeline with tf.data Dataset API
+- [ ] Add Beam Search Decoder for making multiple suggestions
+- [ ] Fixate all random seeds for reproducible results
+- [ ] Run one full experiment
+  - [ ] Log training and evaluation
+  - [ ] Save configuration
+  - [ ] Save checkpoints of model weights
+  - [ ] Make predictions
+  - [ ] Run evaluation on test set
+
+Modelling and Feature Engineering (Creative):
+
+- [ ] Does subtoken splitting improve performance?
+- [ ] Does attention improve performance?
+- [ ] Does a bidirectional RNN perform better than a unidirectional RNN?
+- [ ] Do binary/categorical features improve performance?

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-PYTHONPATH=. python lib/pipelines/baseline.py \
-  --file_data_raw data/method-names-rich/elasticsearch.csv \
-  --file_model_output models/baseline.h5 \
+PYTHONPATH=. python src/pipelines/baseline.py \
+  --file_data_raw data/interim/method-names-rich/elasticsearch.csv \
+  --file_model_output models/saved/baseline.h5 \
   --max_input_length 100 \
   --max_output_length 5 \
   --input_vocab_size 10000 \

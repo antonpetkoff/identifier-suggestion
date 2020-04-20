@@ -14,4 +14,4 @@ echo "${FILE_COUNT}"
 
 echo "${FILES}" \
 | pv -l -s "${FILE_COUNT}" \
-| pipenv run extract-java-methods > data/method-names-rich/elasticsearch-ASDFASDF.csv
+| python lib/tools/extract-java-methods.py > data/method-names-rich/elasticsearch-ASDFASDF.csv

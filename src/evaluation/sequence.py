@@ -1,5 +1,5 @@
 from collections import Counter
-from lib.preprocessing.tokens import get_subtokens
+from src.preprocessing.tokens import get_subtokens
 
 """
 

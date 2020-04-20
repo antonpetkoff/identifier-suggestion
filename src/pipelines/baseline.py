@@ -7,8 +7,8 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, LSTM, Dense
 
 # custom imports
-from lib.evaluation.sequence import compute_f1_score
-from lib.preprocessing.tokens import tokenize_method_body, get_subtokens
+from src.evaluation.sequence import compute_f1_score
+from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 
 # set random seeds for reproducible results
 from numpy.random import seed
