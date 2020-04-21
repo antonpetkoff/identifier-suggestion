@@ -11,6 +11,7 @@ from tensorflow.keras.layers import Input, LSTM, Dense
 from src.utils.random import set_random_seeds
 from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
+from src.preprocessing.sequence import preprocess_sequences
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
@@ -265,6 +266,9 @@ def filter_out_string_literals(seq):
 def main():
     args = parser.parse_args()
     #print(args) # TODO: persist configuration in experiment folter
+
+    preprocessed_df = preprocess_sequences(args.file_data_raw)
+    return # TODO: REMOVEME
 
     df = pd.read_csv(args.file_data_raw).dropna().head(1000)
     print(f'loaded dataset of size {len(df)}')
