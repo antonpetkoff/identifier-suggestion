@@ -299,13 +299,22 @@ def preprocess_data(args):
         with open(output_vocab_path, 'w') as f:
             json.dump(output_vocab_index, f)
 
+    print('Loading preprocessed files...')
+
+    with open(input_vocab_path) as f:
+        input_vocab_index = json.load(f)
+
+    with open(output_vocab_path) as f:
+        output_vocab_index = json.load(f)
+
     df = pd.read_hdf(df_path, key='data')
+
     print('Loaded preprocessed files.')
 
-    return df
+    return df, input_vocab_index, output_vocab_index
 
 
-def get_dataset(df):
+def get_dataset(df, input_vocab_index, output_vocab_index):
     # df['inputs'] gives a series
     # df['inputs'].values gives a NumPy ndarray of lists with shape (100000,) where 100000 is the number of lists
     # but tensorflow doesn't work with a NumPy array of lists, so we have to np.stack the lists
@@ -317,15 +326,31 @@ def get_dataset(df):
         np.stack(df['outputs'].values)
     )
 
-    return tf.data.Dataset.zip((dataset_inputs, dataset_outputs))
+    encoder_inputs = dataset_inputs.map(lambda seq: tf.one_hot(seq, len(input_vocab_index)))
+
+    decoder_inputs = dataset_outputs.map(lambda seq: tf.one_hot(seq, len(output_vocab_index)))
+
+    # Teacher Forcing: decoder_outputs must be one step ahead of decoder_inputs
+
+    # TODO: the sequence is shorter with 1, should we append the <PAD> token at the end?
+    # decoder_outputs = dataset_outputs.map(lambda seq: tf.concat(seq[1:], tf.constant([output_vocab_index['<PAD>']])))
+    decoder_outputs = dataset_outputs.map(lambda seq: seq[1:])
+    decoder_outputs = dataset_outputs.map(lambda seq: tf.one_hot(seq, len(output_vocab_index)))
+
+    dataset_features = tf.data.Dataset.zip((encoder_inputs, decoder_inputs))
+
+    return tf.data.Dataset.zip((dataset_features, decoder_outputs))
 
 def main():
     args = parser.parse_args()
     # TODO: persist configuration in experiment folter
 
-    df = preprocess_data(args)
+    df, input_vocab_index, output_vocab_index = preprocess_data(args)
 
-    dataset = get_dataset(df)
+    dataset = get_dataset(df, input_vocab_index, output_vocab_index)
+
+    for item in dataset.take(2):
+        print(item)
 
     return # TODO: REMOVEME
 
