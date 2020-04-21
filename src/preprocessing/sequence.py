@@ -96,26 +96,24 @@ def preprocess_sequences(
     )
 
     # Pad and align sequences
-    df['inputs'] = list(tf.keras.preprocessing.sequence.pad_sequences(
+    df['inputs'] = tf.keras.preprocessing.sequence.pad_sequences(
         df['inputs'],
         maxlen=max_input_seq_length,
         truncating='post',
         padding='post',
         value=input_vocab_index[PAD_TOKEN],
         dtype='int32',
-    ))
+    ).tolist()
 
-    df['outputs'] = list(tf.keras.preprocessing.sequence.pad_sequences(
+    df['outputs'] = tf.keras.preprocessing.sequence.pad_sequences(
         df['outputs'],
         maxlen=max_output_seq_length,
         truncating='post',
         padding='post',
         value=output_vocab_index[PAD_TOKEN],
         dtype='int32',
-    ))
+    ).tolist()
 
     # TODO: write tests which ensure that we have correctly formatted the preprocessed data
 
-    print(len(df), df.head())
-
-    return df
+    return df, input_vocab_index, output_vocab_index

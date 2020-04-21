@@ -1,4 +1,6 @@
 import argparse
+import json
+import os
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -24,6 +26,7 @@ parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 # data files
 parser.add_argument('--file_data_raw', type=str, help='Raw data file used for model training', required=True)
 parser.add_argument('--file_model_output', type=str, help='Model output file name', required=True)
+parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
 # hyper parameters
 parser.add_argument('--max_input_length', type=int, help='Max input sequence length', required=True)
@@ -265,9 +268,25 @@ def filter_out_string_literals(seq):
 
 def main():
     args = parser.parse_args()
-    #print(args) # TODO: persist configuration in experiment folter
+    # TODO: persist configuration in experiment folter
 
-    preprocessed_df = preprocess_sequences(args.file_data_raw)
+    # Preprocess raw data
+    df, input_vocab_index, output_vocab_index = preprocess_sequences(args.file_data_raw)
+
+    # Save preprocessed data
+    os.makedirs(args.dir_preprocessed_data, exist_ok=True)
+
+    df.to_hdf(os.path.join(args.dir_preprocessed_data, 'sequences.h5'), key='data', mode='w')
+
+    with open(os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json'), 'w') as f:
+        json.dump(input_vocab_index, f)
+
+    with open(os.path.join(args.dir_preprocessed_data, 'output_vocab_index.json'), 'w') as f:
+        json.dump(output_vocab_index, f)
+
+    df = pd.read_hdf(os.path.join(args.dir_preprocessed_data, 'sequences.h5'), key='data')
+    print(df.head())
+
     return # TODO: REMOVEME
 
     df = pd.read_csv(args.file_data_raw).dropna().head(1000)

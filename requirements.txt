@@ -60,6 +60,7 @@ murmurhash==1.0.2
 nbconvert==5.6.1
 nbformat==5.0.6
 notebook==6.0.3
+numexpr==2.7.1
 numpy==1.18.3
 oauthlib==3.1.0
 opt-einsum==3.2.1
@@ -101,6 +102,7 @@ six==1.14.0
 sklearn==0.0
 spacy==2.2.4
 srsly==1.0.2
+tables==3.6.1
 tensorboard==2.1.1
 tensorflow==2.1.0
 tensorflow-datasets==3.0.0

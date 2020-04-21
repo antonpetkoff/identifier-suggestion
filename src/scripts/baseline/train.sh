@@ -3,6 +3,7 @@
 PYTHONPATH=. python src/pipelines/baseline.py \
   --file_data_raw data/interim/method-names-rich/elasticsearch.csv \
   --file_model_output models/saved/baseline.h5 \
+  --dir_preprocessed_data data/interim/preprocessed/ \
   --max_input_length 100 \
   --max_output_length 5 \
   --input_vocab_size 10000 \
