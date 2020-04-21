@@ -300,14 +300,22 @@ def preprocess_data(args):
             json.dump(output_vocab_index, f)
 
     df = pd.read_hdf(df_path, key='data')
-    print('Loaded preprocessed files')
+    print('Loaded preprocessed files.')
 
     return df
 
 
 def get_dataset(df):
-    dataset_inputs = tf.data.Dataset.from_tensor_slices(df['inputs'].values)
-    dataset_outputs = tf.data.Dataset.from_tensor_slices(df['outputs'].values)
+    # df['inputs'] gives a series
+    # df['inputs'].values gives a NumPy ndarray of lists with shape (100000,) where 100000 is the number of lists
+    # but tensorflow doesn't work with a NumPy array of lists, so we have to np.stack the lists
+    # TODO: will replacing all lists with NumPy arrays help for this issue?
+    dataset_inputs = tf.data.Dataset.from_tensor_slices(
+        np.stack(df['inputs'].values)
+    )
+    dataset_outputs = tf.data.Dataset.from_tensor_slices(
+        np.stack(df['outputs'].values)
+    )
 
     return tf.data.Dataset.zip((dataset_inputs, dataset_outputs))
 
