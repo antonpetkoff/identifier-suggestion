@@ -88,8 +88,23 @@ Support:
 Fundamentals:
 
 - [ ] Create data input pipeline with tf.data Dataset API
+  - [ ] Preprocess raw text sequences into padded number sequences (IO efficient)
+    - [ ] Read
+    - [ ] Filter
+    - [ ] Tokenize
+    - [ ] Build vocabulary
+      - [ ] Save vocabulary to file
+    - [ ] Encode to numbers
+    - [ ] Pad, align and cut
+    - [ ] Save final sequences to binary data files
+  - [ ] Create tensors for training (memory intensive)
+    - [ ] Load the data
+    - [ ] Use the Dataset API to tf.one_hot encode, batch, shuffle and repeat
+
 - [ ] Add Beam Search Decoder for making multiple suggestions
+
 - [*] Fixate all random seeds for reproducible results
+
 - [ ] Run one full experiment
   - [ ] Log training and evaluation
   - [ ] Save configuration
