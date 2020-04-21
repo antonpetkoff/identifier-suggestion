@@ -271,7 +271,11 @@ def main():
     # TODO: persist configuration in experiment folter
 
     # Preprocess raw data
-    df, input_vocab_index, output_vocab_index = preprocess_sequences(args.file_data_raw)
+    df, input_vocab_index, output_vocab_index = preprocess_sequences(
+        csv_filename=args.file_data_raw,
+        max_input_seq_length=args.max_input_length,
+        max_output_seq_length=args.max_output_length,
+    )
 
     # Save preprocessed data
     os.makedirs(args.dir_preprocessed_data, exist_ok=True)

@@ -42,14 +42,17 @@ def preprocess_sequences(
 
     Args:
         csv_filename (str): CSV filename which includes the raw data.
+        max_input_seq_length (int): Maximum input sequence length.
         max_output_seq_length (int): Maximum output sequence length.
 
     Returns:
-        A pandas data frame with the preprocessed input and output sequences.
+        A pandas data frame with the preprocessed inputs and outputs sequences
+        in columns with the names 'inputs' and 'outputs'.
+        Also the input and output vocabulary indices.
     """
 
     # Reading the input files
-    df = pd.read_csv(csv_filename).head(1000) # TODO: remove head(1000)
+    df = pd.read_csv(csv_filename)
 
     # Cleaning, filtering the data
     df = df.dropna()
@@ -75,6 +78,7 @@ def preprocess_sequences(
     )
 
     def get_vocab_index(df):
+        # TODO: limit vocabulary size by counting and arguments
         vocab = set(lists_to_series(df.values).unique())
         vocab.add(PAD_TOKEN) # TODO: order the vocabulary so that PAD_TOKEN is with index 0
         vocab_index = { token: index for index, token in enumerate(vocab) }
