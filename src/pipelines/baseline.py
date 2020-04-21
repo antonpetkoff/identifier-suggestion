@@ -266,30 +266,56 @@ def seq2seq(args, input_texts, target_texts):
 def filter_out_string_literals(seq):
     return [token for token in seq if not token.startswith('"')]
 
+
+def preprocess_data(args):
+    df_path = os.path.join(args.dir_preprocessed_data, 'sequences.h5')
+    input_vocab_path = os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json')
+    output_vocab_path = os.path.join(args.dir_preprocessed_data, 'output_vocab_index.json')
+
+    files_exist = all(map(
+        os.path.isfile,
+        [df_path, input_vocab_path, output_vocab_path]
+    ))
+
+    print(f'files_exist: {files_exist}')
+
+    if not files_exist:
+        # Preprocess raw data
+        df, input_vocab_index, output_vocab_index = preprocess_sequences(
+            csv_filename=args.file_data_raw,
+            max_input_seq_length=args.max_input_length,
+            max_output_seq_length=args.max_output_length,
+        )
+
+        # Save preprocessed data
+        os.makedirs(args.dir_preprocessed_data, exist_ok=True)
+
+        df.to_hdf(df_path, key='data', mode='w')
+
+        with open(input_vocab_path, 'w') as f:
+            json.dump(input_vocab_index, f)
+
+        with open(output_vocab_path, 'w') as f:
+            json.dump(output_vocab_index, f)
+
+    df = pd.read_hdf(df_path, key='data')
+
+    return df
+
+
+def get_dataset(df):
+    dataset_inputs = tf.data.Dataset.from_tensor_slices(df['inputs'].values)
+    dataset_outputs = tf.data.Dataset.from_tensor_slices(df['outputs'].values)
+
+    return tf.data.Dataset.zip((dataset_inputs, dataset_outputs))
+
 def main():
     args = parser.parse_args()
     # TODO: persist configuration in experiment folter
 
-    # Preprocess raw data
-    df, input_vocab_index, output_vocab_index = preprocess_sequences(
-        csv_filename=args.file_data_raw,
-        max_input_seq_length=args.max_input_length,
-        max_output_seq_length=args.max_output_length,
-    )
+    df = preprocess_data(args)
 
-    # Save preprocessed data
-    os.makedirs(args.dir_preprocessed_data, exist_ok=True)
-
-    df.to_hdf(os.path.join(args.dir_preprocessed_data, 'sequences.h5'), key='data', mode='w')
-
-    with open(os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json'), 'w') as f:
-        json.dump(input_vocab_index, f)
-
-    with open(os.path.join(args.dir_preprocessed_data, 'output_vocab_index.json'), 'w') as f:
-        json.dump(output_vocab_index, f)
-
-    df = pd.read_hdf(os.path.join(args.dir_preprocessed_data, 'sequences.h5'), key='data')
-    print(df.head())
+    dataset = get_dataset(df)
 
     return # TODO: REMOVEME
 
