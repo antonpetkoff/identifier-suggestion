@@ -1,4 +1,5 @@
 import pandas as pd
+import tensorflow as tf
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
@@ -22,6 +23,7 @@ def replace_string_literals(seq):
 
 def preprocess_sequences(
     csv_filename,
+    max_input_seq_length = 200,
     max_output_seq_length = 8,
 ):
     """This function preprocesses input and output sequences for seq2seq models.
@@ -72,22 +74,47 @@ def preprocess_sequences(
         lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
     )
 
-    # Build vocabularies and their indices
-    input_vocab = set(lists_to_series(df['inputs'].values).unique())
-    input_vocab.add(PAD_TOKEN)
-    input_vocab_index = { token: index for index, token in enumerate(input_vocab) }
+    def get_vocab_index(df):
+        vocab = set(lists_to_series(df.values).unique())
+        vocab.add(PAD_TOKEN) # TODO: order the vocabulary so that PAD_TOKEN is with index 0
+        vocab_index = { token: index for index, token in enumerate(vocab) }
+        return vocab_index
 
-    output_vocab = set(lists_to_series(df['inputs'].values).unique())
-    output_vocab.add(PAD_TOKEN)
-    output_vocab_index = { token: index for index, token in enumerate(output_vocab) }
+    # Build vocabularies and their indices
+    input_vocab_index = get_vocab_index(df['inputs'])
+    output_vocab_index = get_vocab_index(df['outputs'])
 
     # TODO: save to vocabularies to JSON now?
 
-    print(output_vocab_index)
+    # Encode sequences to numbers
+    df['inputs'] = df['inputs'].progress_apply(
+        lambda seq: [input_vocab_index[token] for token in seq]
+    )
+
+    df['outputs'] = df['outputs'].progress_apply(
+        lambda seq: [output_vocab_index[token] for token in seq]
+    )
+
+    # Pad and align sequences
+    df['inputs'] = list(tf.keras.preprocessing.sequence.pad_sequences(
+        df['inputs'],
+        maxlen=max_input_seq_length,
+        truncating='post',
+        padding='post',
+        value=input_vocab_index[PAD_TOKEN],
+        dtype='int32',
+    ))
+
+    df['outputs'] = list(tf.keras.preprocessing.sequence.pad_sequences(
+        df['outputs'],
+        maxlen=max_output_seq_length,
+        truncating='post',
+        padding='post',
+        value=output_vocab_index[PAD_TOKEN],
+        dtype='int32',
+    ))
 
     # TODO: write tests which ensure that we have correctly formatted the preprocessed data
-
-    # TODO: the output sequences are marked with a <start> and <end> special tokens
 
     print(len(df), df.head())
 
