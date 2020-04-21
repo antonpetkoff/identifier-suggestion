@@ -277,15 +277,16 @@ def preprocess_data(args):
         [df_path, input_vocab_path, output_vocab_path]
     ))
 
-    print(f'files_exist: {files_exist}')
-
     if not files_exist:
+        print('Preprocessed files not found. Preprocessing...')
         # Preprocess raw data
         df, input_vocab_index, output_vocab_index = preprocess_sequences(
             csv_filename=args.file_data_raw,
             max_input_seq_length=args.max_input_length,
             max_output_seq_length=args.max_output_length,
         )
+
+        print('Done preprocessing. Saving...')
 
         # Save preprocessed data
         os.makedirs(args.dir_preprocessed_data, exist_ok=True)
@@ -299,6 +300,7 @@ def preprocess_data(args):
             json.dump(output_vocab_index, f)
 
     df = pd.read_hdf(df_path, key='data')
+    print('Loaded preprocessed files')
 
     return df
 
