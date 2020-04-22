@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import resource
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -20,6 +21,24 @@ from tqdm import tqdm
 tqdm.pandas()
 
 set_random_seeds(1)
+
+
+def get_memory():
+    with open('/proc/meminfo', 'r') as mem:
+        free_memory = 0
+        for i in mem:
+            sline = i.split()
+            if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+                free_memory += int(sline[1])
+    return free_memory
+
+
+def limit_memory():
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    new_hard_memory_limit = get_memory() * 1024 / 2
+    print(f'Setting new hard memory limit to: {new_hard_memory_limit}')
+    resource.setrlimit(resource.RLIMIT_AS, (new_hard_memory_limit, hard))
+
 
 parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 
@@ -49,6 +68,8 @@ parser.add_argument('--random_seed', type=int, help='Random Seed', required=True
 SEQ_START_TOKEN = '\t'
 SEQ_END_TOKEN = '\n'
 PAD_TOKEN = ' '
+
+SHUFFLE_SIZE = 5000
 
 def seq2seq(args, input_texts, target_texts):
     # Vectorize the data.
@@ -314,7 +335,7 @@ def preprocess_data(args):
     return df, input_vocab_index, output_vocab_index
 
 
-def get_dataset(df, input_vocab_index, output_vocab_index):
+def get_dataset(args, df, input_vocab_index, output_vocab_index):
     # df['inputs'] gives a series
     # df['inputs'].values gives a NumPy ndarray of lists with shape (100000,) where 100000 is the number of lists
     # but tensorflow doesn't work with a NumPy array of lists, so we have to np.stack the lists
@@ -333,12 +354,15 @@ def get_dataset(df, input_vocab_index, output_vocab_index):
     # Teacher Forcing: decoder_outputs must be one step ahead of decoder_inputs
 
     # TODO: the sequence is shorter with 1, should we append the <PAD> token at the end?
-    # decoder_outputs = dataset_outputs.map(lambda seq: tf.concat(seq[1:], tf.constant([output_vocab_index['<PAD>']])))
-    decoder_outputs = dataset_outputs.map(lambda seq: seq[1:])
+    decoder_outputs = dataset_outputs.map(lambda seq: tf.concat(axis=0, values=[seq[1:], [output_vocab_index['<PAD>']]]))
     decoder_outputs = dataset_outputs.map(lambda seq: tf.one_hot(seq, len(output_vocab_index)))
 
     dataset_features = tf.data.Dataset.zip((encoder_inputs, decoder_inputs))
 
+    # TODO: shuffle before one-hot encoding
+    # TODO: batch(args.batch_size).repeat()
+    # TODO: limit input vocabulary with <MASK> tokens
+    # TODO: maybe limit the max input seq length
     return tf.data.Dataset.zip((dataset_features, decoder_outputs))
 
 def main():
@@ -347,10 +371,12 @@ def main():
 
     df, input_vocab_index, output_vocab_index = preprocess_data(args)
 
-    dataset = get_dataset(df, input_vocab_index, output_vocab_index)
+    dataset = get_dataset(args, df, input_vocab_index, output_vocab_index)
 
-    for item in dataset.take(2):
-        print(item)
+    for (encoder_input, decoder_input), label in dataset.take(2):
+        print(f'encoder_input: {encoder_input.shape}\n')
+        print(f'decoder_input: {decoder_input.shape}\n')
+        print(f'label: {label.shape}\n')
 
     return # TODO: REMOVEME
 
@@ -372,5 +398,10 @@ def main():
     seq2seq(args, input_texts, target_texts)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    limit_memory() # limit maximun memory usage to half
+    try:
+        main()
+    except MemoryError:
+        sys.stderr.write('\nERROR: Memory Limit Exception\n')
+        sys.exit(1)
