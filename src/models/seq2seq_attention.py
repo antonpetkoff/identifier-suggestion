@@ -186,7 +186,7 @@ class Seq2SeqAttention():
         output_batch,
         encoder_initial_cell_state
     ):
-        loss = 0
+        loss = 0.0
 
         with tf.GradientTape() as tape:
             # TODO: extract the feed forward pass as a method
@@ -195,7 +195,7 @@ class Seq2SeqAttention():
             # TODO: put accurate names everywhere below
             encoder_emb_inp = self.encoder.encoder_embedding(input_batch)
 
-            a, a_tx, c_tx = self.encoder_rnnlayer(
+            a, a_tx, c_tx = self.encoder.encoder_rnnlayer(
                 encoder_emb_inp,
                 initial_state=encoder_initial_cell_state
             )
@@ -247,3 +247,34 @@ class Seq2SeqAttention():
         self.optimizer.apply_gradients(grads_and_vars)
 
         return loss
+
+
+    def initialize_initial_state(self):
+        # TODO: use random or Xavier initialization?
+        # TODO: can we initialize all model parameters at once? or we need to initialize only a part of the parameters?
+        return [
+            tf.zeros((BATCH_SIZE, rnn_units)),
+            tf.zeros((BATCH_SIZE, rnn_units))
+        ]
+
+
+    def train(self, dataset, epochs):
+        # TODO: maybe better define the dataset itself here? because we need to know its shapes
+
+        for i in range(1, epochs + 1):
+            encoder_initial_cell_state = self.initialize_initial_state()
+            total_loss = 0.0
+
+            for (batch, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
+                batch_loss = self.train_step(
+                    input_batch,
+                    output_batch,
+                    encoder_initial_cell_state # TODO: shouldn't we persist this state through training steps?
+                )
+
+                total_loss += batch_loss
+
+                # TODO: integrate with wandb to save model checkpoints and metrics
+
+                if (batch + 1) % 5 == 0:
+                    print(f'total loss: {batch_loss.numpy()}, epoch {i}, batch {batch + 1}')
