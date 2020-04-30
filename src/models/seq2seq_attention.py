@@ -2,19 +2,6 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
 
-# import os
-# import io
-# import itertools
-
-BATCH_SIZE = 64
-BUFFER_SIZE = len(X_train)
-steps_per_epoch = BUFFER_SIZE//BATCH_SIZE
-embedding_dims = 256
-rnn_units = 1024
-dense_units = 1024
-Dtype = tf.float32   #used to initialize DecoderCell Zero state
-
-Tx = len(X_train) # TODO: what is Tx?
 
 class Encoder(tf.keras.Model):
     def __init__(
@@ -40,9 +27,12 @@ class Encoder(tf.keras.Model):
 class Decoder(tf.keras.Model):
     def __init__(
         self,
+        max_output_seq_length,
         output_vocab_size,
         embedding_dims,
-        rnn_units
+        rnn_units,
+        dense_units,
+        batch_size
     ):
         super().__init__()
 
@@ -70,12 +60,13 @@ class Decoder(tf.keras.Model):
         self.attention_mechanism = self.build_attention_mechanism(
             dense_units,
             None, # TODO: use named parameters
-            BATCH_SIZE * [Tx] # TODO: what is this parameter?
+            batch_size * [max_output_seq_length] # TODO: what is this parameter?
         )
 
         # TODO: didn't we build a decoder RNN cell above already?
         self.rnn_cell = self.build_rnn_cell(
-            BATCH_SIZE
+            dense_units,
+            batch_size
         )
 
         # TODO: is there a fancier decoder?
@@ -98,7 +89,7 @@ class Decoder(tf.keras.Model):
             memory_sequence_length=memory_sequence_length
         )
 
-    def build_rnn_cell(self, batch_size):
+    def build_rnn_cell(self, dense_units, batch_size):
         rnn_cell = tfa.seq2seq.AttentionWrapper(
             self.decoder_rnncell,
             self.attention_mechanism,
@@ -125,21 +116,39 @@ class Decoder(tf.keras.Model):
 class Seq2SeqAttention():
     def __init__(
         self,
+        max_input_seq_length,
+        max_output_seq_length,
         input_vocab_size,
         output_vocab_size,
-        embedding_dims,
-        rnn_units,
+        embedding_dims = 256,
+        rnn_units = 1024,
+        dense_units = 1024,
+        batch_size = 64,
     ):
+        self.params = {
+            'max_input_seq_length': max_input_seq_length,
+            'max_output_seq_length': max_output_seq_length,
+            'input_vocab_size': input_vocab_size,
+            'output_vocab_size': output_vocab_size,
+            'embedding_dims': embedding_dims,
+            'rnn_units': rnn_units,
+            'dense_units': dense_units,
+            'batch_size': batch_size,
+        }
+
         self.encoder = Encoder(
-            input_vocab_size,
-            embedding_dims,
-            rnn_units
+            input_vocab_size=self.params['input_vocab_size'],
+            embedding_dims=self.params['embedding_dims'],
+            rnn_units=self.params['rnn_units']
         )
 
         self.decoder = Decoder(
-            output_vocab_size,
-            embedding_dims,
-            rnn_units
+            max_output_seq_length=self.params['max_output_seq_length'],
+            output_vocab_size=self.params['output_vocab_size'],
+            embedding_dims=self.params['embedding_dims'],
+            rnn_units=self.params['rnn_units'],
+            dense_units=self.params['dense_units'],
+            batch_size=self.params['batch_size'],
         )
 
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
@@ -213,7 +222,7 @@ class Seq2SeqAttention():
             self.decoder.attention_mechanism.setup_memory(a)
 
             decoder_initial_state = self.decoder.build_decoder_initial_state(
-                BATCH_SIZE, # TODO: this parameter should be known already
+                self.params['batch_size'], # TODO: this parameter should be known already
                 # [last step activations, last memory_state] of encoder is passed as input to decoder Network
                 encoder_state=[a_tx, c_tx], # TODO: use more appropriate names
                 dtype=tf.float32, # TODO: isn't the dtype always tf.float32?
@@ -226,7 +235,7 @@ class Seq2SeqAttention():
 
                 # TODO: don't we know the BATCH_SIZE already inside the decoder? should we?
                 # output sequence length - 1 because of teacher forcing
-                sequence_length=BATCH_SIZE * [Ty - 1]
+                sequence_length=self.params['batch_size'] * [self.params['max_output_seq_length'] - 1]
             )
 
             # TODO: please, argument why logits? and what is the type of outputs? i expected only tensors
@@ -252,14 +261,17 @@ class Seq2SeqAttention():
     def initialize_initial_state(self):
         # TODO: use random or Xavier initialization?
         # TODO: can we initialize all model parameters at once? or we need to initialize only a part of the parameters?
+        # TODO: why return a list? instead return a tensor with one more dimension set to 2
         return [
-            tf.zeros((BATCH_SIZE, rnn_units)),
-            tf.zeros((BATCH_SIZE, rnn_units))
+            tf.zeros((self.params['batch_size'], self.params['rnn_units'])),
+            tf.zeros((self.params['batch_size'], self.params['rnn_units']))
         ]
 
 
-    def train(self, dataset, epochs):
+    def train(self, dataset, num_samples, epochs):
         # TODO: maybe better define the dataset itself here? because we need to know its shapes
+
+        steps_per_epoch = num_samples // self.params['batch_size']
 
         for i in range(1, epochs + 1):
             encoder_initial_cell_state = self.initialize_initial_state()
@@ -273,6 +285,8 @@ class Seq2SeqAttention():
                 )
 
                 total_loss += batch_loss
+
+                # TODO: add a custom validation step
 
                 # TODO: integrate with wandb to save model checkpoints and metrics
 
