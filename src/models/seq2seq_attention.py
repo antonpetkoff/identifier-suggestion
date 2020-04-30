@@ -145,11 +145,105 @@ class Seq2SeqAttention():
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
         self.optimizer = tf.keras.optimizers.Adam()
 
+
+    # TODO: add documentation
+    def loss_function(
+        self,
+        y_pred, # shape: [batch_size, Ty, output_vocab_size]
+        y # shape: [batch_size, Ty]
+    ):
         # TODO: why Sparse instead of non-sparse?
-        # TODO: from_logits is before the softmax layer? what does it mean?
+        # TODO: what does from_logits mean? is it the output of a softmax layer?  i guess it means that we have a distribution, i.e. one dimension more
         # TODO: what does the reduction parameter do?
-        self.loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
+        loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True,
             reduction='none'
         )
 
+        # compute the actual losses
+        loss = loss_fn(
+            y_true=y,
+            y_pred=y_pred
+        )
+
+        # skip loss calculation for padding sequences which contain only zeroes (i.e. when y = 0)
+        # mask the loss when padding sequence appears in the output sequence
+        # e.g.
+        # [ <start>,transform, search, response, data, 0, 0, 0, 0, ..., <end>]
+        # [ 1      , 234     , 3234  , 423     , 3344, 0, 0, 0 ,0, ..., 2 ]
+        mask = tf.logical_not(tf.math.equal(y, 0)) # output 0 when y = 0, otherwise output 1
+        mask = tf.cast(mask, dtype=loss.dtype)
+
+        loss = mask * loss
+        loss = tf.reduce_mean(loss) # TODO: on which axises is the reduction done?
+
+        return loss
+
+
+    def train_step(
+        self,
+        input_batch,
+        output_batch,
+        encoder_initial_cell_state
+    ):
+        loss = 0
+
+        with tf.GradientTape() as tape:
+            # TODO: extract the feed forward pass as a method
+
+            # feed forward through encoder
+            # TODO: put accurate names everywhere below
+            encoder_emb_inp = self.encoder.encoder_embedding(input_batch)
+
+            a, a_tx, c_tx = self.encoder_rnnlayer(
+                encoder_emb_inp,
+                initial_state=encoder_initial_cell_state
+            )
+
+            # apply teacher forcing
+            # ignore the <end> marker token for the decoder input
+            decoder_input = output_batch[:, :-1]
+            # shift the output sequences with +1
+            decoder_output = output_batch[:, 1:]
+
+            # feed forward through decoder
+            decoder_emb_inp = self.decoder.decoder_embedding(decoder_input)
+
+            # set up decoder memory from encoder output
+            self.decoder.attention_mechanism.setup_memory(a)
+
+            decoder_initial_state = self.decoder.build_decoder_initial_state(
+                BATCH_SIZE, # TODO: this parameter should be known already
+                # [last step activations, last memory_state] of encoder is passed as input to decoder Network
+                encoder_state=[a_tx, c_tx], # TODO: use more appropriate names
+                dtype=tf.float32, # TODO: isn't the dtype always tf.float32?
+            )
+
+            # ignore hidden state and cell state from decoder RNN
+            outputs, _, _ = self.decoder.decoder(
+                decoder_emb_inp,
+                initial_state=decoder_initial_state,
+
+                # TODO: don't we know the BATCH_SIZE already inside the decoder? should we?
+                # output sequence length - 1 because of teacher forcing
+                sequence_length=BATCH_SIZE * [Ty - 1]
+            )
+
+            # TODO: please, argument why logits? and what is the type of outputs? i expected only tensors
+            logits = outputs.rnn_output
+
+            loss = self.loss_function(logits, decoder_output)
+
+        # get the list of all trainable weights (variables)
+        variables = self.encoder.trainable_variables + self.decoder.trainable_variables
+
+        # differentiate loss with regard to variables (the parameters of the model)
+        gradients = tape.gradient(loss, variables)
+
+        # combine into pairs each variable with its gradient
+        grads_and_vars = zip(gradients, variables)
+
+        # adjust the weights / parameters with the computed gradients
+        self.optimizer.apply_gradients(grads_and_vars)
+
+        return loss
