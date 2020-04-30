@@ -2,10 +2,10 @@
 /data/
 
 # Trained and serialized models, model predictions, or model summaries
-models/
+/models/
 
 # Generated information like logs, figures, images, summaries, etc.
-reports/
+/reports/
 
 # VSCode
 .vscode/
