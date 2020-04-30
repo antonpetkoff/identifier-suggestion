@@ -268,10 +268,16 @@ class Seq2SeqAttention():
         ]
 
 
-    def train(self, dataset, num_samples, epochs):
-        # TODO: maybe better define the dataset itself here? because we need to know its shapes
-
+    def train(self, X_train, Y_train, epochs):
+        num_samples = len(X_train)
         steps_per_epoch = num_samples // self.params['batch_size']
+
+        BUFFER_SIZE=5000
+        dataset = tf.data.Dataset.from_tensor_slices((X_train, Y_train)).shuffle(BUFFER_SIZE).batch(self.params['batch_size'], drop_remainder=True)
+
+        example_X, example_Y = next(iter(dataset))
+        print('example_X shape: ', example_X.shape)
+        print('example_Y shape: ', example_Y.shape)
 
         for i in range(1, epochs + 1):
             encoder_initial_cell_state = self.initialize_initial_state()

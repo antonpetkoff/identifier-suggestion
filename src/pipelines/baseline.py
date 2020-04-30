@@ -16,6 +16,8 @@ from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 from src.preprocessing.sequence import preprocess_sequences
 
+from src.models.seq2seq_attention import Seq2SeqAttention
+
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
 tqdm.pandas()
@@ -371,6 +373,27 @@ def main():
 
     df, input_vocab_index, output_vocab_index = preprocess_data(args)
 
+    model = Seq2SeqAttention(
+        max_input_seq_length=args.max_input_length,
+        max_output_seq_length=args.max_output_length,
+        input_vocab_size=args.input_vocab_size,
+        output_vocab_size=args.output_vocab_size,
+        embedding_dims=256,
+        rnn_units=1024,
+        dense_units=1024,
+        batch_size=args.batch_size,
+    )
+
+    model.train(
+        X_train=np.stack(df['inputs'].values),
+        Y_train=np.stack(df['outputs'].values),
+        epochs=args.epochs
+    )
+
+    return # TODO: REMOVEME
+
+    # TODO: everything below is outdated and irrelevant anymore
+
     dataset = get_dataset(args, df, input_vocab_index, output_vocab_index)
 
     for (encoder_input, decoder_input), label in dataset.take(2):
@@ -378,7 +401,6 @@ def main():
         print(f'decoder_input: {decoder_input.shape}\n')
         print(f'label: {label.shape}\n')
 
-    return # TODO: REMOVEME
 
     df = pd.read_csv(args.file_data_raw).dropna().head(1000)
     print(f'loaded dataset of size {len(df)}')
