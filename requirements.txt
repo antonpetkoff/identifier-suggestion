@@ -105,6 +105,7 @@ srsly==1.0.2
 tables==3.6.1
 tensorboard==2.1.1
 tensorflow==2.1.0
+tensorflow-addons==0.9.1
 tensorflow-datasets==3.0.0
 tensorflow-estimator==2.1.0
 tensorflow-metadata==0.21.2
@@ -116,6 +117,7 @@ tornado==6.0.4
 tqdm==4.45.0
 traitlets==4.3.3
 typed-ast==1.4.1
+typeguard==2.7.1
 urllib3==1.25.9
 wasabi==0.6.0
 wcwidth==0.1.9

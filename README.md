@@ -92,10 +92,11 @@ Fundamentals:
     - [ ] Read
     - [ ] Filter
     - [ ] Tokenize
-    - [ ] Build vocabulary
+    - [*] Build vocabulary
       - [ ] Save vocabulary to file
-    - [ ] Encode to numbers
-    - [ ] Pad, align and cut
+    - [*] Encode to numbers
+    - [*] Pad, align and cut
+    - [ ] Shuffle
     - [ ] Save final sequences to binary data files
   - [ ] Create tensors for training (memory intensive)
     - [ ] Load the data
@@ -106,6 +107,7 @@ Fundamentals:
 - [*] Fixate all random seeds for reproducible results
 
 - [ ] Run one full experiment
+  - [ ] Describe the experiment - setup, expectations (hypothesis) vs results, goals, architecture, meaning of parameters, evaluation
   - [ ] Log training and evaluation
   - [ ] Save configuration
   - [ ] Save checkpoints of model weights
