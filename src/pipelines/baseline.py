@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 import resource
 import pandas as pd
 import numpy as np
@@ -295,13 +296,10 @@ def preprocess_data(args):
     input_vocab_path = os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json')
     output_vocab_path = os.path.join(args.dir_preprocessed_data, 'output_vocab_index.json')
 
-    # files_exist = all(map(
-    #     os.path.isfile,
-    #     [df_path, input_vocab_path, output_vocab_path]
-    # ))
-
-    # TODO: REMOVE ME
-    files_exist = False
+    files_exist = all(map(
+        os.path.isfile,
+        [df_path, input_vocab_path, output_vocab_path]
+    ))
 
     if not files_exist:
         print('Preprocessed files not found. Preprocessing...')
@@ -383,9 +381,10 @@ def main():
         max_output_seq_length=args.max_output_length,
         input_vocab_size=args.input_vocab_size,
         output_vocab_size=args.output_vocab_size,
-        embedding_dims=64,
-        rnn_units=128,
-        dense_units=128,
+        input_embedding_dim=args.input_embedding_dim,
+        output_embedding_dim=args.output_embedding_dim,
+        rnn_units=args.latent_dim,
+        dense_units=args.latent_dim, # TODO: expose as a hyper parameter
         batch_size=args.batch_size,
     )
 

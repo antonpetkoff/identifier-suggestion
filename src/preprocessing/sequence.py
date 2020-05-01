@@ -1,5 +1,7 @@
+import numpy as np
 import pandas as pd
 import tensorflow as tf
+import sklearn
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
@@ -50,9 +52,8 @@ def preprocess_sequences(
     # Reading the input files
     df = pd.read_csv(csv_filename)
 
-    # TODO: REMOVE the head(1000)
     # Cleaning, filtering the data
-    df = df.dropna().head(1000)
+    df = df.dropna()
 
     # Tokenize and filter input sequences
     df['inputs'] = df['body'].progress_apply(tokenize_method)
@@ -82,29 +83,34 @@ def preprocess_sequences(
 
         tokenizer.fit_on_texts(df.values)
 
-        return tokenizer.word_index
+        return tokenizer
 
     # Build vocabularies and their indices
-    input_vocab_index = get_vocab_index(
+    input_tokenizer = get_vocab_index(
         df['inputs'],
         max_vocab_size=max_input_vocab_size
     )
-    output_vocab_index = get_vocab_index(
+    input_vocab_index = input_tokenizer.word_index
+
+    output_tokenizer = get_vocab_index(
         df['outputs'],
         max_vocab_size=max_output_vocab_size
     )
+    output_vocab_index = output_tokenizer.word_index
 
-    # TODO: save to vocabularies to JSON now?
-
-    # TODO: use tokenizer fit_on_sequences
+    # TODO: can tokenizer.texts_to_sequences be applied on all samples at once?
     # Encode sequences to numbers
     df['inputs'] = df['inputs'].progress_apply(
-        lambda seq: [input_vocab_index[token] for token in seq]
+        lambda seq: np.concatenate(input_tokenizer.texts_to_sequences(seq))
     )
 
+    print('inputs after tokenizer', df['inputs'].head(3))
+
     df['outputs'] = df['outputs'].progress_apply(
-        lambda seq: [output_vocab_index[token] for token in seq]
+        lambda seq: np.concatenate(output_tokenizer.texts_to_sequences(seq))
     )
+
+    print('outputs after tokenizer', df['outputs'].head(3))
 
     # Pad and align sequences
     df['inputs'] = tf.keras.preprocessing.sequence.pad_sequences(
@@ -116,7 +122,7 @@ def preprocess_sequences(
         dtype='int32',
     ).tolist()
 
-    print('inputs', df['inputs'].head(5))
+    print('inputs after padding', df['inputs'].head(3))
 
     df['outputs'] = tf.keras.preprocessing.sequence.pad_sequences(
         df['outputs'],
@@ -127,7 +133,10 @@ def preprocess_sequences(
         dtype='int32',
     ).tolist()
 
-    print('outputs', df['outputs'].head(5))
+    print('outputs after padding', df['outputs'].head(3))
+
+    # shuffle the samples so that we don't have only unit tests at the beginning
+    sklearn.utils.shuffle(df)
 
     # TODO: write tests which ensure that we have correctly formatted the preprocessed data
 

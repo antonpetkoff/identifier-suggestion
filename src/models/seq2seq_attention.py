@@ -120,7 +120,8 @@ class Seq2SeqAttention():
         max_output_seq_length,
         input_vocab_size,
         output_vocab_size,
-        embedding_dims = 256,
+        input_embedding_dim = 256,
+        output_embedding_dim = 256,
         rnn_units = 1024,
         dense_units = 1024,
         batch_size = 64,
@@ -130,7 +131,8 @@ class Seq2SeqAttention():
             'max_output_seq_length': max_output_seq_length,
             'input_vocab_size': input_vocab_size,
             'output_vocab_size': output_vocab_size,
-            'embedding_dims': embedding_dims,
+            'input_embedding_dim': input_embedding_dim,
+            'output_embedding_dim': output_embedding_dim,
             'rnn_units': rnn_units,
             'dense_units': dense_units,
             'batch_size': batch_size,
@@ -138,14 +140,14 @@ class Seq2SeqAttention():
 
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
-            embedding_dims=self.params['embedding_dims'],
+            embedding_dims=self.params['input_embedding_dim'],
             rnn_units=self.params['rnn_units']
         )
 
         self.decoder = Decoder(
             max_output_seq_length=self.params['max_output_seq_length'],
             output_vocab_size=self.params['output_vocab_size'],
-            embedding_dims=self.params['embedding_dims'],
+            embedding_dims=self.params['output_embedding_dim'],
             rnn_units=self.params['rnn_units'],
             dense_units=self.params['dense_units'],
             batch_size=self.params['batch_size'],
