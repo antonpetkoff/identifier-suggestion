@@ -74,6 +74,7 @@ PAD_TOKEN = ' '
 
 SHUFFLE_SIZE = 5000
 
+# TODO: REMOVE ME
 def seq2seq(args, input_texts, target_texts):
     # Vectorize the data.
     # add the PAD_TOKEN to both vocabularies in order to pad the sequences
@@ -286,11 +287,6 @@ def seq2seq(args, input_texts, target_texts):
         print('Decoded sentence:', decoded_sentence)
 
 
-
-def filter_out_string_literals(seq):
-    return [token for token in seq if not token.startswith('"')]
-
-
 def preprocess_data(args):
     df_path = os.path.join(args.dir_preprocessed_data, 'sequences.h5')
     input_vocab_path = os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json')
@@ -340,36 +336,6 @@ def preprocess_data(args):
     return df, input_vocab_index, output_vocab_index
 
 
-def get_dataset(args, df, input_vocab_index, output_vocab_index):
-    # df['inputs'] gives a series
-    # df['inputs'].values gives a NumPy ndarray of lists with shape (100000,) where 100000 is the number of lists
-    # but tensorflow doesn't work with a NumPy array of lists, so we have to np.stack the lists
-    # TODO: will replacing all lists with NumPy arrays help for this issue?
-    dataset_inputs = tf.data.Dataset.from_tensor_slices(
-        np.stack(df['inputs'].values)
-    )
-    dataset_outputs = tf.data.Dataset.from_tensor_slices(
-        np.stack(df['outputs'].values)
-    )
-
-    encoder_inputs = dataset_inputs.map(lambda seq: tf.one_hot(seq, len(input_vocab_index)))
-
-    decoder_inputs = dataset_outputs.map(lambda seq: tf.one_hot(seq, len(output_vocab_index)))
-
-    # Teacher Forcing: decoder_outputs must be one step ahead of decoder_inputs
-
-    # TODO: the sequence is shorter with 1, should we append the <PAD> token at the end?
-    decoder_outputs = dataset_outputs.map(lambda seq: tf.concat(axis=0, values=[seq[1:], [output_vocab_index['<PAD>']]]))
-    decoder_outputs = dataset_outputs.map(lambda seq: tf.one_hot(seq, len(output_vocab_index)))
-
-    dataset_features = tf.data.Dataset.zip((encoder_inputs, decoder_inputs))
-
-    # TODO: shuffle before one-hot encoding
-    # TODO: batch(args.batch_size).repeat()
-    # TODO: limit input vocabulary with <MASK> tokens
-    # TODO: maybe limit the max input seq length
-    return tf.data.Dataset.zip((dataset_features, decoder_outputs))
-
 def main():
     args = parser.parse_args()
     # TODO: persist configuration in experiment folter
@@ -394,34 +360,7 @@ def main():
         epochs=args.epochs
     )
 
-    return # TODO: REMOVEME
-
-    # TODO: everything below is outdated and irrelevant anymore
-
-    dataset = get_dataset(args, df, input_vocab_index, output_vocab_index)
-
-    for (encoder_input, decoder_input), label in dataset.take(2):
-        print(f'encoder_input: {encoder_input.shape}\n')
-        print(f'decoder_input: {decoder_input.shape}\n')
-        print(f'label: {label.shape}\n')
-
-
-    df = pd.read_csv(args.file_data_raw).dropna().head(1000)
-    print(f'loaded dataset of size {len(df)}')
-
-    # dataset
-    df['body_tokens'] = df['body'] \
-        .progress_apply(tokenize_method_body) \
-        .progress_apply(filter_out_string_literals) # ignore string literals, because they increase the vocabulary size too much
-    input_texts = df[df.body_tokens.str.len() > 0]['body_tokens'] # remove invalid methods which cannot be parsed
-
-    # the output sequences are marked with a <start> and <end> special tokens
-    target_texts = df['method_name'].progress_apply(get_subtokens)
-
-    # print(input_texts.head(5))
-    # print('-------')
-    # print(target_texts.head(5))
-    seq2seq(args, input_texts, target_texts)
+    # TODO: save the model
 
 
 if __name__ == '__main__':
