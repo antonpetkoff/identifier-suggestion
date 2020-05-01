@@ -49,15 +49,18 @@ def preprocess_sequences(
         Also the input and output vocabulary indices.
     """
 
+    print('Reading input files')
     # Reading the input files
     df = pd.read_csv(csv_filename)
 
     # Cleaning, filtering the data
     df = df.dropna()
 
+    print('Tokenizing input method bodies')
     # Tokenize and filter input sequences
     df['inputs'] = df['body'].progress_apply(tokenize_method)
 
+    print('Tokenizing output sequences')
     # Tokenize output sequences
     df['outputs'] = df['method_name'].progress_apply(split_subtokens)
 
@@ -69,6 +72,7 @@ def preprocess_sequences(
 
     # Ensure output sequences are at most max_output_seq_length long
     # and annotate output sequences with <SOS> and <EOS>
+    print('Adding <start> and <end> markers to output sequences')
     df['outputs'] = df['outputs'].progress_apply(
         lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
     )
@@ -86,18 +90,21 @@ def preprocess_sequences(
         return tokenizer
 
     # Build vocabularies and their indices
+    print('Building input vocabulary')
     input_tokenizer = get_vocab_index(
         df['inputs'],
         max_vocab_size=max_input_vocab_size
     )
     input_vocab_index = input_tokenizer.word_index
 
+    print('Building output vocabulary')
     output_tokenizer = get_vocab_index(
         df['outputs'],
         max_vocab_size=max_output_vocab_size
     )
     output_vocab_index = output_tokenizer.word_index
 
+    print('Encoding input sequences into numbers')
     # TODO: can tokenizer.texts_to_sequences be applied on all samples at once?
     # Encode sequences to numbers
     df['inputs'] = df['inputs'].progress_apply(
@@ -106,12 +113,14 @@ def preprocess_sequences(
 
     print('inputs after tokenizer', df['inputs'].head(3))
 
+    print('Encoding output sequences into numbers')
     df['outputs'] = df['outputs'].progress_apply(
         lambda seq: np.concatenate(output_tokenizer.texts_to_sequences(seq))
     )
 
     print('outputs after tokenizer', df['outputs'].head(3))
 
+    print('Padding and aligning input sequences')
     # Pad and align sequences
     df['inputs'] = tf.keras.preprocessing.sequence.pad_sequences(
         df['inputs'],
@@ -124,6 +133,7 @@ def preprocess_sequences(
 
     print('inputs after padding', df['inputs'].head(3))
 
+    print('Padding and aligning output sequences')
     df['outputs'] = tf.keras.preprocessing.sequence.pad_sequences(
         df['outputs'],
         maxlen=max_output_seq_length,
@@ -133,10 +143,13 @@ def preprocess_sequences(
         dtype='int32',
     ).tolist()
 
-    print('outputs after padding', df['outputs'].head(3))
+    print('Outputs after padding: ', df['outputs'].head(3))
 
+    print('Shuffling the final dataset')
     # shuffle the samples so that we don't have only unit tests at the beginning
     sklearn.utils.shuffle(df)
+
+    print('Done preprocessing')
 
     # TODO: write tests which ensure that we have correctly formatted the preprocessed data
 
