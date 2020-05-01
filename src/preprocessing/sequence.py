@@ -5,26 +5,22 @@ import tensorflow as tf
 from tqdm import tqdm
 tqdm.pandas()
 
-from src.preprocessing.tokens import tokenize_method_body, get_subtokens
+from src.preprocessing.tokens import tokenize_method, split_subtokens
 from src.utils.pandas import lists_to_series
 
+
+OOV_TOKEN = '<OOV>'
 SEQ_START_TOKEN = '<SOS>'
 SEQ_END_TOKEN = '<EOS>'
 PAD_TOKEN = '<PAD>'
-STRING_LITERAL_TOKEN = '<STR>'
-
-
-def replace_string_literals(seq):
-    return [
-        STRING_LITERAL_TOKEN if token.startswith('"') else token
-        for token in seq
-    ]
 
 
 def preprocess_sequences(
     csv_filename,
     max_input_seq_length = 200,
     max_output_seq_length = 8,
+    max_input_vocab_size = 30000,
+    max_output_vocab_size = 10000,
 ):
     """This function preprocesses input and output sequences for seq2seq models.
 
@@ -54,16 +50,15 @@ def preprocess_sequences(
     # Reading the input files
     df = pd.read_csv(csv_filename)
 
+    # TODO: REMOVE the head(1000)
     # Cleaning, filtering the data
-    df = df.dropna()
+    df = df.dropna().head(1000)
 
     # Tokenize and filter input sequences
-    df['inputs'] = df['body'] \
-        .progress_apply(tokenize_method_body) \
-        .progress_apply(replace_string_literals) # ignore string literals, because they increase the vocabulary size too much
+    df['inputs'] = df['body'].progress_apply(tokenize_method)
 
     # Tokenize output sequences
-    df['outputs'] = df['method_name'].progress_apply(get_subtokens)
+    df['outputs'] = df['method_name'].progress_apply(split_subtokens)
 
     # Filter out the samples which cannot be tokenized
     df = df[df.inputs.str.len() > 0]
@@ -77,19 +72,31 @@ def preprocess_sequences(
         lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
     )
 
-    def get_vocab_index(df):
-        # TODO: limit vocabulary size by counting and arguments
-        vocab = set(lists_to_series(df.values).unique())
-        vocab.add(PAD_TOKEN) # TODO: order the vocabulary so that PAD_TOKEN is with index 0
-        vocab_index = { token: index for index, token in enumerate(vocab) }
-        return vocab_index
+    def get_vocab_index(df, max_vocab_size):
+        tokenizer = tf.keras.preprocessing.text.Tokenizer(
+            num_words=max_vocab_size,
+            filters='',
+            lower=False,
+            oov_token='<OOV>',
+        )
+
+        tokenizer.fit_on_texts(df.values)
+
+        return tokenizer.word_index
 
     # Build vocabularies and their indices
-    input_vocab_index = get_vocab_index(df['inputs'])
-    output_vocab_index = get_vocab_index(df['outputs'])
+    input_vocab_index = get_vocab_index(
+        df['inputs'],
+        max_vocab_size=max_input_vocab_size
+    )
+    output_vocab_index = get_vocab_index(
+        df['outputs'],
+        max_vocab_size=max_output_vocab_size
+    )
 
     # TODO: save to vocabularies to JSON now?
 
+    # TODO: use tokenizer fit_on_sequences
     # Encode sequences to numbers
     df['inputs'] = df['inputs'].progress_apply(
         lambda seq: [input_vocab_index[token] for token in seq]
@@ -105,18 +112,22 @@ def preprocess_sequences(
         maxlen=max_input_seq_length,
         truncating='post',
         padding='post',
-        value=input_vocab_index[PAD_TOKEN],
+        value=0, # index of PAD token
         dtype='int32',
     ).tolist()
+
+    print('inputs', df['inputs'].head(5))
 
     df['outputs'] = tf.keras.preprocessing.sequence.pad_sequences(
         df['outputs'],
         maxlen=max_output_seq_length,
         truncating='post',
         padding='post',
-        value=output_vocab_index[PAD_TOKEN],
+        value=0, # index of PAD token
         dtype='int32',
     ).tolist()
+
+    print('outputs', df['outputs'].head(5))
 
     # TODO: write tests which ensure that we have correctly formatted the preprocessed data
 

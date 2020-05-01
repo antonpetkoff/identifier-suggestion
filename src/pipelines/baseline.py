@@ -295,10 +295,13 @@ def preprocess_data(args):
     input_vocab_path = os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json')
     output_vocab_path = os.path.join(args.dir_preprocessed_data, 'output_vocab_index.json')
 
-    files_exist = all(map(
-        os.path.isfile,
-        [df_path, input_vocab_path, output_vocab_path]
-    ))
+    # files_exist = all(map(
+    #     os.path.isfile,
+    #     [df_path, input_vocab_path, output_vocab_path]
+    # ))
+
+    # TODO: REMOVE ME
+    files_exist = False
 
     if not files_exist:
         print('Preprocessed files not found. Preprocessing...')
@@ -307,6 +310,8 @@ def preprocess_data(args):
             csv_filename=args.file_data_raw,
             max_input_seq_length=args.max_input_length,
             max_output_seq_length=args.max_output_length,
+            max_input_vocab_size=args.input_vocab_size,
+            max_output_vocab_size=args.output_vocab_size,
         )
 
         print('Done preprocessing. Saving...')
@@ -378,9 +383,9 @@ def main():
         max_output_seq_length=args.max_output_length,
         input_vocab_size=args.input_vocab_size,
         output_vocab_size=args.output_vocab_size,
-        embedding_dims=256,
-        rnn_units=1024,
-        dense_units=1024,
+        embedding_dims=64,
+        rnn_units=128,
+        dense_units=128,
         batch_size=args.batch_size,
     )
 

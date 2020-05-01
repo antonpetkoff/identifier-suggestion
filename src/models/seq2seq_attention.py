@@ -272,7 +272,7 @@ class Seq2SeqAttention():
         num_samples = len(X_train)
         steps_per_epoch = num_samples // self.params['batch_size']
 
-        BUFFER_SIZE=5000
+        BUFFER_SIZE=20 # TODO: expose as a parameter
         dataset = tf.data.Dataset.from_tensor_slices((X_train, Y_train)).shuffle(BUFFER_SIZE).batch(self.params['batch_size'], drop_remainder=True)
 
         example_X, example_Y = next(iter(dataset))
