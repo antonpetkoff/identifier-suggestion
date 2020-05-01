@@ -37,8 +37,9 @@ def get_memory():
 
 
 def limit_memory():
+    ALLOWED_FREE_MEMORY = 0.8 # percentage of the free memory to allow for usage
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    new_hard_memory_limit = get_memory() * 1024 / 2
+    new_hard_memory_limit = get_memory() * 1024 * ALLOWED_FREE_MEMORY
     print(f'Setting new hard memory limit to: {new_hard_memory_limit}')
     resource.setrlimit(resource.RLIMIT_AS, (new_hard_memory_limit, hard))
 
