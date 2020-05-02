@@ -300,3 +300,101 @@ class Seq2SeqAttention():
 
                 if (batch + 1) % 5 == 0:
                     print(f'total loss: {batch_loss.numpy()}, epoch {i}, batch {batch + 1}')
+
+
+    def predict(
+        self,
+        input_sequences,
+        start_token_index,
+        end_token_index,
+    ):
+        """Predict the outputs for the given inputs.
+
+        Args:
+            input_batch (tensor): A fully preprocessed batch of input sequences.
+
+        Returns:
+            A tensor with the raw predicted output sequences as numbers.
+        """
+
+        # compute the size of input sequences batch
+        inference_batch_size = input_sequences.shape[0]
+
+        # TODO: why do we initialize the encoder with zeroes? does it matter for inference?
+        encoder_initial_cell_state = [
+            tf.zeros((inference_batch_size, self.params['rnn_units'])),
+            tf.zeros((inference_batch_size, self.params['rnn_units'])),
+        ]
+
+        # feed forward input sequences through the encoder
+        encoder_emb_inp = self.encoder.encoder_embedding(input_sequences)
+        a, a_tx, c_tx = self.encoder.encoder_rnnlayer(
+            encoder_emb_inp,
+            initial_state=encoder_initial_cell_state
+        )
+
+        # initialize decoder
+
+        # TODO: how is this different from? [start_token_index] * inference_batch_size
+        start_tokens = tf.fill(
+            [inference_batch_size],
+            start_token_index
+        )
+
+        end_token = end_token_index
+
+        # the sampler is initialized inside the basic decoder below
+        greedy_sampler = tfa.seq2seq.GreedyEmbeddingSampler()
+
+        # TODO: understand why and explain? isn't ([[start]] * batch_size) the same?
+        # TODO: understand how samplers work
+        # a new decoder is created because we use a different embedding sampler
+        decoder_instance = tfa.seq2seq.BasicDecoder(
+            cell=self.decoder.rnn_cell,
+            sampler=greedy_sampler,
+            output_layer=self.decoder.dense_layer
+        )
+
+        self.decoder.attention_mechanism.setup_memory(a)
+
+        # TODO: load variable from checkpoint?
+        # instead of feeding forward through the decoder embedding layer
+        # we use an EmbeddingSampler
+        decoder_embedding_matrix = self.decoder.decoder_embedding.variables[0]
+
+        decoder_initial_state = self.decoder.build_decoder_initial_state(
+            inference_batch_size,
+            encoder_state=[a_tx, c_tx],
+            dtype=tf.float32 # TODO: isn't this known by default?
+        )
+
+        # the kwargs being passed here are passed to the sampler itself
+        # and the first two values of the returned tuple are returned by the sampler initialization
+        _first_finished, first_inputs, first_state = decoder_instance.initialize(
+            decoder_embedding_matrix,
+            start_tokens=start_tokens,
+            end_token=end_token,
+            initial_state=decoder_initial_state,
+        )
+
+        # TODO: decide on a maximum output sequence length
+        # inference can produce output sequences longer than
+        # the limited length output sequences used during training
+        maximum_iterations = 2 * self.params['max_output_seq_length']
+
+        inputs = first_inputs
+        state = first_state
+        predictions = np.empty((inference_batch_size, 0), dtype = np.int32)
+        for step in range(maximum_iterations):
+            outputs, next_state, next_inputs, _finished = decoder_instance.step(
+                step,
+                inputs,
+                state
+            )
+
+            inputs = next_inputs
+            state = next_state
+            outputs = np.expand_dims(outputs.sample_id, axis = -1)
+            predictions = np.append(predictions, outputs, axis = -1)
+
+        return predictions
