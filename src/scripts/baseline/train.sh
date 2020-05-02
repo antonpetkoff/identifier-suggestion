@@ -2,7 +2,7 @@
 
 PYTHONPATH=. python src/pipelines/baseline.py \
   --file_data_raw data/interim/method-names-rich/elasticsearch.csv \
-  --file_model_output models/saved/baseline.h5 \
+  --file_model_dir models/saved/baseline/ \
   --dir_preprocessed_data data/interim/preprocessed/ \
   --max_input_length 200 \
   --max_output_length 8 \
@@ -12,6 +12,6 @@ PYTHONPATH=. python src/pipelines/baseline.py \
   --output_embedding_dim 128 \
   --latent_dim 512 \
   --learning_rate 0.0001 \
-  --epochs 10 \
+  --epochs 1 \
   --batch_size 256 \
   --random_seed 1

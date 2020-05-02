@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import resource
+import wandb
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -52,7 +53,7 @@ parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 
 # data files
 parser.add_argument('--file_data_raw', type=str, help='Raw data file used for model training', required=True)
-parser.add_argument('--file_model_output', type=str, help='Model output file name', required=True)
+parser.add_argument('--file_model_dir', type=str, help='Model output directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
 # hyper parameters
@@ -207,7 +208,7 @@ def seq2seq(args, input_texts, target_texts):
     )
 
     # Save model
-    model.save(args.file_model_output)
+    model.save(args.file_model_dir + '/model.h5')
 
     # TODO: load the model for inference mode below
 
@@ -342,6 +343,8 @@ def preprocess_data(args):
 
 
 def main():
+    wandb.init(dir='./reports')
+
     args = parser.parse_args()
     # TODO: persist configuration in experiment folter
 
@@ -365,14 +368,12 @@ def main():
         epochs=args.epochs
     )
 
+    model.save(save_dir=args.file_model_dir)
+
     # TODO: save the model
 
 
 if __name__ == '__main__':
-    print(f"WANDB_USERNAME: {os.getenv('WANDB_USERNAME')}")
-    print(f"WANDB_PROJECT: {os.getenv('WANDB_PROJECT')}")
-    print(f"WANDB_API_KEY: {os.getenv('WANDB_API_KEY')}")
-
     limit_memory() # limit maximun memory usage to half
     try:
         main()

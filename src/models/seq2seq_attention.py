@@ -1,6 +1,8 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 import numpy as np
+import wandb
+import os
 
 
 class Encoder(tf.keras.Model):
@@ -281,7 +283,7 @@ class Seq2SeqAttention():
         print('example_X shape: ', example_X.shape)
         print('example_Y shape: ', example_Y.shape)
 
-        for i in range(1, epochs + 1):
+        for epoch in range(1, epochs + 1):
             encoder_initial_cell_state = self.initialize_initial_state()
             total_loss = 0.0
 
@@ -296,10 +298,26 @@ class Seq2SeqAttention():
 
                 # TODO: add a custom validation step
 
-                # TODO: integrate with wandb to save model checkpoints and metrics
+                wandb.log({'batch': batch, 'loss': batch_loss})
 
                 if (batch + 1) % 5 == 0:
-                    print(f'total loss: {batch_loss.numpy()}, epoch {i}, batch {batch + 1}')
+                    print(f'total loss: {batch_loss.numpy()}, epoch {epoch}, batch {batch + 1}')
+
+            wandb.log({'epoch': epoch, 'loss': total_loss})
+
+
+    def save(self, save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+
+        print('Saving encoder locally')
+        self.encoder.save(os.path.join(save_dir, 'encoder.h5'))
+        print('Saving decoder locally')
+        self.decoder.save(os.path.join(save_dir, 'decoder.h5'))
+        print('Saved model locally')
+
+        print('Saving model with wandb')
+        wandb.save(os.path.join(save_dir, '*.h5'))
+        print('Done saving model')
 
 
     def predict(
