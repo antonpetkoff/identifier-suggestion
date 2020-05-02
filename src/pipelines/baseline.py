@@ -23,6 +23,10 @@ from src.models.seq2seq_attention import Seq2SeqAttention
 from tqdm import tqdm
 tqdm.pandas()
 
+# load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv(verbose=True)
+
 set_random_seeds(1)
 
 
@@ -365,6 +369,10 @@ def main():
 
 
 if __name__ == '__main__':
+    print(f"WANDB_USERNAME: {os.getenv('WANDB_USERNAME')}")
+    print(f"WANDB_PROJECT: {os.getenv('WANDB_PROJECT')}")
+    print(f"WANDB_API_KEY: {os.getenv('WANDB_API_KEY')}")
+
     limit_memory() # limit maximun memory usage to half
     try:
         main()
