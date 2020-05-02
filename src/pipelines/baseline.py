@@ -151,7 +151,17 @@ def main():
 
     model.save(save_dir=args.file_model_dir)
 
-    # TODO: save the model
+    test_inputs = np.stack(df['inputs'].head(2))
+
+    print('Test inputs: ', test_inputs)
+
+    predictions = model.predict(
+        input_sequences=test_inputs,
+        start_token_index=output_vocab_index['<SOS>'],
+        end_token_index=output_vocab_index['<EOS>'],
+    )
+
+    print('Predictions: ', predictions)
 
 
 if __name__ == '__main__':
