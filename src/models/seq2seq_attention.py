@@ -309,14 +309,14 @@ class Seq2SeqAttention():
     def save(self, save_dir):
         os.makedirs(save_dir, exist_ok=True)
 
-        print('Saving encoder locally')
-        self.encoder.save(os.path.join(save_dir, 'encoder.h5'))
-        print('Saving decoder locally')
-        self.decoder.save(os.path.join(save_dir, 'decoder.h5'))
-        print('Saved model locally')
+        print('Saving encoder weights locally')
+        self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
+        print('Saving decoder weights locally')
+        self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
+        print('Saved model weights locally')
 
         print('Saving model with wandb')
-        wandb.save(os.path.join(save_dir, '*.h5'))
+        wandb.save(os.path.join(save_dir, '*'))
         print('Done saving model')
 
 
