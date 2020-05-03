@@ -102,8 +102,8 @@ Fundamentals:
     - [*] Use the Dataset API to batch, shuffle and repeat
 
 - [ ] Evaluation
-  - [ ] Split a validation set for evaluation during training
-  - [ ] Split a test set for evaluation after training
+  - [ ] Split a test set for evaluation after/while training
+  - [ ] Split a validation set for hyperparameter optimization
   - [ ] Add accuracy for sequences as an evaluation metric
   - [ ] Add BLEU score as an evaluation metric
   - [ ] Run evaluation on validation and test sets

@@ -222,6 +222,7 @@ class Seq2SeqAttention():
             # feed forward through decoder
             decoder_emb_inp = self.decoder.decoder_embedding(decoder_input)
 
+            # TODO: how often should we setup this memory?
             # set up decoder memory from encoder output
             self.decoder.attention_mechanism.setup_memory(a)
 
@@ -301,7 +302,10 @@ class Seq2SeqAttention():
                 wandb.log({'batch': batch, 'loss': batch_loss})
 
                 if (batch + 1) % 5 == 0:
+                    # TODO: log the average
                     print(f'total loss: {batch_loss.numpy()}, epoch {epoch}, batch {batch + 1}')
+
+            # TODO: evaluate(test_set)
 
             wandb.log({'epoch': epoch, 'loss': total_loss})
 

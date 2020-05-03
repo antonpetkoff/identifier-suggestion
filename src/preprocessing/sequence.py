@@ -23,6 +23,7 @@ def preprocess_sequences(
     max_output_seq_length = 8,
     max_input_vocab_size = 30000,
     max_output_vocab_size = 10000,
+    random_seed = 1,
 ):
     """This function preprocesses input and output sequences for seq2seq models.
 
@@ -147,7 +148,7 @@ def preprocess_sequences(
 
     print('Shuffling the final dataset')
     # shuffle the samples so that we don't have only unit tests at the beginning
-    sklearn.utils.shuffle(df)
+    sklearn.utils.shuffle(df, random_state=random_seed)
 
     print('Done preprocessing')
 

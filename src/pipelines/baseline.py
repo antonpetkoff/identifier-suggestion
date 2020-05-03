@@ -28,7 +28,10 @@ tqdm.pandas()
 from dotenv import load_dotenv
 load_dotenv(verbose=True)
 
-set_random_seeds(1)
+
+RANDOM_SEED = 1
+
+set_random_seeds(RANDOM_SEED)
 
 
 def get_memory():
@@ -93,6 +96,7 @@ def preprocess_data(args):
             max_output_seq_length=args.max_output_length,
             max_input_vocab_size=args.input_vocab_size,
             max_output_vocab_size=args.output_vocab_size,
+            random_seed=RANDOM_SEED,
         )
 
         print('Done preprocessing. Saving...')
@@ -124,12 +128,13 @@ def preprocess_data(args):
 
 
 def main():
-    wandb.init(dir='./reports')
-
     args = parser.parse_args()
+
+    wandb.init(dir='./reports', config=args)
+
     # TODO: persist configuration in experiment folter
 
-    df, input_vocab_index, output_vocab_index = preprocess_data(args)
+    df, _input_vocab_index, output_vocab_index = preprocess_data(args)
 
     model = Seq2SeqAttention(
         max_input_seq_length=args.max_input_length,
