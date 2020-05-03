@@ -84,6 +84,7 @@ Fundamentals:
 - [ ] Dataset creation - organize project structure to make it more easily reproducible
   - [ ] Write scripts for downloading the source code repositories (with wget)
   - [ ] Write scripts for generating the datasets
+  - [ ] Add a way to download the preprocessed data for training (e.g. S3, Drive)
 
 - [*] Create data input pipeline with tf.data Dataset API
   - [*] Preprocess raw text sequences into padded number sequences (IO efficient)
@@ -107,6 +108,15 @@ Fundamentals:
   - [ ] Add BLEU score as an evaluation metric
   - [ ] Run evaluation on validation and test sets
   - [ ] Log evaluation metrics with `weights and biases`
+
+- [ ] Make a notebook for Google Colab to train on Tesla K80
+  - [ ] Make your repo public
+  - [ ] Clone it in the notebook
+  - [ ] Authenticate and fetch credentials for `wandb` and other services
+  - [ ] Fetch the preprocessed data
+  - [ ] Run the training script
+    - [ ] Save checkpoints
+    - [ ] Restore from checkpoints, if the training fails
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
