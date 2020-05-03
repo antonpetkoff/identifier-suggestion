@@ -79,28 +79,34 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 ## Tasks
 
-Support:
+Fundamentals:
 
-- [ ] Organize project structure to make it more easily reproducible
+- [ ] Dataset creation - organize project structure to make it more easily reproducible
   - [ ] Write scripts for downloading the source code repositories (with wget)
   - [ ] Write scripts for generating the datasets
 
-Fundamentals:
-
-- [ ] Create data input pipeline with tf.data Dataset API
-  - [ ] Preprocess raw text sequences into padded number sequences (IO efficient)
-    - [ ] Read
-    - [ ] Filter
-    - [ ] Tokenize
+- [*] Create data input pipeline with tf.data Dataset API
+  - [*] Preprocess raw text sequences into padded number sequences (IO efficient)
+    - [*] Read
+    - [*] Filter
+    - [*] Tokenize
     - [*] Build vocabulary
-      - [ ] Save vocabulary to file
+      - [*] Save vocabulary to file
     - [*] Encode to numbers
     - [*] Pad, align and cut
-    - [ ] Shuffle
-    - [ ] Save final sequences to binary data files
-  - [ ] Create tensors for training (memory intensive)
-    - [ ] Load the data
-    - [ ] Use the Dataset API to tf.one_hot encode, batch, shuffle and repeat
+    - [*] Shuffle
+    - [*] Save final sequences to binary data files
+  - [*] Create tensors for training (memory intensive)
+    - [*] Load the data
+    - [*] Use the Dataset API to batch, shuffle and repeat
+
+- [ ] Evaluation
+  - [ ] Split a validation set for evaluation during training
+  - [ ] Split a test set for evaluation after training
+  - [ ] Add accuracy for sequences as an evaluation metric
+  - [ ] Add BLEU score as an evaluation metric
+  - [ ] Run evaluation on validation and test sets
+  - [ ] Log evaluation metrics with `weights and biases`
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
@@ -111,11 +117,13 @@ Fundamentals:
   - [ ] Log training and evaluation
   - [ ] Save configuration
   - [ ] Save checkpoints of model weights
-  - [ ] Make predictions
-  - [ ] Run evaluation on test set
+  - [*] Make predictions
 
 Modelling and Feature Engineering (Creative):
 
+- [ ] Are there better evaluation metrics than accuracy and BLEU for our task?
+  - [ ] Are there differentiable ones which we can use as loss functions?
+  - [ ] Can we incorporate synonym sets in the loss function for looser evaluation?
 - [ ] Does subtoken splitting improve performance?
 - [ ] Does attention improve performance?
 - [ ] Does a bidirectional RNN perform better than a unidirectional RNN?
