@@ -82,20 +82,20 @@ Fundamentals:
   - [ ] Write scripts for generating the datasets
   - [ ] Add a way to download the preprocessed data for training (e.g. S3, Drive)
 
-- [*] Create data input pipeline with tf.data Dataset API
-  - [*] Preprocess raw text sequences into padded number sequences (IO efficient)
-    - [*] Read
-    - [*] Filter
-    - [*] Tokenize
-    - [*] Build vocabulary
-      - [*] Save vocabulary to file
-    - [*] Encode to numbers
-    - [*] Pad, align and cut
-    - [*] Shuffle
-    - [*] Save final sequences to binary data files
-  - [*] Create tensors for training (memory intensive)
-    - [*] Load the data
-    - [*] Use the Dataset API to batch, shuffle and repeat
+- [x] Create data input pipeline with tf.data Dataset API
+  - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
+    - [x] Read
+    - [x] Filter
+    - [x] Tokenize
+    - [x] Build vocabulary
+      - [x] Save vocabulary to file
+    - [x] Encode to numbers
+    - [x] Pad, align and cut
+    - [x] Shuffle
+    - [x] Save final sequences to binary data files
+  - [x] Create tensors for training (memory intensive)
+    - [x] Load the data
+    - [x] Use the Dataset API to batch, shuffle and repeat
 
 - [ ] Evaluation
   - [ ] Split a test set for evaluation after/while training
@@ -127,14 +127,14 @@ Fundamentals:
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
   - [ ] LayerNorm vs BatchNorm
 
-- [*] Fixate all random seeds for reproducible results
+- [x] Fixate all random seeds for reproducible results
 
 - [ ] Run one full experiment
   - [ ] Describe the experiment - setup, expectations (hypothesis) vs results, goals, architecture, meaning of parameters, evaluation
   - [ ] Log training and evaluation
-  - [*] Save configuration
+  - [x] Save configuration
   - [ ] Save checkpoints of model weights
-  - [*] Make predictions
+  - [x] Make predictions
 
 - [ ] Visualizations
   - [ ] Plot embeddings
