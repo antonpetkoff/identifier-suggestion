@@ -1,6 +1,6 @@
 # Identifier Suggestion
 
-Models for source code identifier suggestion built by learning from Big Code
+Models for source code identifier suggestion built by learning from Big Code.
 
 ## Setup
 
@@ -51,9 +51,6 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
 │   └── figures        <- Generated graphics and figures to be used in reporting
 │
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
 ├── setup.py           <- Make this project pip installable with `pip install -e`
 ├── src                <- Source code for use in this project.
 │   ├── __init__.py    <- Makes src a Python module
@@ -72,9 +69,8 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
 │       └── visualize.py
 │
-├── Pipfile            <- Contains all installed packages
-└── Pipfile.lock       <- Declares all dependencies (and sub-dependencies) of the project
-                          and the current hashes for the downloaded files.
+└── requirements.txt   <- The requirements file for reproducing this environment.
+                          The list with dependencies and their versions
 ```
 
 ## Tasks
@@ -126,6 +122,11 @@ Fundamentals:
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
+- [ ] Regularization
+  - [ ] L2 Regularization
+  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
+  - [ ] LayerNorm vs BatchNorm
+
 - [*] Fixate all random seeds for reproducible results
 
 - [ ] Run one full experiment
@@ -150,7 +151,10 @@ Modelling and Feature Engineering (Creative):
 - [ ] Are there better evaluation metrics than accuracy and BLEU for our task?
   - [ ] Are there differentiable ones which we can use as loss functions?
   - [ ] Can we incorporate synonym sets in the loss function for looser evaluation?
-- [ ] Does subtoken splitting improve performance?
-- [ ] Does attention improve performance?
-- [ ] Does a bidirectional RNN perform better than a unidirectional RNN?
-- [ ] Do binary/categorical features improve performance?
+
+- [ ] Does performance improve when using:
+  - [ ] Subtoken splitting
+  - [ ] Attention for the decoder
+  - [ ] Bi-directional RNN for the encoder
+  - [ ] Custom Binary/Categorical features
+  - [ ] AST features (AST path embeddings)
