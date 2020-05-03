@@ -41,6 +41,8 @@ def tokenize_method_body(code):
 
 STRING_LITERAL_TOKEN = '<STR>' # used to mask string literals
 MODIFIERS = ['public', 'private', 'protected', 'static']
+
+# TODO: add snake case splitting
 SUBTOKEN_REGEX = re.compile(r'''
     # Find words in a string. Order matters!
     [A-Z]+(?=[A-Z][a-z]) |  # All upper case before a capitalized word

@@ -158,3 +158,7 @@ Modelling and Feature Engineering (Creative):
   - [ ] Bi-directional RNN for the encoder
   - [ ] Custom Binary/Categorical features
   - [ ] AST features (AST path embeddings)
+
+Optional:
+
+- [ ] Add types with [typing](https://docs.python.org/3/library/typing.html)
