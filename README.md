@@ -110,6 +110,7 @@ Fundamentals:
     - [ ] Recall
     - [ ] F1 score
     - [ ] BLEU
+      - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
   - [ ] Run evaluation on test set after each epoch
   - [ ] Log evaluation metrics with `weights and biases`
 
@@ -130,9 +131,19 @@ Fundamentals:
 - [ ] Run one full experiment
   - [ ] Describe the experiment - setup, expectations (hypothesis) vs results, goals, architecture, meaning of parameters, evaluation
   - [ ] Log training and evaluation
-  - [ ] Save configuration
+  - [*] Save configuration
   - [ ] Save checkpoints of model weights
   - [*] Make predictions
+
+- [ ] Visualizations
+  - [ ] Plot embeddings
+    - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
+    - [ ] Make a 2D/3D Plot with a good (interpretable) sample
+    - [ ] Log/Upload the plot in `wandb`
+
+  - [ ] Heat map of Attention weights during a single prediction. [see here](https://www.researchgate.net/figure/Heatmaps-of-attention-weights-a-i-j_fig1_316184919)
+
+  - [ ] What other visualizations can be useful?
 
 Modelling and Feature Engineering (Creative):
 
