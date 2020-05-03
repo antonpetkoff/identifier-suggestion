@@ -104,9 +104,13 @@ Fundamentals:
 - [ ] Evaluation
   - [ ] Split a test set for evaluation after/while training
   - [ ] Split a validation set for hyperparameter optimization
-  - [ ] Add accuracy for sequences as an evaluation metric
-  - [ ] Add BLEU score as an evaluation metric
-  - [ ] Run evaluation on validation and test sets
+  - [ ] Add evaluation metrics
+    - [ ] Accuracy
+    - [ ] Precision
+    - [ ] Recall
+    - [ ] F1 score
+    - [ ] BLEU
+  - [ ] Run evaluation on test set after each epoch
   - [ ] Log evaluation metrics with `weights and biases`
 
 - [ ] Make a notebook for Google Colab to train on Tesla K80
@@ -114,6 +118,7 @@ Fundamentals:
   - [ ] Clone it in the notebook
   - [ ] Authenticate and fetch credentials for `wandb` and other services
   - [ ] Fetch the preprocessed data
+    - [ ] Find where to host the dataset files - S3, Drive, or ?
   - [ ] Run the training script
     - [ ] Save checkpoints
     - [ ] Restore from checkpoints, if the training fails

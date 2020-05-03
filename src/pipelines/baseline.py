@@ -148,6 +148,9 @@ def main():
         batch_size=args.batch_size,
     )
 
+    # TODO: expose callback and use the model to predict a sample of 10 sequences.
+    # TODO: Log the predictions as text tables to observe the progress of the training
+
     model.train(
         X_train=np.stack(df['inputs'].values),
         Y_train=np.stack(df['outputs'].values),
