@@ -130,6 +130,7 @@ def preprocess_data(args):
 def main():
     args = parser.parse_args()
 
+    os.makedirs('./reports', exist_ok=True)
     wandb.init(dir='./reports', config=args)
 
     # TODO: persist configuration in experiment folter
