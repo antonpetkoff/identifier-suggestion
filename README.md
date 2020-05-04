@@ -12,7 +12,7 @@ Models for source code identifier suggestion built by learning from Big Code.
 
 ### Installation
 
-1. Run `pip install -r requirements.txt` to install all Python package dependencies.
+1. Run `pip install -r requirements/dev.txt` to install all Python package dependencies.
 
 ### Installation with a virtual environment
 
@@ -22,7 +22,7 @@ For example, you can use the standard `venv`:
 
 1. Run `source .venv/bin/activate` to activate the virtual environment. This step must be executed on every new terminal session.
 
-1. Run `pip install -r requirements.txt` to install all Python package dependencies.
+1. Run `pip install -r requirements/dev.txt` to install all Python package dependencies.
 
 ## Project Structure
 
