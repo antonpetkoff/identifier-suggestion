@@ -117,8 +117,12 @@ def preprocess_data(args):
     with open(input_vocab_path) as f:
         input_vocab_index = json.load(f)
 
+    print('Loaded input vocabulary.')
+
     with open(output_vocab_path) as f:
         output_vocab_index = json.load(f)
+
+    print('Loaded output vocabulary.')
 
     df = pd.read_hdf(df_path, key='data')
 
