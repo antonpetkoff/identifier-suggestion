@@ -121,6 +121,8 @@ Fundamentals:
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
+- [ ] Log the architecture, params, shapes
+
 - [ ] Regularization
   - [ ] L2 Regularization
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)

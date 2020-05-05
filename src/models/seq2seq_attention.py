@@ -3,6 +3,7 @@ import tensorflow_addons as tfa
 import numpy as np
 import wandb
 import os
+import time
 
 
 class Encoder(tf.keras.Model):
@@ -275,20 +276,21 @@ class Seq2SeqAttention():
 
     def train(self, X_train, Y_train, epochs):
         num_samples = len(X_train)
-        steps_per_epoch = num_samples // self.params['batch_size']
+        batch_size = self.params['batch_size']
+        steps_per_epoch = num_samples // batch_size
+        BUFFER_SIZE=5000 # TODO: expose as a parameter
 
-        BUFFER_SIZE=20 # TODO: expose as a parameter
-        dataset = tf.data.Dataset.from_tensor_slices((X_train, Y_train)).shuffle(BUFFER_SIZE).batch(self.params['batch_size'], drop_remainder=True)
-
-        example_X, example_Y = next(iter(dataset))
-        print('example_X shape: ', example_X.shape)
-        print('example_Y shape: ', example_Y.shape)
+        dataset = tf.data.Dataset.from_tensor_slices((X_train, Y_train))
+        dataset = dataset.shuffle(BUFFER_SIZE)
+        dataset = dataset.batch(batch_size, drop_remainder=True)
 
         for epoch in range(1, epochs + 1):
-            encoder_initial_cell_state = self.initialize_initial_state()
+            start_time = time.time()
             total_loss = 0.0
 
-            for (batch, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
+            encoder_initial_cell_state = self.initialize_initial_state()
+
+            for (step, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
                     input_batch,
                     output_batch,
@@ -299,15 +301,16 @@ class Seq2SeqAttention():
 
                 # TODO: add a custom validation step
 
-                wandb.log({'batch': batch, 'loss': batch_loss})
+                wandb.log({'batch': step, 'loss': batch_loss})
 
-                if (batch + 1) % 5 == 0:
-                    # TODO: log the average
-                    print(f'total loss: {batch_loss.numpy()}, epoch {epoch}, batch {batch + 1}')
+                if (step + 1) % 10 == 0:
+                    avg_loss = batch_loss / (step + 1)
+                    print(f'epoch {epoch} - batch {step + 1} - avg loss {avg_loss}')
 
             # TODO: evaluate(test_set)
 
-            wandb.log({'epoch': epoch, 'loss': total_loss})
+            print(f'epoch {epoch} time: {time.time() - start_time} sec')
+            wandb.log({'epoch': epoch, 'epoch_loss': total_loss / steps_per_epoch})
 
 
     def save(self, save_dir):
