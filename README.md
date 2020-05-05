@@ -110,12 +110,12 @@ Fundamentals:
   - [ ] Run evaluation on test set after each epoch
   - [ ] Log evaluation metrics with `weights and biases`
 
-- [*] Make a notebook for Google Colab to train on Tesla K80
-  - [*] Make your repo public
-  - [*] Clone it in the notebook
-  - [*] Authenticate and fetch credentials for `wandb` and other services
-  - [*] Fetch the preprocessed data from Drive
-  - [*] Run the training script
+- [x] Make a notebook for Google Colab to train on Tesla K80
+  - [x] Make your repo public
+  - [x] Clone it in the notebook
+  - [x] Authenticate and fetch credentials for `wandb` and other services
+  - [x] Fetch the preprocessed data from Drive
+  - [x] Run the training script
   - [ ] Save checkpoints
   - [ ] Restore from checkpoints, if the training fails
 
@@ -134,8 +134,10 @@ Fundamentals:
   - [x] Save configuration
   - [ ] Save checkpoints of model weights
   - [x] Make predictions
+    - [ ] Stop predicting elements once you hit the <EOS> marker
 
 - [ ] Visualizations
+  - [ ] Log predictions into text tables for transparency on how the model performs
   - [ ] Plot embeddings
     - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
     - [ ] Make a 2D/3D Plot with a good (interpretable) sample
