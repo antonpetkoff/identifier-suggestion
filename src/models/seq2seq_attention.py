@@ -161,9 +161,11 @@ class Seq2SeqAttention():
 
         self.metrics = {
             'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
-            'f1_score': tfa.metrics.F1Score(
+
+            # TODO: F1 macro vs macro for machine translation?
+            'f1_macro_score': tfa.metrics.F1Score(
                 num_classes=self.params['output_vocab_size'],
-                average=None, # TODO: can be also 'micro', 'macro' or 'weighted'
+                average='macro', # can be None (returns a vector), 'macro', 'micro' or 'weighted'
                 # Elements of y_pred above threshold are considered to be 1, and the rest 0.
                 # If threshold is None, the argmax is converted to 1, and the rest 0.
                 threshold=None,
@@ -277,7 +279,7 @@ class Seq2SeqAttention():
                     axis = -1
                 ) # [output_seq_length, output_vocab_size]
 
-                self.metrics['f1_score'].update_state(
+                self.metrics['f1_macro_score'].update_state(
                     y_true=one_hot_labels,
                     y_pred=pred_logits # the F1Score metric does an argmax or applies a pre-configured threshold
                 )
@@ -294,11 +296,7 @@ class Seq2SeqAttention():
         # adjust the weights / parameters with the computed gradients
         self.optimizer.apply_gradients(grads_and_vars)
 
-        return (
-            loss,
-            self.metrics['sparse_categorical_accuracy'].result(),
-            self.metrics['f1_score'].result()
-        )
+        return loss
 
 
     def initialize_initial_state(self):
@@ -328,11 +326,14 @@ class Seq2SeqAttention():
             encoder_initial_cell_state = self.initialize_initial_state()
 
             for (step, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
-                batch_loss, sparse_cat_acc, f1_score = self.train_step(
+                batch_loss = self.train_step(
                     input_batch,
                     output_batch,
                     encoder_initial_cell_state # TODO: shouldn't we persist this state through training steps?
                 )
+
+                sparse_categorical_accuracy = self.metrics['sparse_categorical_accuracy'].result()
+                f1_macro_score = self.metrics['f1_macro_score'].result()
 
                 total_loss += batch_loss
 
@@ -341,12 +342,12 @@ class Seq2SeqAttention():
                 wandb.log({
                     'batch': step,
                     'loss': batch_loss,
-                    'f1': f1_score,
-                    'sparse_cat_acc': sparse_cat_acc
+                    'f1_macro_score': f1_macro_score,
+                    'sparse_categorical_accuracy': sparse_categorical_accuracy
                 })
 
-                if (step + 1) % 2 == 0:
-                    print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - f1 {f1_score} - sparse_cat_acc {sparse_cat_acc}')
+                if (step + 1) % 10 == 0:
+                    print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - f1_macro_score {f1_macro_score} - sparse_categorical_accuracy {sparse_categorical_accuracy}')
 
             # TODO: evaluate(test_set)
 
@@ -354,8 +355,8 @@ class Seq2SeqAttention():
             wandb.log({
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
-                'epoch_sparse_cat_acc': sparse_cat_acc,
-                'epoch_f1_score': f1_score
+                'epoch_sparse_categorical_accuracy': sparse_categorical_accuracy,
+                'epoch_f1_macro_score': f1_macro_score
             })
 
             # reset accumulated metrics
