@@ -131,8 +131,8 @@ def preprocess_data(args):
     return df, input_vocab_index, output_vocab_index
 
 
-def main():
-    args = parser.parse_args()
+def run(args):
+    print('Experiment parameters: ', args)
 
     os.makedirs('./reports', exist_ok=True)
     wandb.init(dir='./reports', config=args)
@@ -180,7 +180,8 @@ def main():
 if __name__ == '__main__':
     limit_memory() # limit maximun memory usage to half
     try:
-        main()
+        args = parser.parse_args()
+        run(args)
     except MemoryError:
         sys.stderr.write('\nERROR: Memory Limit Exception\n')
         sys.exit(1)
