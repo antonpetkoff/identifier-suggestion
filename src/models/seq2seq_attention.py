@@ -159,6 +159,17 @@ class Seq2SeqAttention():
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
         self.optimizer = tf.keras.optimizers.Adam()
 
+        self.metrics = {
+            'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
+            'f1_score': tfa.metrics.F1Score(
+                num_classes=self.params['output_vocab_size'],
+                average=None, # TODO: can be also 'micro', 'macro' or 'weighted'
+                # Elements of y_pred above threshold are considered to be 1, and the rest 0.
+                # If threshold is None, the argmax is converted to 1, and the rest 0.
+                threshold=None,
+            ),
+        }
+
 
     # TODO: add documentation
     def loss_function(
@@ -218,7 +229,7 @@ class Seq2SeqAttention():
             # ignore the <end> marker token for the decoder input
             decoder_input = output_batch[:, :-1]
             # shift the output sequences with +1
-            decoder_output = output_batch[:, 1:]
+            decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
 
             # feed forward through decoder
             decoder_emb_inp = self.decoder.decoder_embedding(decoder_input)
@@ -245,9 +256,31 @@ class Seq2SeqAttention():
             )
 
             # TODO: please, argument why logits? and what is the type of outputs? i expected only tensors
-            logits = outputs.rnn_output
+            logits = outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
 
             loss = self.loss_function(logits, decoder_output)
+
+            self.metrics['sparse_categorical_accuracy'].update_state(
+                y_true=decoder_output,
+                y_pred=logits
+            )
+
+            # iterate the samples in the batch, because the metric doesn't work with batches
+            # pred_logits and seq_labels are without the first axis, i.e. batch_size
+            # i.e. pred_logits is [output_seq_length, output_vocab_size]
+            for pred_logits, seq_labels in zip(logits, decoder_output):
+                # we have to one_hot encode the true labels, instead of argmax-ing the predictions
+                # the metric itself does the argmax on y_pred
+                one_hot_labels = tf.one_hot(
+                    seq_labels,
+                    self.params['output_vocab_size'],
+                    axis = -1
+                ) # [output_seq_length, output_vocab_size]
+
+                self.metrics['f1_score'].update_state(
+                    y_true=one_hot_labels,
+                    y_pred=pred_logits # the F1Score metric does an argmax or applies a pre-configured threshold
+                )
 
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
@@ -261,7 +294,11 @@ class Seq2SeqAttention():
         # adjust the weights / parameters with the computed gradients
         self.optimizer.apply_gradients(grads_and_vars)
 
-        return loss
+        return (
+            loss,
+            self.metrics['sparse_categorical_accuracy'].result(),
+            self.metrics['f1_score'].result()
+        )
 
 
     def initialize_initial_state(self):
@@ -291,7 +328,7 @@ class Seq2SeqAttention():
             encoder_initial_cell_state = self.initialize_initial_state()
 
             for (step, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
-                batch_loss = self.train_step(
+                batch_loss, sparse_cat_acc, f1_score = self.train_step(
                     input_batch,
                     output_batch,
                     encoder_initial_cell_state # TODO: shouldn't we persist this state through training steps?
@@ -301,16 +338,29 @@ class Seq2SeqAttention():
 
                 # TODO: add a custom validation step
 
-                wandb.log({'batch': step, 'loss': batch_loss})
+                wandb.log({
+                    'batch': step,
+                    'loss': batch_loss,
+                    'f1': f1_score,
+                    'sparse_cat_acc': sparse_cat_acc
+                })
 
-                if (step + 1) % 10 == 0:
-                    avg_loss = batch_loss / (step + 1)
-                    print(f'epoch {epoch} - batch {step + 1} - avg loss {avg_loss}')
+                if (step + 1) % 2 == 0:
+                    print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - f1 {f1_score} - sparse_cat_acc {sparse_cat_acc}')
 
             # TODO: evaluate(test_set)
 
             print(f'epoch {epoch} time: {time.time() - start_time} sec')
-            wandb.log({'epoch': epoch, 'epoch_loss': total_loss / steps_per_epoch})
+            wandb.log({
+                'epoch': epoch,
+                'epoch_loss': total_loss / steps_per_epoch,
+                'epoch_sparse_cat_acc': sparse_cat_acc,
+                'epoch_f1_score': f1_score
+            })
+
+            # reset accumulated metrics
+            for metric in self.metrics.values():
+                metric.reset_states()
 
 
     def save(self, save_dir):
