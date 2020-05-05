@@ -81,6 +81,8 @@ Fundamentals:
   - [ ] Write scripts for downloading the source code repositories (with wget)
   - [ ] Write scripts for generating the datasets
   - [ ] Add a way to download the preprocessed data for training (e.g. S3, Drive)
+  - [ ] Increase the dataset size
+  - [ ] Split the dataset into train/test/validation sets
 
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
@@ -98,8 +100,6 @@ Fundamentals:
     - [x] Use the Dataset API to batch, shuffle and repeat
 
 - [ ] Evaluation
-  - [ ] Split a test set for evaluation after/while training
-  - [ ] Split a validation set for hyperparameter optimization
   - [ ] Add evaluation metrics
     - [ ] Accuracy
     - [ ] Precision
@@ -110,15 +110,14 @@ Fundamentals:
   - [ ] Run evaluation on test set after each epoch
   - [ ] Log evaluation metrics with `weights and biases`
 
-- [ ] Make a notebook for Google Colab to train on Tesla K80
-  - [ ] Make your repo public
-  - [ ] Clone it in the notebook
-  - [ ] Authenticate and fetch credentials for `wandb` and other services
-  - [ ] Fetch the preprocessed data
-    - [ ] Find where to host the dataset files - S3, Drive, or ?
-  - [ ] Run the training script
-    - [ ] Save checkpoints
-    - [ ] Restore from checkpoints, if the training fails
+- [*] Make a notebook for Google Colab to train on Tesla K80
+  - [*] Make your repo public
+  - [*] Clone it in the notebook
+  - [*] Authenticate and fetch credentials for `wandb` and other services
+  - [*] Fetch the preprocessed data from Drive
+  - [*] Run the training script
+  - [ ] Save checkpoints
+  - [ ] Restore from checkpoints, if the training fails
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
