@@ -267,22 +267,23 @@ class Seq2SeqAttention():
                 y_pred=logits
             )
 
-            # iterate the samples in the batch, because the metric doesn't work with batches
-            # pred_logits and seq_labels are without the first axis, i.e. batch_size
-            # i.e. pred_logits is [output_seq_length, output_vocab_size]
-            for pred_logits, seq_labels in zip(logits, decoder_output):
-                # we have to one_hot encode the true labels, instead of argmax-ing the predictions
-                # the metric itself does the argmax on y_pred
-                one_hot_labels = tf.one_hot(
-                    seq_labels,
-                    self.params['output_vocab_size'],
-                    axis = -1
-                ) # [output_seq_length, output_vocab_size]
+            # TODO: temporarily do not update the F1 score to see if it is the reason for low GPU utilization
+            # # iterate the samples in the batch, because the metric doesn't work with batches
+            # # pred_logits and seq_labels are without the first axis, i.e. batch_size
+            # # i.e. pred_logits is [output_seq_length, output_vocab_size]
+            # for pred_logits, seq_labels in zip(logits, decoder_output):
+            #     # we have to one_hot encode the true labels, instead of argmax-ing the predictions
+            #     # the metric itself does the argmax on y_pred
+            #     one_hot_labels = tf.one_hot(
+            #         seq_labels,
+            #         self.params['output_vocab_size'],
+            #         axis = -1
+            #     ) # [output_seq_length, output_vocab_size]
 
-                self.metrics['f1_macro_score'].update_state(
-                    y_true=one_hot_labels,
-                    y_pred=pred_logits # the F1Score metric does an argmax or applies a pre-configured threshold
-                )
+            #     self.metrics['f1_macro_score'].update_state(
+            #         y_true=one_hot_labels,
+            #         y_pred=pred_logits # the F1Score metric does an argmax or applies a pre-configured threshold
+            #     )
 
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
