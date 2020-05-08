@@ -271,10 +271,11 @@ class Seq2SeqAttention():
             # depadded_decoder_output = tf.RaggedTensor.from_tensor(decoder_output, padding=0)
 
             # take the most confidently predicted tokens
-            predictions = np.argmax(logits, axis=-1)
+            predictions = tf.argmax(logits, axis=-1)
 
             # TODO: wrap these confusion matrix metrics inside a tf.Metric
-            for target_seq, predicted_seq in zip(decoder_output, predictions):
+            # TODO: optimize with batching + tf operations on the GPU
+            for target_seq, predicted_seq in zip(decoder_output.numpy(), predictions.numpy()):
                 target_counts = Counter(target_seq)
                 predicted_counts = Counter(predicted_seq)
 
@@ -316,6 +317,21 @@ class Seq2SeqAttention():
         ]
 
 
+    # TODO: extract in a class which inherits from tf.Metric
+    def calculate_metrics(self):
+        tp = self.metrics['true_positives']
+        fp = self.metrics['false_positives']
+        fn = self.metrics['false_negatives']
+
+        precision = tp / (tp + fp) if tp + fp > 0 else 0
+
+        recall = tp / (tp + fn) if tp + fn > 0 else 0
+
+        f1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
+
+        return precision, recall, f1
+
+
     def train(self, X_train, Y_train, epochs):
         num_samples = len(X_train)
         batch_size = self.params['batch_size']
@@ -348,9 +364,7 @@ class Seq2SeqAttention():
                 sparse_categorical_accuracy = self.metrics['sparse_categorical_accuracy'].result()
 
                 # TODO: compute accuracy
-                precision = self.metrics['true_positives'] / (self.metrics['true_positives'] + self.metrics['false_positives'])
-                recall = self.metrics['true_positives'] / (self.metrics['true_positives'] + self.metrics['false_negatives'])
-                f1 = 2 * precision * recall / (precision + recall)
+                precision, recall, f1 = self.calculate_metrics()
 
                 total_loss += batch_loss
 
@@ -366,6 +380,7 @@ class Seq2SeqAttention():
                 })
 
                 if (step + 1) % 10 == 0:
+                    # TODO: just log the dict above? also format the numbers to 2 decimal places?
                     print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}')
 
             # TODO: evaluate(test_set)
