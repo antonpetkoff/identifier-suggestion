@@ -105,9 +105,12 @@ Fundamentals:
     - [ ] Precision
     - [ ] Recall
     - [ ] F1 score
-    - [ ] BLEU
-      - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
+    - [ ] Order-aware metrics
+      - [ ] Some type of edit distance
+      - [ ] BLEU
+        - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
   - [ ] Run evaluation on test set after each epoch
+    - [ ] Can we run the evaluation in parallel on the CPU while the model trains on the GPU?
   - [ ] Log evaluation metrics with `weights and biases`
 
 - [x] Make a notebook for Google Colab to train on Tesla K80

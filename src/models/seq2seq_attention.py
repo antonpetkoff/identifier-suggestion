@@ -5,6 +5,8 @@ import wandb
 import os
 import time
 
+from collections import Counter
+
 
 class Encoder(tf.keras.Model):
     def __init__(
@@ -162,14 +164,9 @@ class Seq2SeqAttention():
         self.metrics = {
             'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
 
-            # TODO: F1 macro vs macro for machine translation?
-            'f1_macro_score': tfa.metrics.F1Score(
-                num_classes=self.params['output_vocab_size'],
-                average='macro', # can be None (returns a vector), 'macro', 'micro' or 'weighted'
-                # Elements of y_pred above threshold are considered to be 1, and the rest 0.
-                # If threshold is None, the argmax is converted to 1, and the rest 0.
-                threshold=None,
-            ),
+            'true_positives': 0,
+            'false_positives': 0,
+            'false_negatives': 0,
         }
 
 
@@ -267,23 +264,32 @@ class Seq2SeqAttention():
                 y_pred=logits
             )
 
-            # TODO: temporarily do not update the F1 score to see if it is the reason for low GPU utilization
-            # # iterate the samples in the batch, because the metric doesn't work with batches
-            # # pred_logits and seq_labels are without the first axis, i.e. batch_size
-            # # i.e. pred_logits is [output_seq_length, output_vocab_size]
-            # for pred_logits, seq_labels in zip(logits, decoder_output):
-            #     # we have to one_hot encode the true labels, instead of argmax-ing the predictions
-            #     # the metric itself does the argmax on y_pred
-            #     one_hot_labels = tf.one_hot(
-            #         seq_labels,
-            #         self.params['output_vocab_size'],
-            #         axis = -1
-            #     ) # [output_seq_length, output_vocab_size]
+            # update evaluation metrics
 
-            #     self.metrics['f1_macro_score'].update_state(
-            #         y_true=one_hot_labels,
-            #         y_pred=pred_logits # the F1Score metric does an argmax or applies a pre-configured threshold
-            #     )
+            # TODO: evaluate on the train set during training or after training? performance and correctness-wise?
+            # TODO: should we ignore padding tokens?
+            # depadded_decoder_output = tf.RaggedTensor.from_tensor(decoder_output, padding=0)
+
+            # take the most confidently predicted tokens
+            predictions = np.argmax(logits, axis=-1)
+
+            # TODO: wrap these confusion matrix metrics inside a tf.Metric
+            for target_seq, predicted_seq in zip(decoder_output, predictions):
+                target_counts = Counter(target_seq)
+                predicted_counts = Counter(predicted_seq)
+
+                # hits: count all tokens both inside 'predicted' and 'target'
+                true_positives = sum((target_counts & predicted_counts).values())
+
+                # false alarms: count all tokens inside 'predicted', but missing in 'target'
+                false_positives = sum((predicted_counts - target_counts).values())
+
+                # misses: count all tokens inside 'target', but missing in 'predicted'
+                false_negatives = sum((target_counts - predicted_counts).values())
+
+                self.metrics['true_positives'] += true_positives
+                self.metrics['false_positives'] += false_positives
+                self.metrics['false_negatives'] += false_negatives
 
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
@@ -324,6 +330,12 @@ class Seq2SeqAttention():
             start_time = time.time()
             total_loss = 0.0
 
+            # reset accumulated metrics
+            self.metrics['sparse_categorical_accuracy'].reset_states()
+            self.metrics['true_positives'] = 0
+            self.metrics['false_positives'] = 0
+            self.metrics['false_negatives'] = 0
+
             encoder_initial_cell_state = self.initialize_initial_state()
 
             for (step, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
@@ -334,7 +346,11 @@ class Seq2SeqAttention():
                 )
 
                 sparse_categorical_accuracy = self.metrics['sparse_categorical_accuracy'].result()
-                f1_macro_score = self.metrics['f1_macro_score'].result()
+
+                # TODO: compute accuracy
+                precision = self.metrics['true_positives'] / (self.metrics['true_positives'] + self.metrics['false_positives'])
+                recall = self.metrics['true_positives'] / (self.metrics['true_positives'] + self.metrics['false_negatives'])
+                f1 = 2 * precision * recall / (precision + recall)
 
                 total_loss += batch_loss
 
@@ -343,12 +359,14 @@ class Seq2SeqAttention():
                 wandb.log({
                     'batch': step,
                     'loss': batch_loss,
-                    'f1_macro_score': f1_macro_score,
-                    'sparse_categorical_accuracy': sparse_categorical_accuracy
+                    'sparse_categorical_accuracy': sparse_categorical_accuracy,
+                    'precision': precision,
+                    'recall': recall,
+                    'f1': f1,
                 })
 
                 if (step + 1) % 10 == 0:
-                    print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - f1_macro_score {f1_macro_score} - sparse_categorical_accuracy {sparse_categorical_accuracy}')
+                    print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}')
 
             # TODO: evaluate(test_set)
 
@@ -357,12 +375,10 @@ class Seq2SeqAttention():
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
                 'epoch_sparse_categorical_accuracy': sparse_categorical_accuracy,
-                'epoch_f1_macro_score': f1_macro_score
+                'epoch_precision': precision,
+                'epoch_recall': recall,
+                'epoch_f1': f1,
             })
-
-            # reset accumulated metrics
-            for metric in self.metrics.values():
-                metric.reset_states()
 
 
     def save(self, save_dir):
