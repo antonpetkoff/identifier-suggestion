@@ -102,9 +102,9 @@ Fundamentals:
 - [ ] Evaluation
   - [ ] Add evaluation metrics
     - [ ] Accuracy
-    - [ ] Precision
-    - [ ] Recall
-    - [ ] F1 score
+    - [x] Precision
+    - [x] Recall
+    - [x] F1 score
     - [ ] Order-aware metrics
       - [ ] Some type of edit distance
       - [ ] BLEU
@@ -125,6 +125,10 @@ Fundamentals:
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
 - [ ] Log the architecture, params, shapes
+
+- [ ] Initialization
+  - [ ] How often should we clear the attention memory?
+  - [ ] Will Xavier or Random Normal initialization improve training time?
 
 - [ ] Regularization
   - [ ] L2 Regularization
@@ -149,6 +153,10 @@ Fundamentals:
     - [ ] Log/Upload the plot in `wandb`
 
   - [ ] Heat map of Attention weights during a single prediction. [see here](https://www.researchgate.net/figure/Heatmaps-of-attention-weights-a-i-j_fig1_316184919)
+
+  - [ ] Can we log layer weights / activations / gradients for debugging? [see here](https://www.quora.com/Are-there-any-examples-of-tensorflow-that-shows-how-to-monitor-the-jacobian-and-or-the-hessian)
+    - [ ] [Tutorial](https://machinelearningmastery.com/how-to-fix-vanishing-gradients-using-the-rectified-linear-activation-function/)
+    - [ ] [Question](https://stackoverflow.com/questions/42315202/understanding-tensorboard-weight-histograms)
 
   - [ ] What other visualizations can be useful?
 

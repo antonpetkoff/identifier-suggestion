@@ -7,6 +7,7 @@ import time
 
 from collections import Counter
 
+from src.metrics.f1_score import F1Score
 
 class Encoder(tf.keras.Model):
     def __init__(
@@ -163,10 +164,7 @@ class Seq2SeqAttention():
 
         self.metrics = {
             'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
-
-            'true_positives': 0,
-            'false_positives': 0,
-            'false_negatives': 0,
+            'f1_score': F1Score(from_logits=True),
         }
 
 
@@ -259,38 +257,19 @@ class Seq2SeqAttention():
 
             loss = self.loss_function(logits, decoder_output)
 
+
+            # update evaluation metrics
+            # TODO: evaluate on the train set during training or after training? performance and correctness-wise?
+
             self.metrics['sparse_categorical_accuracy'].update_state(
                 y_true=decoder_output,
                 y_pred=logits
             )
 
-            # update evaluation metrics
-
-            # TODO: evaluate on the train set during training or after training? performance and correctness-wise?
-            # TODO: should we ignore padding tokens?
-            # depadded_decoder_output = tf.RaggedTensor.from_tensor(decoder_output, padding=0)
-
-            # take the most confidently predicted tokens
-            predictions = tf.argmax(logits, axis=-1)
-
-            # TODO: wrap these confusion matrix metrics inside a tf.Metric
-            # TODO: optimize with batching + tf operations on the GPU
-            for target_seq, predicted_seq in zip(decoder_output.numpy(), predictions.numpy()):
-                target_counts = Counter(target_seq)
-                predicted_counts = Counter(predicted_seq)
-
-                # hits: count all tokens both inside 'predicted' and 'target'
-                true_positives = sum((target_counts & predicted_counts).values())
-
-                # false alarms: count all tokens inside 'predicted', but missing in 'target'
-                false_positives = sum((predicted_counts - target_counts).values())
-
-                # misses: count all tokens inside 'target', but missing in 'predicted'
-                false_negatives = sum((target_counts - predicted_counts).values())
-
-                self.metrics['true_positives'] += true_positives
-                self.metrics['false_positives'] += false_positives
-                self.metrics['false_negatives'] += false_negatives
+            self.metrics['f1_score'].update_state(
+                y_true = decoder_output,
+                y_pred = logits,
+            )
 
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
@@ -317,21 +296,6 @@ class Seq2SeqAttention():
         ]
 
 
-    # TODO: extract in a class which inherits from tf.Metric
-    def calculate_metrics(self):
-        tp = self.metrics['true_positives']
-        fp = self.metrics['false_positives']
-        fn = self.metrics['false_negatives']
-
-        precision = tp / (tp + fp) if tp + fp > 0 else 0
-
-        recall = tp / (tp + fn) if tp + fn > 0 else 0
-
-        f1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0
-
-        return precision, recall, f1
-
-
     def train(self, X_train, Y_train, epochs):
         num_samples = len(X_train)
         batch_size = self.params['batch_size']
@@ -348,9 +312,7 @@ class Seq2SeqAttention():
 
             # reset accumulated metrics
             self.metrics['sparse_categorical_accuracy'].reset_states()
-            self.metrics['true_positives'] = 0
-            self.metrics['false_positives'] = 0
-            self.metrics['false_negatives'] = 0
+            self.metrics['f1_score'].reset_states()
 
             encoder_initial_cell_state = self.initialize_initial_state()
 
@@ -364,7 +326,7 @@ class Seq2SeqAttention():
                 sparse_categorical_accuracy = self.metrics['sparse_categorical_accuracy'].result()
 
                 # TODO: compute accuracy
-                precision, recall, f1 = self.calculate_metrics()
+                f1, precision, recall = self.metrics['f1_score'].result()
 
                 total_loss += batch_loss
 
