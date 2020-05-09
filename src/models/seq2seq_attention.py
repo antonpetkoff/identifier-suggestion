@@ -164,7 +164,7 @@ class Seq2SeqAttention():
 
         self.metrics = {
             'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
-            'f1_score': F1Score(from_logits=True),
+            'f1_score': F1Score(from_logits=True, averaging='macro'),
         }
 
 
