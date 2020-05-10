@@ -206,13 +206,11 @@ def run(args):
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)
 
-        df_predictions = pd.DataFrame({
-            'inputs': input_texts,
-            'predicted': predicted_texts,
-            'expected': expected_texts,
-        })
-
-        print('Predictions:', df_predictions)
+        examples_table = wandb.Table(
+            data=np.stack([input_texts, predicted_texts, expected_texts], axis=1).tolist(),
+            columns=['Input', 'Predicted', 'Actual']
+        )
+        wandb.log({ 'examples': examples_table })
 
     # TODO: expose callback and use the model to predict a sample of 10 sequences.
     # TODO: Log the predictions as text tables to observe the progress of the training
