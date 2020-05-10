@@ -131,6 +131,7 @@ class Seq2SeqAttention():
         rnn_units = 1024,
         dense_units = 1024,
         batch_size = 64,
+        eval_averaging = 'micro',
     ):
         self.params = {
             'max_input_seq_length': max_input_seq_length,
@@ -142,6 +143,7 @@ class Seq2SeqAttention():
             'rnn_units': rnn_units,
             'dense_units': dense_units,
             'batch_size': batch_size,
+            'eval_averaging': eval_averaging,
         }
 
         self.encoder = Encoder(
@@ -167,7 +169,7 @@ class Seq2SeqAttention():
             'f1_score': F1Score(
                 num_classes=self.params['output_vocab_size'],
                 from_logits=True,
-                averaging='macro', # TODO: micro vs macro averaging?
+                averaging=self.params['eval_averaging'], # TODO: micro vs macro averaging?
                 dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
             ),
         }

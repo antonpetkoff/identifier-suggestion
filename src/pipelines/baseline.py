@@ -59,6 +59,9 @@ parser.add_argument('--file_data_raw', type=str, help='Raw data file used for mo
 parser.add_argument('--file_model_dir', type=str, help='Model output directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
+# evaluation
+parser.add_argument('--eval_averaging', type=str, help='Type of averaging for F1, precision, recall evaluation metrics', required=True)
+
 # hyper parameters
 parser.add_argument('--max_input_length', type=int, help='Max input sequence length', required=True)
 
@@ -151,6 +154,7 @@ def run(args):
         rnn_units=args.latent_dim,
         dense_units=args.latent_dim, # TODO: expose as a hyper parameter
         batch_size=args.batch_size,
+        eval_averaging=args.eval_averaging,
     )
 
     # TODO: expose callback and use the model to predict a sample of 10 sequences.

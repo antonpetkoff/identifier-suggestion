@@ -9,8 +9,6 @@ def get_counts_per_class(sequence, num_classes):
     # the sorting is required to ensure that the returned unique values will be in sorted order
     unique_values, _idx, counts = tf.unique_with_counts(tf.sort(sequence))
 
-    print(unique_values, counts)
-
     sparse_tensor = tf.SparseTensor(
         indices = tf.expand_dims(unique_values, axis = 1),
         values = counts,
