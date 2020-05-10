@@ -164,7 +164,12 @@ class Seq2SeqAttention():
 
         self.metrics = {
             'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
-            'f1_score': F1Score(from_logits=True, averaging='macro'),
+            'f1_score': F1Score(
+                num_classes=self.params['output_vocab_size'],
+                from_logits=True,
+                averaging='macro', # TODO: micro vs macro averaging?
+                dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
+            ),
         }
 
 
