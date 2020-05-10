@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
+from itertools import takewhile
 
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, LSTM, Dense
@@ -81,19 +82,21 @@ parser.add_argument('--random_seed', type=int, help='Random Seed', required=True
 
 
 def preprocess_data(args):
-    df_path = os.path.join(args.dir_preprocessed_data, 'sequences.h5')
+    df_train_path = os.path.join(args.dir_preprocessed_data, 'sequences.train.h5')
+    df_validation_path = os.path.join(args.dir_preprocessed_data, 'sequences.validation.h5')
+    df_test_path = os.path.join(args.dir_preprocessed_data, 'sequences.test.h5')
     input_vocab_path = os.path.join(args.dir_preprocessed_data, 'input_vocab_index.json')
     output_vocab_path = os.path.join(args.dir_preprocessed_data, 'output_vocab_index.json')
 
     files_exist = all(map(
         os.path.isfile,
-        [df_path, input_vocab_path, output_vocab_path]
+        [df_train_path, df_validation_path, df_test_path, input_vocab_path, output_vocab_path]
     ))
 
     if not files_exist:
         print('Preprocessed files not found. Preprocessing...')
         # Preprocess raw data
-        df, input_vocab_index, output_vocab_index = preprocess_sequences(
+        df_train, df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_sequences(
             csv_filename=args.file_data_raw,
             max_input_seq_length=args.max_input_length,
             max_output_seq_length=args.max_output_length,
@@ -107,7 +110,9 @@ def preprocess_data(args):
         # Save preprocessed data
         os.makedirs(args.dir_preprocessed_data, exist_ok=True)
 
-        df.to_hdf(df_path, key='data', mode='w')
+        df_train.to_hdf(df_train_path, key='data', mode='w')
+        df_validation.to_hdf(df_validation_path, key='data', mode='w')
+        df_test.to_hdf(df_test_path, key='data', mode='w')
 
         with open(input_vocab_path, 'w') as f:
             json.dump(input_vocab_index, f)
@@ -127,11 +132,13 @@ def preprocess_data(args):
 
     print('Loaded output vocabulary.')
 
-    df = pd.read_hdf(df_path, key='data')
+    df_train = pd.read_hdf(df_train_path, key='data')
+    df_validation = pd.read_hdf(df_validation_path, key='data')
+    df_test = pd.read_hdf(df_test_path, key='data')
 
     print('Loaded preprocessed files.')
 
-    return df, input_vocab_index, output_vocab_index
+    return df_train, df_validation, df_test, input_vocab_index, output_vocab_index
 
 
 def run(args):
@@ -142,7 +149,7 @@ def run(args):
 
     # TODO: persist configuration in experiment folter
 
-    df, _input_vocab_index, output_vocab_index = preprocess_data(args)
+    df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args)
 
     model = Seq2SeqAttention(
         max_input_seq_length=args.max_input_length,
@@ -157,28 +164,69 @@ def run(args):
         eval_averaging=args.eval_averaging,
     )
 
+
+    # TODO: extract this evaluation logic as a callback
+    reverse_input_index = dict(
+        (i, token) for token, i in input_vocab_index.items()
+    )
+    reverse_output_index = dict(
+        (i, token) for token, i in output_vocab_index.items()
+    )
+
+    test_samples = df_train.sample(10)
+    test_inputs = np.stack(test_samples['inputs'])
+    test_outputs = np.stack(test_samples['outputs'])
+
+    # TODO: extract index to text conversion logic
+    # convert raw inputs to texts
+    input_texts = []
+    for test_input in test_inputs:
+        without_padding = filter(lambda index: index != 0, test_input)
+        input_texts.append(
+            ' '.join(list(map(lambda index: reverse_input_index.get(index, '<OOV>'), without_padding)))
+        )
+
+    def map_raw_predictions_to_texts(raw_predictions):
+        prediction_texts = []
+
+        for prediction in raw_predictions:
+            before_end = takewhile(lambda index: index != output_vocab_index['<EOS>'], prediction)
+            prediction_texts.append(
+                ''.join(list(map(lambda index: reverse_output_index.get(index, '<OOV>'), before_end)))
+            )
+
+        return prediction_texts
+
+    def on_epoch_end():
+        raw_predictions = model.predict(
+            input_sequences=test_inputs,
+            start_token_index=output_vocab_index['<SOS>'],
+            end_token_index=output_vocab_index['<EOS>'],
+        )
+        predicted_texts = map_raw_predictions_to_texts(raw_predictions)
+        expected_texts = map_raw_predictions_to_texts(test_outputs)
+
+        df_predictions = pd.DataFrame({
+            'inputs': input_texts,
+            'predicted': predicted_texts,
+            'expected': expected_texts,
+        })
+
+        print('Predictions:', df_predictions)
+
     # TODO: expose callback and use the model to predict a sample of 10 sequences.
     # TODO: Log the predictions as text tables to observe the progress of the training
 
     model.train(
-        X_train=np.stack(df['inputs'].values),
-        Y_train=np.stack(df['outputs'].values),
-        epochs=args.epochs
+        X_train=np.stack(df_train['inputs'].values),
+        Y_train=np.stack(df_train['outputs'].values),
+        X_test=np.stack(df_test['inputs'].values),
+        Y_test=np.stack(df_test['outputs'].values),
+        epochs=args.epochs,
+        on_epoch_end=on_epoch_end,
     )
 
     model.save(save_dir=args.file_model_dir)
-
-    test_inputs = np.stack(df['inputs'].head(2))
-
-    print('Test inputs: ', test_inputs)
-
-    predictions = model.predict(
-        input_sequences=test_inputs,
-        start_token_index=output_vocab_index['<SOS>'],
-        end_token_index=output_vocab_index['<EOS>'],
-    )
-
-    print('Predictions: ', predictions)
 
 
 if __name__ == '__main__':

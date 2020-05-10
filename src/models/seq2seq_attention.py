@@ -303,15 +303,18 @@ class Seq2SeqAttention():
         ]
 
 
-    def train(self, X_train, Y_train, epochs):
+    def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
         num_samples = len(X_train)
         batch_size = self.params['batch_size']
         steps_per_epoch = num_samples // batch_size
         BUFFER_SIZE=5000 # TODO: expose as a parameter
 
-        dataset = tf.data.Dataset.from_tensor_slices((X_train, Y_train))
-        dataset = dataset.shuffle(BUFFER_SIZE)
-        dataset = dataset.batch(batch_size, drop_remainder=True)
+        train_dataset = tf.data.Dataset.from_tensor_slices((X_train, Y_train))
+        train_dataset = train_dataset.shuffle(BUFFER_SIZE)
+        train_dataset = train_dataset.batch(batch_size, drop_remainder=True)
+
+        test_dataset = tf.data.Dataset.from_tensor_slices((X_test, Y_test))
+        test_dataset = test_dataset.batch(batch_size, drop_remainder=True)
 
         for epoch in range(1, epochs + 1):
             start_time = time.time()
@@ -323,7 +326,7 @@ class Seq2SeqAttention():
 
             encoder_initial_cell_state = self.initialize_initial_state()
 
-            for (step, (input_batch, output_batch)) in enumerate(dataset.take(steps_per_epoch)):
+            for (step, (input_batch, output_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
                     input_batch,
                     output_batch,
@@ -363,6 +366,7 @@ class Seq2SeqAttention():
                 'epoch_recall': recall,
                 'epoch_f1': f1,
             })
+            on_epoch_end()
 
 
     def save(self, save_dir):

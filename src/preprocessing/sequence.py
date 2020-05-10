@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import sklearn
+
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
@@ -148,10 +150,41 @@ def preprocess_sequences(
 
     print('Shuffling the final dataset')
     # shuffle the samples so that we don't have only unit tests at the beginning
-    sklearn.utils.shuffle(df, random_state=random_seed)
+    shuffle(df, random_state=random_seed)
+
+    print('Splitting the data into train/validation/test datasets')
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        df['inputs'],
+        df['outputs'],
+        test_size=0.2,
+        random_state=random_seed
+    )
+
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train,
+        y_train,
+        test_size=0.25, # 0.25 x 0.8 = 0.2
+        random_state=random_seed
+    )
+
+    df_train = pd.DataFrame({
+        'inputs': X_train,
+        'outputs': y_train,
+    })
+
+    df_validation = pd.DataFrame({
+        'inputs': X_val,
+        'outputs': y_val,
+    })
+
+    df_test = pd.DataFrame({
+        'inputs': X_test,
+        'outputs': y_test,
+    })
 
     print('Done preprocessing')
 
     # TODO: write tests which ensure that we have correctly formatted the preprocessed data
 
-    return df, input_vocab_index, output_vocab_index
+    return df_train, df_validation, df_test, input_vocab_index, output_vocab_index
