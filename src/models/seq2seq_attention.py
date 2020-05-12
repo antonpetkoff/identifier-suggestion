@@ -83,85 +83,124 @@ class Decoder(tf.keras.Model):
         embedding_dims,
         rnn_units,
         dense_units,
-        batch_size
+        batch_size,
+        *args,
+        **kwargs,
     ):
-        super().__init__()
+        super().__init__(self, args, kwargs)
 
-        # TODO: have a separate parameter for the decoder embedding output dim
-        self.decoder_embedding = tf.keras.layers.Embedding(
-            input_dim=output_vocab_size,
-            output_dim=embedding_dims,
+        self.config = {
+            'max_output_seq_length': max_output_seq_length,
+            'output_vocab_size': output_vocab_size,
+            'embedding_dims': embedding_dims,
+            'rnn_units': rnn_units,
+            'dense_units': dense_units,
+            'batch_size': batch_size,
+        }
+
+
+    def build(self, input_shape):
+        self.embedding = tf.keras.layers.Embedding(
+            input_dim=self.config['output_vocab_size'],
+            output_dim=self.config['embedding_dims'],
+            name='DecoderEmbedding'
         )
 
-        # TODO: softmax output classifier?
+        # TODO: why isn't the activation softmax?
         self.dense_layer = tf.keras.layers.Dense(
-            output_vocab_size
+            self.config['output_vocab_size'],
+            name='DenseOutput'
         )
 
-        # TODO: rename to decoder_rnn_cell
-        self.decoder_rnncell = tf.keras.layers.LSTMCell(
-            rnn_units
+        self.decoder_rnn_cell = tf.keras.layers.LSTMCell(
+            self.config['rnn_units'],
+            name='DecoderLSTMCell'
+        )
+
+        # TODO: why prefer Luong over tfa.seq2seq.BahdanauAttention or vice-versa?
+        self.attention_mechanism = tfa.seq2seq.LuongAttention(
+            self.config['dense_units'],
+            memory = None,
+            memory_sequence_length = self.config['batch_size'] * [self.config['max_output_seq_length']]
+        )
+
+        self.rnn_cell = tfa.seq2seq.AttentionWrapper(
+            self.decoder_rnn_cell,
+            self.attention_mechanism,
+            attention_layer_size=self.config['dense_units'],
         )
 
         # TODO: isn't this sampler only for training? what if we need to pass a sampler for Beam Search?
         self.sampler = tfa.seq2seq.sampler.TrainingSampler()
 
-        # Create attention mechanism with memory = None
-        # TODO: why no memory and what does this memory do?
-        self.attention_mechanism = self.build_attention_mechanism(
-            dense_units,
-            None, # TODO: use named parameters
-            batch_size * [max_output_seq_length] # TODO: what is this parameter?
-        )
-
-        # TODO: didn't we build a decoder RNN cell above already?
-        self.rnn_cell = self.build_rnn_cell(
-            dense_units,
-            batch_size
-        )
-
-        # TODO: is there a fancier decoder?
         self.decoder = tfa.seq2seq.BasicDecoder(
             self.rnn_cell,
             sampler=self.sampler,
             output_layer=self.dense_layer,
         )
 
-    def build_attention_mechanism(
-        self,
-        units, # TODO: the attention is over what? and what are units here?
-        memory,
-        memory_sequence_length
-    ):
-        # TODO: why prefer Luong over Bahdanau or vice-versa?
-        return tfa.seq2seq.LuongAttention( # can be replaced with tfa.seq2seq.BahdanauAttention
-            units,
-            memory=memory,
-            memory_sequence_length=memory_sequence_length
-        )
+        self.setup_memory_and_initial_state() # setup memory with zeros, since we don't have encoder outputs
 
-    def build_rnn_cell(self, dense_units, batch_size):
-        rnn_cell = tfa.seq2seq.AttentionWrapper(
-            self.decoder_rnncell,
-            self.attention_mechanism,
-            attention_layer_size=dense_units # TODO: extract hyper parameters
-        )
+        super().build(input_shape)
 
-        return rnn_cell
 
     def build_decoder_initial_state(
         self,
         batch_size,
         encoder_state,
-        dtype
     ):
         decoder_initial_state = self.rnn_cell.get_initial_state(
             batch_size=batch_size,
-            dtype=dtype
+            dtype=tf.float32, # TODO: do we need this dtype at all?
         )
 
         # TODO: why clone? do we clone the encoder_state? what's going on here?
         return decoder_initial_state.clone(cell_state=encoder_state)
+
+
+    def setup_memory_and_initial_state(
+        self,
+        encoder_outputs=None,
+        encoder_states=None,
+        batch_size=None
+    ):
+        self.attention_mechanism.setup_memory(
+            encoder_outputs if encoder_outputs is not None else tf.zeros((
+                self.config['batch_size'],
+                200, # TODO: provide input sequence length
+                self.config['rnn_units'],
+            ))
+        )
+
+        self.decoder_initial_state = self.build_decoder_initial_state(
+            # the batch size can be different when in prediction mode
+            batch_size if batch_size is not None else self.config['batch_size'],
+
+            # [last step activations, last memory_state] of encoder is passed as input to decoder Network
+            encoder_state = encoder_states if encoder_states is not None else [
+                tf.zeros((self.config['batch_size'], self.config['rnn_units'])),
+                tf.zeros((self.config['batch_size'], self.config['rnn_units'])),
+            ],
+        )
+
+
+    def call(self, input_batch):
+        # TODO: document that the memory must be set up with encoder outputs before calling call()
+
+        outputs, hidden_state, cell_state = self.decoder(
+            self.embedding(input_batch),
+            initial_state=self.decoder_initial_state,
+
+            # TODO: don't we know the BATCH_SIZE already inside the decoder? should we?
+            # output sequence length - 1 because of teacher forcing
+            sequence_length=self.config['batch_size'] * [self.config['max_output_seq_length'] - 1]
+        )
+
+        return outputs, hidden_state, cell_state
+
+
+    def get_config(self):
+        return self.config
 
 
 class Seq2SeqAttention():
@@ -263,47 +302,34 @@ class Seq2SeqAttention():
         loss = 0.0
 
         with tf.GradientTape() as tape:
-            # TODO: extract the feed forward pass as a method?
-
-            # feed forward through encoder
-            self.encoder.clear_initial_cell_state(batch_size=input_batch.shape[0])
-            a, a_tx, c_tx = self.encoder(input_batch)
-
             # apply teacher forcing
             # ignore the <end> marker token for the decoder input
             decoder_input = output_batch[:, :-1]
             # shift the output sequences with +1
             decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
 
+            # TODO: extract the feed forward pass as a method?
+
+            # feed forward through encoder
+            self.encoder.clear_initial_cell_state(batch_size=input_batch.shape[0])
+            encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(input_batch)
+
             # feed forward through decoder
-            decoder_emb_inp = self.decoder.decoder_embedding(decoder_input)
 
-            # TODO: how often should we setup this memory?
             # set up decoder memory from encoder output
-            self.decoder.attention_mechanism.setup_memory(a)
-
-            decoder_initial_state = self.decoder.build_decoder_initial_state(
-                self.params['batch_size'], # TODO: this parameter should be known already
-                # [last step activations, last memory_state] of encoder is passed as input to decoder Network
-                encoder_state=[a_tx, c_tx], # TODO: use more appropriate names
-                dtype=tf.float32, # TODO: isn't the dtype always tf.float32?
+            # this also sets up the decoder initial state based on the encoder last hidden and memory states
+            self.decoder.setup_memory_and_initial_state(
+                encoder_outputs=encoder_outputs,
+                encoder_states=[encoder_hidden_state, encoder_memory_state],
             )
 
             # ignore hidden state and cell state from decoder RNN
-            outputs, _, _ = self.decoder.decoder(
-                decoder_emb_inp,
-                initial_state=decoder_initial_state,
-
-                # TODO: don't we know the BATCH_SIZE already inside the decoder? should we?
-                # output sequence length - 1 because of teacher forcing
-                sequence_length=self.params['batch_size'] * [self.params['max_output_seq_length'] - 1]
-            )
+            outputs, _, _ = self.decoder(decoder_input)
 
             # TODO: please, argument why logits? and what is the type of outputs? i expected only tensors
             logits = outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
 
             loss = self.loss_function(logits, decoder_output)
-
 
             # update evaluation metrics
             # TODO: evaluate on the train set during training or after training? performance and correctness-wise?
@@ -430,7 +456,7 @@ class Seq2SeqAttention():
 
         # feed forward input sequences through the encoder
         self.encoder.clear_initial_cell_state(batch_size = inference_batch_size)
-        a, a_tx, c_tx = self.encoder(input_sequences)
+        encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(input_sequences)
 
         # initialize decoder
 
@@ -441,6 +467,8 @@ class Seq2SeqAttention():
         )
 
         end_token = end_token_index
+
+        # TODO: add a training=False argument to self.decoder.call()
 
         # the sampler is initialized inside the basic decoder below
         greedy_sampler = tfa.seq2seq.GreedyEmbeddingSampler()
@@ -454,17 +482,16 @@ class Seq2SeqAttention():
             output_layer=self.decoder.dense_layer
         )
 
-        self.decoder.attention_mechanism.setup_memory(a)
-
         # TODO: load variable from checkpoint?
         # instead of feeding forward through the decoder embedding layer
         # we use an EmbeddingSampler
-        decoder_embedding_matrix = self.decoder.decoder_embedding.variables[0]
+        decoder_embedding_matrix = self.decoder.embedding.variables[0]
 
-        decoder_initial_state = self.decoder.build_decoder_initial_state(
-            inference_batch_size,
-            encoder_state=[a_tx, c_tx],
-            dtype=tf.float32 # TODO: isn't this known by default?
+        # setup self.decoder.decoder_initial_state
+        self.decoder.setup_memory_and_initial_state(
+            encoder_outputs=encoder_outputs,
+            encoder_states=[encoder_hidden_state, encoder_memory_state],
+            batch_size=inference_batch_size
         )
 
         # the kwargs being passed here are passed to the sampler itself
@@ -473,7 +500,7 @@ class Seq2SeqAttention():
             decoder_embedding_matrix,
             start_tokens=start_tokens,
             end_token=end_token,
-            initial_state=decoder_initial_state,
+            initial_state=self.decoder.decoder_initial_state,
         )
 
         # TODO: decide on a maximum output sequence length

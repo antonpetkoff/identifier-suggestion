@@ -164,8 +164,12 @@ def run(args):
         eval_averaging=args.eval_averaging,
     )
 
+    # TODO replace model.encoder and model.decoder with model.build() and model.summary()
     model.encoder.build(input_shape=(args.batch_size, args.max_input_length))
     model.encoder.summary()
+
+    model.decoder.build(input_shape=(args.batch_size, args.max_output_length))
+    model.decoder.summary()
 
     # TODO: extract this evaluation logic as a callback
     reverse_input_index = dict(
