@@ -9,26 +9,71 @@ from collections import Counter
 
 from src.metrics.f1_score import F1Score
 
+
 class Encoder(tf.keras.Model):
     def __init__(
         self,
         input_vocab_size,
         embedding_dims,
-        rnn_units
+        rnn_units,
+        batch_size, # TODO: can we not pass the batch_size?
+        *args,
+        **kwargs,
     ):
-        super().__init__()
+        super().__init__(self, args, kwargs)
 
-        self.encoder_embedding = tf.keras.layers.Embedding(
-            input_dim=input_vocab_size,
-            output_dim=embedding_dims,
+        self.config = {
+            'input_vocab_size': input_vocab_size,
+            'embedding_dims': embedding_dims,
+            'rnn_units': rnn_units,
+            'batch_size': batch_size,
+        }
+
+    def build(self, input_shape):
+        self.embedding = tf.keras.layers.Embedding(
+            input_dim=self.config['input_vocab_size'],
+            output_dim=self.config['embedding_dims'],
+            name='EncoderEmbedding',
         )
 
-        # TODO: rename to encoder_rnn
-        self.encoder_rnnlayer = tf.keras.layers.LSTM(
-            rnn_units,
+        self.encoder_rnn = tf.keras.layers.LSTM(
+            self.config['rnn_units'],
             return_sequences=True,
-            return_state=True
+            return_state=True,
+            name='EncoderLSTM',
+            # default kernel_initializer is 'glorot_uniform',
+            # default recurrent_initializer is 'orthogonal'
+            # default bias_initializer is 'zeros'
         )
+
+        self.set_initial_cell_state()
+
+        # we must add our own layers and weights, and then call super().build()
+        super().build(input_shape)
+
+
+    def set_initial_cell_state(self, initial_cell_state=None):
+        self.encoder_initial_cell_state = [
+            tf.zeros((self.config['batch_size'], self.config['rnn_units'])),
+            tf.zeros((self.config['batch_size'], self.config['rnn_units'])),
+        ] if initial_cell_state is None else initial_cell_state
+
+
+    def call(self, input_batch):
+        output, last_step_hidden_state, last_step_memory_state = self.encoder_rnn(
+            self.embedding(input_batch),
+            initial_state=self.encoder_initial_cell_state
+        )
+
+        return (
+            output, # [batch_size, input sequence length, rnn_units]
+            last_step_hidden_state, # [batch_size, rnn_units]
+            last_step_memory_state # [batch_size, rnn_units]
+        )
+
+    def get_config(self):
+        return self.config
+
 
 class Decoder(tf.keras.Model):
     def __init__(
@@ -149,7 +194,8 @@ class Seq2SeqAttention():
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
             embedding_dims=self.params['input_embedding_dim'],
-            rnn_units=self.params['rnn_units']
+            rnn_units=self.params['rnn_units'],
+            batch_size=self.params['batch_size'],
         )
 
         self.decoder = Decoder(
@@ -218,16 +264,11 @@ class Seq2SeqAttention():
         loss = 0.0
 
         with tf.GradientTape() as tape:
-            # TODO: extract the feed forward pass as a method
+            # TODO: extract the feed forward pass as a method?
 
             # feed forward through encoder
-            # TODO: put accurate names everywhere below
-            encoder_emb_inp = self.encoder.encoder_embedding(input_batch)
-
-            a, a_tx, c_tx = self.encoder.encoder_rnnlayer(
-                encoder_emb_inp,
-                initial_state=encoder_initial_cell_state
-            )
+            self.encoder.set_initial_cell_state(encoder_initial_cell_state)
+            a, a_tx, c_tx = self.encoder(input_batch)
 
             # apply teacher forcing
             # ignore the <end> marker token for the decoder input
@@ -402,17 +443,13 @@ class Seq2SeqAttention():
         inference_batch_size = input_sequences.shape[0]
 
         # TODO: why do we initialize the encoder with zeroes? does it matter for inference?
-        encoder_initial_cell_state = [
+        self.encoder.set_initial_cell_state([
             tf.zeros((inference_batch_size, self.params['rnn_units'])),
             tf.zeros((inference_batch_size, self.params['rnn_units'])),
-        ]
+        ])
 
         # feed forward input sequences through the encoder
-        encoder_emb_inp = self.encoder.encoder_embedding(input_sequences)
-        a, a_tx, c_tx = self.encoder.encoder_rnnlayer(
-            encoder_emb_inp,
-            initial_state=encoder_initial_cell_state
-        )
+        a, a_tx, c_tx = self.encoder(input_sequences)
 
         # initialize decoder
 
