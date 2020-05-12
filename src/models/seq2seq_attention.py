@@ -46,17 +46,17 @@ class Encoder(tf.keras.Model):
             # default bias_initializer is 'zeros'
         )
 
-        self.set_initial_cell_state()
+        self.clear_initial_cell_state(batch_size=self.config['batch_size'])
 
         # we must add our own layers and weights, and then call super().build()
         super().build(input_shape)
 
 
-    def set_initial_cell_state(self, initial_cell_state=None):
+    def clear_initial_cell_state(self, batch_size):
         self.encoder_initial_cell_state = [
-            tf.zeros((self.config['batch_size'], self.config['rnn_units'])),
-            tf.zeros((self.config['batch_size'], self.config['rnn_units'])),
-        ] if initial_cell_state is None else initial_cell_state
+            tf.zeros((batch_size, self.config['rnn_units'])),
+            tf.zeros((batch_size, self.config['rnn_units'])),
+        ]
 
 
     def call(self, input_batch):
@@ -259,7 +259,6 @@ class Seq2SeqAttention():
         self,
         input_batch,
         output_batch,
-        encoder_initial_cell_state
     ):
         loss = 0.0
 
@@ -267,7 +266,7 @@ class Seq2SeqAttention():
             # TODO: extract the feed forward pass as a method?
 
             # feed forward through encoder
-            self.encoder.set_initial_cell_state(encoder_initial_cell_state)
+            self.encoder.clear_initial_cell_state(batch_size=input_batch.shape[0])
             a, a_tx, c_tx = self.encoder(input_batch)
 
             # apply teacher forcing
@@ -334,16 +333,6 @@ class Seq2SeqAttention():
         return loss
 
 
-    def initialize_initial_state(self):
-        # TODO: use random or Xavier initialization?
-        # TODO: can we initialize all model parameters at once? or we need to initialize only a part of the parameters?
-        # TODO: why return a list? instead return a tensor with one more dimension set to 2
-        return [
-            tf.zeros((self.params['batch_size'], self.params['rnn_units'])),
-            tf.zeros((self.params['batch_size'], self.params['rnn_units']))
-        ]
-
-
     def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
         num_samples = len(X_train)
         batch_size = self.params['batch_size']
@@ -365,13 +354,10 @@ class Seq2SeqAttention():
             self.metrics['sparse_categorical_accuracy'].reset_states()
             self.metrics['f1_score'].reset_states()
 
-            encoder_initial_cell_state = self.initialize_initial_state()
-
             for (step, (input_batch, output_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
                     input_batch,
                     output_batch,
-                    encoder_initial_cell_state # TODO: shouldn't we persist this state through training steps?
                 )
 
                 sparse_categorical_accuracy = self.metrics['sparse_categorical_accuracy'].result()
@@ -442,13 +428,8 @@ class Seq2SeqAttention():
         # compute the size of input sequences batch
         inference_batch_size = input_sequences.shape[0]
 
-        # TODO: why do we initialize the encoder with zeroes? does it matter for inference?
-        self.encoder.set_initial_cell_state([
-            tf.zeros((inference_batch_size, self.params['rnn_units'])),
-            tf.zeros((inference_batch_size, self.params['rnn_units'])),
-        ])
-
         # feed forward input sequences through the encoder
+        self.encoder.clear_initial_cell_state(batch_size = inference_batch_size)
         a, a_tx, c_tx = self.encoder(input_sequences)
 
         # initialize decoder
