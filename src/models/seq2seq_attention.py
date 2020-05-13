@@ -203,7 +203,7 @@ class Decoder(tf.keras.Model):
         return self.config
 
 
-class Seq2SeqAttention():
+class Seq2SeqAttention(tf.keras.Model):
     def __init__(
         self,
         max_input_seq_length,
@@ -216,7 +216,11 @@ class Seq2SeqAttention():
         dense_units = 1024,
         batch_size = 64,
         eval_averaging = 'micro',
+        *args,
+        **kwargs,
     ):
+        super(Seq2SeqAttention, self).__init__(args, kwargs)
+
         self.params = {
             'max_input_seq_length': max_input_seq_length,
             'max_output_seq_length': max_output_seq_length,
@@ -230,12 +234,18 @@ class Seq2SeqAttention():
             'eval_averaging': eval_averaging,
         }
 
+
+    def build(self, input_shape):
+        batch_size = input_shape[0]
+
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
             embedding_dims=self.params['input_embedding_dim'],
             rnn_units=self.params['rnn_units'],
             batch_size=self.params['batch_size'],
         )
+
+        self.encoder.build(input_shape=(batch_size, self.params['max_input_seq_length']))
 
         self.decoder = Decoder(
             max_output_seq_length=self.params['max_output_seq_length'],
@@ -246,10 +256,12 @@ class Seq2SeqAttention():
             batch_size=self.params['batch_size'],
         )
 
+        self.decoder.build(input_shape=(batch_size, self.params['max_output_seq_length']))
+
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
         self.optimizer = tf.keras.optimizers.Adam()
 
-        self.metrics = {
+        self.train_metrics = {
             'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
             'f1_score': F1Score(
                 num_classes=self.params['output_vocab_size'],
@@ -259,6 +271,36 @@ class Seq2SeqAttention():
             ),
         }
 
+        super().build(input_shape)
+
+
+    def call(self, inputs, training=False):
+        if training is True:
+            encoder_inputs, decoder_inputs = inputs
+
+            # feed forward through encoder
+            self.encoder.clear_initial_cell_state(batch_size=encoder_inputs.shape[0])
+            encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(encoder_inputs)
+
+            # feed forward through decoder
+
+            # set up decoder memory from encoder output
+            # this also sets up the decoder initial state based on the encoder last hidden and memory states
+            self.decoder.setup_memory_and_initial_state(
+                encoder_outputs=encoder_outputs,
+                encoder_states=[encoder_hidden_state, encoder_memory_state],
+            )
+
+            # ignore hidden state and cell state from decoder RNN
+            outputs, _, _ = self.decoder(decoder_inputs)
+
+            return outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
+        else:
+            raise NotImplementedError('Non-training feed forward not yet supported')
+
+
+    def get_config(self):
+        return self.params
 
     # TODO: add documentation
     def loss_function(
@@ -294,6 +336,7 @@ class Seq2SeqAttention():
         return loss
 
 
+    # TODO: what will happen if we annotate with @tf.function?
     def train_step(
         self,
         input_batch,
@@ -308,38 +351,18 @@ class Seq2SeqAttention():
             # shift the output sequences with +1
             decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
 
-            # TODO: extract the feed forward pass as a method?
-
-            # feed forward through encoder
-            self.encoder.clear_initial_cell_state(batch_size=input_batch.shape[0])
-            encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(input_batch)
-
-            # feed forward through decoder
-
-            # set up decoder memory from encoder output
-            # this also sets up the decoder initial state based on the encoder last hidden and memory states
-            self.decoder.setup_memory_and_initial_state(
-                encoder_outputs=encoder_outputs,
-                encoder_states=[encoder_hidden_state, encoder_memory_state],
-            )
-
-            # ignore hidden state and cell state from decoder RNN
-            outputs, _, _ = self.decoder(decoder_input)
-
-            # TODO: please, argument why logits? and what is the type of outputs? i expected only tensors
-            logits = outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
+            # feed forward
+            logits = self.call(inputs=[input_batch, decoder_input], training = True)
+            # logits.shape is [batch_size, output_seq_length, output_vocab_size]
 
             loss = self.loss_function(logits, decoder_output)
 
-            # update evaluation metrics
-            # TODO: evaluate on the train set during training or after training? performance and correctness-wise?
-
-            self.metrics['sparse_categorical_accuracy'].update_state(
+            self.train_metrics['sparse_categorical_accuracy'].update_state(
                 y_true=decoder_output,
                 y_pred=logits
             )
 
-            self.metrics['f1_score'].update_state(
+            self.train_metrics['f1_score'].update_state(
                 y_true = decoder_output,
                 y_pred = logits,
             )
@@ -377,8 +400,8 @@ class Seq2SeqAttention():
             total_loss = 0.0
 
             # reset accumulated metrics
-            self.metrics['sparse_categorical_accuracy'].reset_states()
-            self.metrics['f1_score'].reset_states()
+            self.train_metrics['sparse_categorical_accuracy'].reset_states()
+            self.train_metrics['f1_score'].reset_states()
 
             for (step, (input_batch, output_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
@@ -386,10 +409,10 @@ class Seq2SeqAttention():
                     output_batch,
                 )
 
-                sparse_categorical_accuracy = self.metrics['sparse_categorical_accuracy'].result()
+                sparse_categorical_accuracy = self.train_metrics['sparse_categorical_accuracy'].result()
 
                 # TODO: compute accuracy
-                f1, precision, recall = self.metrics['f1_score'].result()
+                f1, precision, recall = self.train_metrics['f1_score'].result()
 
                 total_loss += batch_loss
 
