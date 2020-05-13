@@ -271,32 +271,42 @@ class Seq2SeqAttention(tf.keras.Model):
             ),
         }
 
+        # TODO: reduce code duplication with train_metrics
+        self.test_metrics = {
+            'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
+            'f1_score': F1Score(
+                num_classes=self.params['output_vocab_size'],
+                from_logits=True,
+                averaging=self.params['eval_averaging'], # TODO: micro vs macro averaging?
+                dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
+            ),
+        }
+
         super().build(input_shape)
 
 
     def call(self, inputs, training=False):
-        if training is True:
-            encoder_inputs, decoder_inputs = inputs
+        # TODO: differentiate between training and NOT training, if you add a Dropout layer
 
-            # feed forward through encoder
-            self.encoder.clear_initial_cell_state(batch_size=encoder_inputs.shape[0])
-            encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(encoder_inputs)
+        encoder_inputs, decoder_inputs = inputs
 
-            # feed forward through decoder
+        # feed forward through encoder
+        self.encoder.clear_initial_cell_state(batch_size=encoder_inputs.shape[0])
+        encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(encoder_inputs)
 
-            # set up decoder memory from encoder output
-            # this also sets up the decoder initial state based on the encoder last hidden and memory states
-            self.decoder.setup_memory_and_initial_state(
-                encoder_outputs=encoder_outputs,
-                encoder_states=[encoder_hidden_state, encoder_memory_state],
-            )
+        # feed forward through decoder
 
-            # ignore hidden state and cell state from decoder RNN
-            outputs, _, _ = self.decoder(decoder_inputs)
+        # set up decoder memory from encoder output
+        # this also sets up the decoder initial state based on the encoder last hidden and memory states
+        self.decoder.setup_memory_and_initial_state(
+            encoder_outputs=encoder_outputs,
+            encoder_states=[encoder_hidden_state, encoder_memory_state],
+        )
 
-            return outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
-        else:
-            raise NotImplementedError('Non-training feed forward not yet supported')
+        # ignore hidden state and cell state from decoder RNN
+        outputs, _, _ = self.decoder(decoder_inputs)
+
+        return outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
 
 
     def get_config(self):
@@ -392,9 +402,6 @@ class Seq2SeqAttention(tf.keras.Model):
         train_dataset = train_dataset.shuffle(BUFFER_SIZE)
         train_dataset = train_dataset.batch(batch_size, drop_remainder=True)
 
-        test_dataset = tf.data.Dataset.from_tensor_slices((X_test, Y_test))
-        test_dataset = test_dataset.batch(batch_size, drop_remainder=True)
-
         for epoch in range(1, epochs + 1):
             start_time = time.time()
             total_loss = 0.0
@@ -416,8 +423,6 @@ class Seq2SeqAttention(tf.keras.Model):
 
                 total_loss += batch_loss
 
-                # TODO: add a custom validation step
-
                 wandb.log({
                     'batch': step,
                     'loss': batch_loss,
@@ -431,9 +436,7 @@ class Seq2SeqAttention(tf.keras.Model):
                     # TODO: just log the dict above? also format the numbers to 2 decimal places?
                     print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}')
 
-            # TODO: evaluate(test_set)
-
-            print(f'epoch {epoch} time: {time.time() - start_time} sec')
+            print(f'epoch {epoch} training time: {time.time() - start_time} sec')
             wandb.log({
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
@@ -442,6 +445,9 @@ class Seq2SeqAttention(tf.keras.Model):
                 'epoch_recall': recall,
                 'epoch_f1': f1,
             })
+
+            self.evaluate(X_test, Y_test, batch_size, epoch)
+
             on_epoch_end()
 
 
@@ -457,6 +463,75 @@ class Seq2SeqAttention(tf.keras.Model):
         print('Saving model with wandb')
         wandb.save(os.path.join(save_dir, '*'))
         print('Done saving model')
+
+
+    def evaluation_step(
+        self,
+        input_batch,
+        output_batch,
+    ):
+        # apply teacher forcing
+        # ignore the <end> marker token for the decoder input
+        decoder_input = output_batch[:, :-1]
+        # shift the output sequences with +1
+        decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
+
+        # feed forward
+        logits = self.call(inputs=[input_batch, decoder_input], training = True)
+        # logits.shape is [batch_size, output_seq_length, output_vocab_size]
+
+        loss = self.loss_function(logits, decoder_output)
+
+        self.test_metrics['sparse_categorical_accuracy'].update_state(
+            y_true=decoder_output,
+            y_pred=logits
+        )
+
+        self.test_metrics['f1_score'].update_state(
+            y_true = decoder_output,
+            y_pred = logits,
+        )
+
+        return loss
+
+
+    def evaluate(self, X_test, Y_test, batch_size, epoch):
+        start_time = time.time()
+
+        num_samples = len(X_test)
+        steps_per_epoch = num_samples // batch_size
+        test_dataset = tf.data.Dataset.from_tensor_slices((X_test, Y_test))
+        test_dataset = test_dataset.batch(batch_size, drop_remainder=True)
+
+        # reset accumulated metrics
+        self.test_metrics['sparse_categorical_accuracy'].reset_states()
+        self.test_metrics['f1_score'].reset_states()
+        total_loss = 0
+
+        # go through the full test dataset
+        for (input_batch, output_batch) in test_dataset:
+            batch_loss = self.evaluation_step(input_batch, output_batch)
+            total_loss += batch_loss
+
+        sparse_categorical_accuracy = self.test_metrics['sparse_categorical_accuracy'].result()
+        f1, precision, recall = self.test_metrics['f1_score'].result()
+
+        print(f'epoch {epoch} evaluation time: {time.time() - start_time} sec')
+
+        test_results = {
+            'epoch': epoch,
+            'epoch_test_loss': total_loss / steps_per_epoch,
+            'epoch_test_sparse_categorical_accuracy': sparse_categorical_accuracy,
+            'epoch_test_precision': precision,
+            'epoch_test_recall': recall,
+            'epoch_test_f1': f1,
+        }
+
+        # TODO: have better logging
+        wandb.log(test_results)
+        print('epoch evaluation: ', test_results)
+
+        return test_results
 
 
     def predict(
