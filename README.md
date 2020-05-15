@@ -77,11 +77,13 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 Fundamentals:
 
-- [ ] Dataset creation - organize project structure to make it more easily reproducible
-  - [ ] Write scripts for downloading the source code repositories (with wget)
-  - [ ] Write scripts for generating the datasets
-  - [ ] Add a way to download the preprocessed data for training (e.g. S3, Drive)
-  - [ ] Increase the dataset size
+- [ ] Increase Dataset to at least 1 million method samples for training
+  - [ ] Select a set of Java repositories
+  - [ ] Write scripts for downloading the source code repositories at specific hashes
+  - [ ] Fetch only the Java code from these repositories
+  - [ ] Split test files and everything else
+  - [ ] Analyze the distribution of the data
+  - [ ] Write scripts for extracting Java methods
   - [ ] Split the dataset into train/test/validation sets
 
 - [x] Create data input pipeline with tf.data Dataset API
@@ -99,19 +101,20 @@ Fundamentals:
     - [x] Load the data
     - [x] Use the Dataset API to batch, shuffle and repeat
 
-- [ ] Evaluation
-  - [ ] Add evaluation metrics
-    - [ ] Accuracy
+- [x] Evaluation
+  - [x] Add evaluation metrics
+    - [x] Accuracy
     - [x] Precision
     - [x] Recall
     - [x] F1 score
+    - [ ] Define the token position strictness of the confusion matrix metrics
     - [ ] Order-aware metrics
       - [ ] Some type of edit distance
       - [ ] BLEU
         - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
-  - [ ] Run evaluation on test set after each epoch
-    - [ ] Can we run the evaluation in parallel on the CPU while the model trains on the GPU?
-  - [ ] Log evaluation metrics with `weights and biases`
+  - [x] Run evaluation on test set after each epoch
+    - [x] Can we run the evaluation in parallel on the CPU while the model trains on the GPU? Will not do it for now
+  - [x] Log evaluation metrics with `weights and biases`
 
 - [x] Make a notebook for Google Colab to train on Tesla K80
   - [x] Make your repo public
@@ -124,10 +127,9 @@ Fundamentals:
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
-- [ ] Log the architecture, params, shapes
+- [x] Log model summary - architecture, parameter counts, shapes
 
 - [ ] Initialization
-  - [ ] How often should we clear the attention memory?
   - [ ] Will Xavier or Random Normal initialization improve training time?
 
 - [ ] Regularization
@@ -139,14 +141,14 @@ Fundamentals:
 
 - [ ] Run one full experiment
   - [ ] Describe the experiment - setup, expectations (hypothesis) vs results, goals, architecture, meaning of parameters, evaluation
-  - [ ] Log training and evaluation
+  - [x] Log training and evaluation
   - [x] Save configuration
   - [ ] Save checkpoints of model weights
   - [x] Make predictions
     - [ ] Stop predicting elements once you hit the <EOS> marker
 
 - [ ] Visualizations
-  - [ ] Log predictions into text tables for transparency on how the model performs
+  - [x] Log predictions into text tables for transparency on how the model performs
   - [ ] Plot embeddings
     - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
     - [ ] Make a 2D/3D Plot with a good (interpretable) sample
@@ -171,6 +173,7 @@ Modelling and Feature Engineering (Creative):
   - [ ] Attention for the decoder
   - [ ] Bi-directional RNN for the encoder
   - [ ] Custom Binary/Categorical features
+  - [ ] Transformer
   - [ ] AST features (AST path embeddings)
 
 Optional:
