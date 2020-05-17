@@ -77,14 +77,33 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 Fundamentals:
 
+- [ ] Serve the trained model for predictions
+  - [ ] Make the Seq2Seq class a tf.Module with @tf.functions with signatures so that it can be serialized
+  - [ ] Ensure the Encoder and Decoder models are properly (de)serialized inside the module
+  - [ ] Test the SavedModel through the saved_model_cli
+  - [ ] Save the model to disk on every 2nd epoch
+  - [ ] Serve the SavedModel from a Docker container
+  - [ ] Preprocess the raw input text for the model
+
+- [ ] Implement an IDE suggestion plugin/extension for VSCode using LSP (Language Server Protocol)
+  - [ ] Provide the method body by making a selection with the cursor
+  - [ ] Query the served model by HTTP to receive a list of suggestions
+
+- [ ] Add Beam Search Decoder for making multiple suggestions
+
+- [ ] Start writing your thesis
+  - [ ] Document experiments
+
 - [ ] Increase Dataset to at least 1 million method samples for training
   - [ ] Select a set of Java repositories
   - [ ] Write scripts for downloading the source code repositories at specific hashes
   - [ ] Fetch only the Java code from these repositories
-  - [ ] Split test files and everything else
   - [ ] Analyze the distribution of the data
+  - [ ] Split test files and everything else
   - [ ] Write scripts for extracting Java methods
   - [ ] Split the dataset into train/test/validation sets
+  - [ ] Preprocess data
+    - [ ] Extract the preprocessing step as a method in the model
 
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
@@ -124,8 +143,6 @@ Fundamentals:
   - [x] Run the training script
   - [ ] Save checkpoints
   - [ ] Restore from checkpoints, if the training fails
-
-- [ ] Add Beam Search Decoder for making multiple suggestions
 
 - [x] Log model summary - architecture, parameter counts, shapes
 
