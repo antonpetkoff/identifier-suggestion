@@ -152,6 +152,7 @@ def run(args):
     df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args)
 
     model = Seq2SeqAttention(
+        default_save_dir=args.file_model_dir,
         max_input_seq_length=args.max_input_length,
         max_output_seq_length=args.max_output_length,
         input_vocab_size=args.input_vocab_size,
@@ -164,8 +165,9 @@ def run(args):
         eval_averaging=args.eval_averaging,
     )
 
-    model.build(input_shape=(args.batch_size, args.max_input_length))
     model.summary()
+
+    model.save()
 
     # TODO: extract this evaluation logic as a callback
     reverse_input_index = dict(
@@ -226,7 +228,7 @@ def run(args):
         on_epoch_end=on_epoch_end,
     )
 
-    model.save(save_dir=args.file_model_dir)
+    model.save()
 
 
 if __name__ == '__main__':

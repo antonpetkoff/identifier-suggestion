@@ -10,9 +10,9 @@ def get_counts_per_class(sequence, num_classes):
     unique_values, _idx, counts = tf.unique_with_counts(tf.sort(sequence))
 
     sparse_tensor = tf.SparseTensor(
-        indices = tf.expand_dims(unique_values, axis = 1),
+        indices = tf.expand_dims(tf.cast(unique_values, dtype=tf.int64), axis = 1),
         values = counts,
-        dense_shape = [num_classes]
+        dense_shape = [num_classes],
     )
 
     return tf.sparse.to_dense(sparse_tensor)

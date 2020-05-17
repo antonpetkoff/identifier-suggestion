@@ -29,7 +29,6 @@ class Encoder(tf.keras.Model):
             'batch_size': batch_size,
         }
 
-    def build(self, input_shape):
         self.embedding = tf.keras.layers.Embedding(
             input_dim=self.config['input_vocab_size'],
             output_dim=self.config['embedding_dims'],
@@ -48,9 +47,6 @@ class Encoder(tf.keras.Model):
 
         self.clear_initial_cell_state(batch_size=self.config['batch_size'])
 
-        # we must add our own layers and weights, and then call super().build()
-        super().build(input_shape)
-
 
     def clear_initial_cell_state(self, batch_size):
         self.encoder_initial_cell_state = [
@@ -59,6 +55,8 @@ class Encoder(tf.keras.Model):
         ]
 
 
+    # annotating with @tf.function leads to None gradients while training
+    # @tf.function(input_signature=[tf.TensorSpec(shape=(None, None))])
     def call(self, input_batch):
         output, last_step_hidden_state, last_step_memory_state = self.encoder_rnn(
             self.embedding(input_batch),
@@ -98,8 +96,6 @@ class Decoder(tf.keras.Model):
             'batch_size': batch_size,
         }
 
-
-    def build(self, input_shape):
         self.embedding = tf.keras.layers.Embedding(
             input_dim=self.config['output_vocab_size'],
             output_dim=self.config['embedding_dims'],
@@ -141,8 +137,6 @@ class Decoder(tf.keras.Model):
 
         self.setup_memory_and_initial_state() # setup memory with zeros, since we don't have encoder outputs
 
-        super().build(input_shape)
-
 
     def build_decoder_initial_state(
         self,
@@ -183,7 +177,8 @@ class Decoder(tf.keras.Model):
             ],
         )
 
-
+    # annotating with @tf.function leads to None gradients while training
+    # @tf.function(input_signature=[tf.TensorSpec(shape=(None, None))])
     def call(self, input_batch):
         # TODO: document that the memory must be set up with encoder outputs before calling call()
 
@@ -203,9 +198,10 @@ class Decoder(tf.keras.Model):
         return self.config
 
 
-class Seq2SeqAttention(tf.keras.Model):
+class Seq2SeqAttention(tf.Module):
     def __init__(
         self,
+        default_save_dir,
         max_input_seq_length,
         max_output_seq_length,
         input_vocab_size,
@@ -216,12 +212,9 @@ class Seq2SeqAttention(tf.keras.Model):
         dense_units = 1024,
         batch_size = 64,
         eval_averaging = 'micro',
-        *args,
-        **kwargs,
     ):
-        super(Seq2SeqAttention, self).__init__(args, kwargs)
-
         self.params = {
+            'default_save_dir': default_save_dir,
             'max_input_seq_length': max_input_seq_length,
             'max_output_seq_length': max_output_seq_length,
             'input_vocab_size': input_vocab_size,
@@ -234,10 +227,6 @@ class Seq2SeqAttention(tf.keras.Model):
             'eval_averaging': eval_averaging,
         }
 
-
-    def build(self, input_shape):
-        batch_size = input_shape[0]
-
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
             embedding_dims=self.params['input_embedding_dim'],
@@ -245,7 +234,6 @@ class Seq2SeqAttention(tf.keras.Model):
             batch_size=self.params['batch_size'],
         )
 
-        self.encoder.build(input_shape=(batch_size, self.params['max_input_seq_length']))
 
         self.decoder = Decoder(
             max_output_seq_length=self.params['max_output_seq_length'],
@@ -255,8 +243,6 @@ class Seq2SeqAttention(tf.keras.Model):
             dense_units=self.params['dense_units'],
             batch_size=self.params['batch_size'],
         )
-
-        self.decoder.build(input_shape=(batch_size, self.params['max_output_seq_length']))
 
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
         self.optimizer = tf.keras.optimizers.Adam()
@@ -281,8 +267,6 @@ class Seq2SeqAttention(tf.keras.Model):
                 dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
             ),
         }
-
-        super().build(input_shape)
 
 
     def call(self, inputs, training=False):
@@ -311,6 +295,52 @@ class Seq2SeqAttention(tf.keras.Model):
 
     def get_config(self):
         return self.params
+
+
+    def summary(self):
+        # TODO: build only if the models are not built
+        self.encoder.build(input_shape=(self.params['batch_size'], self.params['max_input_seq_length']))
+        self.decoder.build(input_shape=(self.params['batch_size'], self.params['max_output_seq_length']))
+        self.encoder.summary()
+        self.decoder.summary()
+
+
+    # TODO: add checkpoints, save_weights can be used for checkpoints
+    # def save(self, save_dir):
+    #     os.makedirs(save_dir, exist_ok=True)
+
+    #     print('Saving encoder weights locally')
+    #     self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
+    #     print('Saving decoder weights locally')
+    #     self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
+    #     print('Saved model weights locally')
+
+    #     print('Saving model with wandb')
+    #     wandb.save(os.path.join(save_dir, '*'))
+    #     print('Done saving model')
+
+
+    def save(self, save_dir=None):
+        # we need to _set_inputs on the encoder and decoder models so that they get serialized
+        dummy_encoder_input = tf.random.uniform(
+            shape=(self.params['batch_size'], self.params['max_input_seq_length']),
+            dtype=tf.int32,
+            minval=0,
+            maxval=self.params['input_vocab_size']
+        )
+        # TODO: _set_inputs only if self.encoder.inputs are not defined
+        self.encoder._set_inputs(tf.cast(dummy_encoder_input, dtype=tf.float32))
+
+        dummy_decoder_input = tf.random.uniform(
+            shape=(self.params['batch_size'], self.params['max_output_seq_length']),
+            dtype=tf.int32,
+            minval=0,
+            maxval=self.params['output_vocab_size']
+        )
+        self.decoder._set_inputs(tf.cast(dummy_decoder_input, dtype=tf.float32))
+
+        tf.saved_model.save(self, save_dir or self.params['default_save_dir'])
+
 
     # TODO: add documentation
     def loss_function(
@@ -412,8 +442,9 @@ class Seq2SeqAttention(tf.keras.Model):
 
             for (step, (input_batch, output_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
-                    input_batch,
-                    output_batch,
+                    # the models expect tf.float32
+                    tf.cast(input_batch, dtype=tf.float32),
+                    tf.cast(output_batch, dtype=tf.float32),
                 )
 
                 sparse_categorical_accuracy = self.train_metrics['sparse_categorical_accuracy'].result()
@@ -450,19 +481,9 @@ class Seq2SeqAttention(tf.keras.Model):
 
             on_epoch_end()
 
-
-    def save(self, save_dir):
-        os.makedirs(save_dir, exist_ok=True)
-
-        print('Saving encoder weights locally')
-        self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
-        print('Saving decoder weights locally')
-        self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
-        print('Saved model weights locally')
-
-        print('Saving model with wandb')
-        wandb.save(os.path.join(save_dir, '*'))
-        print('Done saving model')
+            # save the whole model on every 5th epoch
+            if epoch % 5 == 0:
+                self.save()
 
 
     def evaluation_step(
