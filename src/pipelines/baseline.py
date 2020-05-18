@@ -153,6 +153,8 @@ def run(args):
 
     model = Seq2SeqAttention(
         default_save_dir=args.file_model_dir,
+        input_vocab_index=input_vocab_index,
+        output_vocab_index=output_vocab_index,
         max_input_seq_length=args.max_input_length,
         max_output_seq_length=args.max_output_length,
         input_vocab_size=args.input_vocab_size,
@@ -202,7 +204,14 @@ def run(args):
         return prediction_texts
 
     def on_epoch_end():
-        raw_predictions = model.predict(
+        input_text = '{ if ( listener instanceof Sql Base Listener ) ( ( Sql Base Listener ) listener ) . exit Set Quantifier ( this ) ; }'
+
+        # TODO: we should provide a tensor to model.predict
+        prediction = model.predict(tf.constant([input_text]))
+
+        print('Prediction', prediction)
+
+        raw_predictions = model.predict_raw(
             input_sequences=test_inputs,
             start_token_index=output_vocab_index['<SOS>'],
             end_token_index=output_vocab_index['<EOS>'],
