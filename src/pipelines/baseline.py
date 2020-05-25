@@ -205,13 +205,6 @@ def run(args):
         return prediction_texts
 
     def on_epoch_end():
-        input_text = '{ if ( listener instanceof Sql Base Listener ) ( ( Sql Base Listener ) listener ) . exit Set Quantifier ( this ) ; }'
-
-        # TODO: we should provide a tensor to model.predict
-        prediction = model.predict(tf.constant([input_text]))
-
-        print('Prediction', prediction)
-
         raw_predictions = model.predict_raw(input_sequences=test_inputs)
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)

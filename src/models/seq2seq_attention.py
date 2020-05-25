@@ -690,6 +690,7 @@ class Seq2SeqAttention(tf.Module):
         inputs = first_inputs
         state = first_state
 
+        # TODO: prefer TF tensors over NumPy arrays
         predictions = np.empty((inference_batch_size, 0), dtype = np.int32)
         for step in range(maximum_iterations):
             outputs, next_state, next_inputs, _finished = decoder_instance.step(
@@ -713,7 +714,6 @@ class Seq2SeqAttention(tf.Module):
 
         print('Tokenized text: ', tokens)
 
-        # TODO: replace NumPy with TensorFlow
         encoded_tokens = np.array([
             self.input_vocab_index.get(token, 0)
             for token in tokens
