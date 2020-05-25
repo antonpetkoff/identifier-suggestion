@@ -323,10 +323,14 @@ class Seq2SeqAttention(tf.Module):
         return self.params
 
 
-    def summary(self):
-        # TODO: build only if the models are not built
+    def build(self):
         self.encoder.build(input_shape=(self.params['batch_size'], self.params['max_input_seq_length']))
         self.decoder.build(input_shape=(self.params['batch_size'], self.params['max_output_seq_length']))
+
+
+    def summary(self):
+        # TODO: build only if the models are not built
+        self.build()
         self.encoder.summary()
         self.decoder.summary()
 
@@ -336,6 +340,8 @@ class Seq2SeqAttention(tf.Module):
 
         print('Saving checkpoint in wandb')
         wandb.save(save_path)
+
+        return save_path
 
 
     def save(self):
@@ -386,6 +392,8 @@ class Seq2SeqAttention(tf.Module):
         )
 
         model.restore_latest_checkpoint()
+
+        model.build() # it is necessary to build the model before accessing its variables
 
         print('Done restoring model')
 
@@ -716,7 +724,8 @@ class Seq2SeqAttention(tf.Module):
 
         raw_predictions = self.predict_raw(input_sequences=tf.constant([encoded_tokens]))
 
-        raw_prediction = raw_predictions[0]
+        # TODO: document that this function works with numpy arrays, not with TF tensors
+        raw_prediction = raw_predictions.numpy()[0]
 
         print('Raw prediction: ', raw_prediction)
 
