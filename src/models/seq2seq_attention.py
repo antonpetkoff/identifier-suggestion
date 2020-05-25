@@ -204,7 +204,7 @@ class Decoder(tf.keras.Model):
 class Seq2SeqAttention(tf.Module):
     def __init__(
         self,
-        default_save_dir,
+        checkpoint_dir,
         input_vocab_index,
         output_vocab_index,
         max_input_seq_length,
@@ -219,7 +219,7 @@ class Seq2SeqAttention(tf.Module):
         eval_averaging = 'micro',
     ):
         self.params = {
-            'default_save_dir': default_save_dir,
+            'checkpoint_dir': checkpoint_dir,
             'max_input_seq_length': max_input_seq_length,
             'max_output_seq_length': max_output_seq_length,
             'input_vocab_size': input_vocab_size,
@@ -283,6 +283,17 @@ class Seq2SeqAttention(tf.Module):
             ),
         }
 
+        self.checkpoint = tf.train.Checkpoint(
+            optimizer = self.optimizer,
+            encoder = self.encoder,
+            decoder = self.decoder,
+        )
+        self.checkpoint_manager = tf.train.CheckpointManager(
+            self.checkpoint,
+            checkpoint_dir,
+            max_to_keep = 3,
+        )
+
 
     def call(self, inputs, training=False):
         # TODO: differentiate between training and NOT training, if you add a Dropout layer
@@ -320,39 +331,46 @@ class Seq2SeqAttention(tf.Module):
         self.decoder.summary()
 
 
-    def save_weights(self, save_dir):
-        print('Saving encoder weights locally')
-        self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
-        print('Saving decoder weights locally')
-        self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
-        print('Saved model weights locally')
+    def save_checkpoint(self):
+        save_path = self.checkpoint_manager.save()
 
-        print('Saving model with wandb')
-        wandb.save(os.path.join(save_dir, '*'))
+        print('Saving checkpoint in wandb')
+        wandb.save(save_path)
 
 
-    # TODO: add checkpoints, save_weights can be used for checkpoints
-    def save(self, save_dir):
-        os.makedirs(save_dir, exist_ok=True)
-        self.save_weights(save_dir)
+    def save(self):
+        self.save_checkpoint()
 
-        with open(os.path.join(save_dir, 'config.json'), 'w') as f:
+        config_filename = os.path.join(self.params['checkpoint_dir'], 'config.json')
+        with open(config_filename, 'w') as f:
             json.dump(self.params, f)
 
+        wandb.save(config_filename)
         print('Done saving model')
 
 
+    def restore_latest_checkpoint(self):
+        latest_checkpoint = self.checkpoint_manager.latest_checkpoint
+
+        self.checkpoint.restore(latest_checkpoint)
+
+        if latest_checkpoint:
+            print("Restored from {}".format(latest_checkpoint))
+        else:
+            print("Initializing from scratch.")
+
+
     @staticmethod
-    def restore(save_dir, input_vocab_index, output_vocab_index):
+    def restore(checkpoint_dir, input_vocab_index, output_vocab_index):
         print('Restoring model config')
 
-        with open(os.path.join(save_dir, 'config.json')) as f:
+        with open(os.path.join(checkpoint_dir, 'config.json')) as f:
             config = json.load(f)
 
         print('Loaded model config: ', config)
 
         model = Seq2SeqAttention(
-            default_save_dir = save_dir,
+            checkpoint_dir = checkpoint_dir,
             input_vocab_index = input_vocab_index,
             output_vocab_index = output_vocab_index,
             max_input_seq_length = config['max_input_seq_length'],
@@ -362,46 +380,16 @@ class Seq2SeqAttention(tf.Module):
             input_embedding_dim = config['input_embedding_dim'],
             output_embedding_dim = config['output_embedding_dim'],
             rnn_units = config['rnn_units'],
-            dense_units = config['dense_uni2ts'],
+            dense_units = config['dense_units'],
             batch_size = config['batch_size'],
             eval_averaging = config['eval_averaging'],
         )
 
-        model.restore_weights(save_dir)
+        model.restore_latest_checkpoint()
 
         print('Done restoring model')
 
         return model
-
-
-    def restore_weights(self, save_dir):
-        print('Restoring encoder weights locally')
-        self.encoder.load_weights(os.path.join(save_dir, 'encoder.h5'))
-        print('Restoring decoder weights locally')
-        self.decoder.load_weights(os.path.join(save_dir, 'decoder.h5'))
-        print('Restored weights successfully')
-
-
-    def save(self, save_dir=None):
-        # we need to _set_inputs on the encoder and decoder models so that they get serialized
-        dummy_encoder_input = tf.random.uniform(
-            shape=(self.params['batch_size'], self.params['max_input_seq_length']),
-            dtype=tf.int32,
-            minval=0,
-            maxval=self.params['input_vocab_size']
-        )
-        # TODO: _set_inputs only if self.encoder.inputs are not defined
-        self.encoder._set_inputs(tf.cast(dummy_encoder_input, dtype=tf.float32))
-
-        dummy_decoder_input = tf.random.uniform(
-            shape=(self.params['batch_size'], self.params['max_output_seq_length']),
-            dtype=tf.int32,
-            minval=0,
-            maxval=self.params['output_vocab_size']
-        )
-        self.decoder._set_inputs(tf.cast(dummy_decoder_input, dtype=tf.float32))
-
-        tf.saved_model.save(self, save_dir or self.params['default_save_dir'])
 
 
     # TODO: add documentation
@@ -485,6 +473,8 @@ class Seq2SeqAttention(tf.Module):
 
 
     def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
+        self.restore_latest_checkpoint()
+
         num_samples = len(X_train)
         batch_size = self.params['batch_size']
         steps_per_epoch = num_samples // batch_size
@@ -543,9 +533,11 @@ class Seq2SeqAttention(tf.Module):
 
             on_epoch_end()
 
-            # save the whole model on every 5th epoch
-            if epoch % 5 == 0:
-                self.save()
+            # TODO: extract in on_epoch_end()?
+            # save the whole model on every 3rd epoch
+            if epoch % 3 == 0:
+                save_path = self.checkpoint_manager.save()
+                print("epoch {} saved checkpoint: {}".format(epoch, save_path))
 
 
     def evaluation_step(

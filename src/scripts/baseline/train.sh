@@ -2,7 +2,7 @@
 
 PYTHONPATH=. python src/pipelines/baseline.py \
   --file_data_raw data/interim/method-names-rich/elasticsearch.csv \
-  --file_model_dir models/saved/baseline/ \
+  --file_checkpoint_dir models/checkpoints/baseline/ \
   --dir_preprocessed_data data/interim/preprocessed/ \
   --eval_averaging macro \
   --max_input_length 200 \
