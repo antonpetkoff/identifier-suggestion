@@ -4,6 +4,7 @@ import numpy as np
 import wandb
 import os
 import time
+import json
 
 from collections import Counter
 from itertools import takewhile
@@ -319,19 +320,66 @@ class Seq2SeqAttention(tf.Module):
         self.decoder.summary()
 
 
+    def save_weights(self, save_dir):
+        print('Saving encoder weights locally')
+        self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
+        print('Saving decoder weights locally')
+        self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
+        print('Saved model weights locally')
+
+        print('Saving model with wandb')
+        wandb.save(os.path.join(save_dir, '*'))
+
+
     # TODO: add checkpoints, save_weights can be used for checkpoints
-    # def save(self, save_dir):
-    #     os.makedirs(save_dir, exist_ok=True)
+    def save(self, save_dir):
+        os.makedirs(save_dir, exist_ok=True)
+        self.save_weights(save_dir)
 
-    #     print('Saving encoder weights locally')
-    #     self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
-    #     print('Saving decoder weights locally')
-    #     self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
-    #     print('Saved model weights locally')
+        with open(os.path.join(save_dir, 'config.json'), 'w') as f:
+            json.dump(self.params, f)
 
-    #     print('Saving model with wandb')
-    #     wandb.save(os.path.join(save_dir, '*'))
-    #     print('Done saving model')
+        print('Done saving model')
+
+
+    @staticmethod
+    def restore(save_dir, input_vocab_index, output_vocab_index):
+        print('Restoring model config')
+
+        with open(os.path.join(save_dir, 'config.json')) as f:
+            config = json.load(f)
+
+        print('Loaded model config: ', config)
+
+        model = Seq2SeqAttention(
+            default_save_dir = save_dir,
+            input_vocab_index = input_vocab_index,
+            output_vocab_index = output_vocab_index,
+            max_input_seq_length = config['max_input_seq_length'],
+            max_output_seq_length = config['max_output_seq_length'],
+            input_vocab_size = config['input_vocab_size'],
+            output_vocab_size = config['output_vocab_size'],
+            input_embedding_dim = config['input_embedding_dim'],
+            output_embedding_dim = config['output_embedding_dim'],
+            rnn_units = config['rnn_units'],
+            dense_units = config['dense_uni2ts'],
+            batch_size = config['batch_size'],
+            eval_averaging = config['eval_averaging'],
+        )
+
+        model.restore_weights(save_dir)
+
+        print('Done restoring model')
+
+        return model
+
+
+    def restore_weights(self, save_dir):
+        print('Restoring encoder weights locally')
+        self.encoder.load_weights(os.path.join(save_dir, 'encoder.h5'))
+        print('Restoring decoder weights locally')
+        self.decoder.load_weights(os.path.join(save_dir, 'decoder.h5'))
+        print('Restored weights successfully')
 
 
     def save(self, save_dir=None):
