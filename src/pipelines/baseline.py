@@ -212,11 +212,7 @@ def run(args):
 
         print('Prediction', prediction)
 
-        raw_predictions = model.predict_raw(
-            input_sequences=test_inputs,
-            start_token_index=output_vocab_index['<SOS>'],
-            end_token_index=output_vocab_index['<EOS>'],
-        )
+        raw_predictions = model.predict_raw(input_sequences=test_inputs)
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)
 
