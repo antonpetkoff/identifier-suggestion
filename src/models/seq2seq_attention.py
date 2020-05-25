@@ -690,8 +690,7 @@ class Seq2SeqAttention(tf.Module):
         inputs = first_inputs
         state = first_state
 
-        # TODO: this was previously np.zeros. Test that the predictions work
-        predictions = tf.zeros((inference_batch_size, 0), dtype = tf.int32)
+        predictions = np.empty((inference_batch_size, 0), dtype = np.int32)
         for step in range(maximum_iterations):
             outputs, next_state, next_inputs, _finished = decoder_instance.step(
                 step,
@@ -701,8 +700,8 @@ class Seq2SeqAttention(tf.Module):
 
             inputs = next_inputs
             state = next_state
-            outputs = tf.expand_dims(outputs.sample_id, axis = -1)
-            predictions = tf.concat([predictions, outputs], axis = -1)
+            outputs = np.expand_dims(outputs.sample_id, axis = -1)
+            predictions = np.concat([predictions, outputs], axis = -1)
 
         return predictions
 
