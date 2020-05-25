@@ -4,10 +4,13 @@ import numpy as np
 import wandb
 import os
 import time
+import json
 
 from collections import Counter
+from itertools import takewhile
 
 from src.metrics.f1_score import F1Score
+from src.preprocessing.tokens import tokenize_method
 
 
 class Encoder(tf.keras.Model):
@@ -201,7 +204,9 @@ class Decoder(tf.keras.Model):
 class Seq2SeqAttention(tf.Module):
     def __init__(
         self,
-        default_save_dir,
+        checkpoint_dir,
+        input_vocab_index,
+        output_vocab_index,
         max_input_seq_length,
         max_output_seq_length,
         input_vocab_size,
@@ -214,7 +219,7 @@ class Seq2SeqAttention(tf.Module):
         eval_averaging = 'micro',
     ):
         self.params = {
-            'default_save_dir': default_save_dir,
+            'checkpoint_dir': checkpoint_dir,
             'max_input_seq_length': max_input_seq_length,
             'max_output_seq_length': max_output_seq_length,
             'input_vocab_size': input_vocab_size,
@@ -226,6 +231,16 @@ class Seq2SeqAttention(tf.Module):
             'batch_size': batch_size,
             'eval_averaging': eval_averaging,
         }
+
+        self.input_vocab_index = input_vocab_index
+        self.output_vocab_index = output_vocab_index
+        self.reverse_input_index = dict(
+            (i, token) for token, i in input_vocab_index.items()
+        )
+        self.reverse_output_index = dict(
+            (i, token) for token, i in output_vocab_index.items()
+        )
+
 
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
@@ -268,6 +283,17 @@ class Seq2SeqAttention(tf.Module):
             ),
         }
 
+        self.checkpoint = tf.train.Checkpoint(
+            optimizer = self.optimizer,
+            encoder = self.encoder,
+            decoder = self.decoder,
+        )
+        self.checkpoint_manager = tf.train.CheckpointManager(
+            self.checkpoint,
+            checkpoint_dir,
+            max_to_keep = 3,
+        )
+
 
     def call(self, inputs, training=False):
         # TODO: differentiate between training and NOT training, if you add a Dropout layer
@@ -297,49 +323,81 @@ class Seq2SeqAttention(tf.Module):
         return self.params
 
 
-    def summary(self):
-        # TODO: build only if the models are not built
+    def build(self):
         self.encoder.build(input_shape=(self.params['batch_size'], self.params['max_input_seq_length']))
         self.decoder.build(input_shape=(self.params['batch_size'], self.params['max_output_seq_length']))
+
+
+    def summary(self):
+        # TODO: build only if the models are not built
+        self.build()
         self.encoder.summary()
         self.decoder.summary()
 
 
-    # TODO: add checkpoints, save_weights can be used for checkpoints
-    # def save(self, save_dir):
-    #     os.makedirs(save_dir, exist_ok=True)
+    def save_checkpoint(self):
+        save_path = self.checkpoint_manager.save()
 
-    #     print('Saving encoder weights locally')
-    #     self.encoder.save_weights(os.path.join(save_dir, 'encoder.h5'))
-    #     print('Saving decoder weights locally')
-    #     self.decoder.save_weights(os.path.join(save_dir, 'decoder.h5'))
-    #     print('Saved model weights locally')
+        print('Saving checkpoint in wandb')
+        wandb.save(save_path)
 
-    #     print('Saving model with wandb')
-    #     wandb.save(os.path.join(save_dir, '*'))
-    #     print('Done saving model')
+        return save_path
 
 
-    def save(self, save_dir=None):
-        # we need to _set_inputs on the encoder and decoder models so that they get serialized
-        dummy_encoder_input = tf.random.uniform(
-            shape=(self.params['batch_size'], self.params['max_input_seq_length']),
-            dtype=tf.int32,
-            minval=0,
-            maxval=self.params['input_vocab_size']
+    def save(self):
+        self.save_checkpoint()
+
+        config_filename = os.path.join(self.params['checkpoint_dir'], 'config.json')
+        with open(config_filename, 'w') as f:
+            json.dump(self.params, f)
+
+        wandb.save(config_filename)
+        print('Done saving model')
+
+
+    def restore_latest_checkpoint(self):
+        latest_checkpoint = self.checkpoint_manager.latest_checkpoint
+
+        self.checkpoint.restore(latest_checkpoint)
+
+        if latest_checkpoint:
+            print("Restored from {}".format(latest_checkpoint))
+        else:
+            print("Initializing from scratch.")
+
+
+    @staticmethod
+    def restore(checkpoint_dir, input_vocab_index, output_vocab_index):
+        print('Restoring model config')
+
+        with open(os.path.join(checkpoint_dir, 'config.json')) as f:
+            config = json.load(f)
+
+        print('Loaded model config: ', config)
+
+        model = Seq2SeqAttention(
+            checkpoint_dir = checkpoint_dir,
+            input_vocab_index = input_vocab_index,
+            output_vocab_index = output_vocab_index,
+            max_input_seq_length = config['max_input_seq_length'],
+            max_output_seq_length = config['max_output_seq_length'],
+            input_vocab_size = config['input_vocab_size'],
+            output_vocab_size = config['output_vocab_size'],
+            input_embedding_dim = config['input_embedding_dim'],
+            output_embedding_dim = config['output_embedding_dim'],
+            rnn_units = config['rnn_units'],
+            dense_units = config['dense_units'],
+            batch_size = config['batch_size'],
+            eval_averaging = config['eval_averaging'],
         )
-        # TODO: _set_inputs only if self.encoder.inputs are not defined
-        self.encoder._set_inputs(tf.cast(dummy_encoder_input, dtype=tf.float32))
 
-        dummy_decoder_input = tf.random.uniform(
-            shape=(self.params['batch_size'], self.params['max_output_seq_length']),
-            dtype=tf.int32,
-            minval=0,
-            maxval=self.params['output_vocab_size']
-        )
-        self.decoder._set_inputs(tf.cast(dummy_decoder_input, dtype=tf.float32))
+        model.restore_latest_checkpoint()
 
-        tf.saved_model.save(self, save_dir or self.params['default_save_dir'])
+        model.build() # it is necessary to build the model before accessing its variables
+
+        print('Done restoring model')
+
+        return model
 
 
     # TODO: add documentation
@@ -423,6 +481,8 @@ class Seq2SeqAttention(tf.Module):
 
 
     def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
+        self.restore_latest_checkpoint()
+
         num_samples = len(X_train)
         batch_size = self.params['batch_size']
         steps_per_epoch = num_samples // batch_size
@@ -481,9 +541,11 @@ class Seq2SeqAttention(tf.Module):
 
             on_epoch_end()
 
-            # save the whole model on every 5th epoch
-            if epoch % 5 == 0:
-                self.save()
+            # TODO: extract in on_epoch_end()?
+            # save the whole model on every 3rd epoch
+            if epoch % 3 == 0:
+                save_path = self.checkpoint_manager.save()
+                print("epoch {} saved checkpoint: {}".format(epoch, save_path))
 
 
     def evaluation_step(
@@ -555,12 +617,7 @@ class Seq2SeqAttention(tf.Module):
         return test_results
 
 
-    def predict(
-        self,
-        input_sequences,
-        start_token_index,
-        end_token_index,
-    ):
+    def predict_raw(self, input_sequences):
         """Predict the outputs for the given inputs.
 
         Args:
@@ -569,6 +626,9 @@ class Seq2SeqAttention(tf.Module):
         Returns:
             A tensor with the raw predicted output sequences as numbers.
         """
+
+        start_token_index = self.output_vocab_index['<SOS>']
+        end_token_index = self.output_vocab_index['<EOS>']
 
         # compute the size of input sequences batch
         inference_batch_size = input_sequences.shape[0]
@@ -629,6 +689,8 @@ class Seq2SeqAttention(tf.Module):
 
         inputs = first_inputs
         state = first_state
+
+        # TODO: prefer TF tensors over NumPy arrays
         predictions = np.empty((inference_batch_size, 0), dtype = np.int32)
         for step in range(maximum_iterations):
             outputs, next_state, next_inputs, _finished = decoder_instance.step(
@@ -640,6 +702,42 @@ class Seq2SeqAttention(tf.Module):
             inputs = next_inputs
             state = next_state
             outputs = np.expand_dims(outputs.sample_id, axis = -1)
-            predictions = np.append(predictions, outputs, axis = -1)
+            predictions = np.concat([predictions, outputs], axis = -1)
 
         return predictions
+
+
+    def predict(self, input_text):
+        print('Input text: ', input_text)
+
+        tokens = tokenize_method(input_text)
+
+        print('Tokenized text: ', tokens)
+
+        encoded_tokens = np.array([
+            self.input_vocab_index.get(token, 0)
+            for token in tokens
+        ])
+
+        print('Encoded tokens: ', encoded_tokens)
+
+        raw_predictions = self.predict_raw(input_sequences=tf.constant([encoded_tokens]))
+
+        # TODO: document that this function works with numpy arrays, not with TF tensors
+        raw_prediction = raw_predictions.numpy()[0]
+
+        print('Raw prediction: ', raw_prediction)
+
+        clean_raw_prediction = takewhile(
+            lambda index: index != self.output_vocab_index['<EOS>'],
+            raw_prediction
+        )
+
+        predicted_text = ''.join([
+            self.reverse_output_index.get(index, '<OOV>')
+            for index in clean_raw_prediction
+        ])
+
+        print('Predicted text: ', predicted_text)
+
+        return predicted_text

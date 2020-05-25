@@ -77,13 +77,14 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 Fundamentals:
 
-- [ ] Serve the trained model for predictions
-  - [ ] Make the Seq2Seq class a tf.Module with @tf.functions with signatures so that it can be serialized
-  - [ ] Ensure the Encoder and Decoder models are properly (de)serialized inside the module
-  - [ ] Test the SavedModel through the saved_model_cli
-  - [ ] Save the model to disk on every 2nd epoch
-  - [ ] Serve the SavedModel from a Docker container
-  - [ ] Preprocess the raw input text for the model
+- [x] Serve the trained model for predictions
+  - [x] Try to serialize the model TF SavedModel
+    - [x] Make the Seq2Seq class a tf.Module with @tf.functions with signatures so that it can be serialized
+    - [x] However, the Encoder and Decoder models are NOT properly serialized and multiple issues arise
+  - [x] Save Checkpoints (weights) of the model to disk on every 2nd epoch
+  - [x] Restore a model and its weights from a checkpoint
+  - [x] Preprocess the raw input text for the model and make a prediction
+  - [x] Expose an HTTP endpoint for predicting the method name for a given source code input
 
 - [ ] Implement an IDE suggestion plugin/extension for VSCode using LSP (Language Server Protocol)
   - [ ] Provide the method body by making a selection with the cursor
@@ -141,8 +142,8 @@ Fundamentals:
   - [x] Authenticate and fetch credentials for `wandb` and other services
   - [x] Fetch the preprocessed data from Drive
   - [x] Run the training script
-  - [ ] Save checkpoints
-  - [ ] Restore from checkpoints, if the training fails
+  - [x] Save checkpoints
+  - [x] Restore from checkpoints, if the training fails
 
 - [x] Log model summary - architecture, parameter counts, shapes
 
@@ -160,9 +161,9 @@ Fundamentals:
   - [ ] Describe the experiment - setup, expectations (hypothesis) vs results, goals, architecture, meaning of parameters, evaluation
   - [x] Log training and evaluation
   - [x] Save configuration
-  - [ ] Save checkpoints of model weights
+  - [x] Save checkpoints of model weights
   - [x] Make predictions
-    - [ ] Stop predicting elements once you hit the <EOS> marker
+    - [x] Stop predicting elements once you hit the <EOS> marker
 
 - [ ] Visualizations
   - [x] Log predictions into text tables for transparency on how the model performs

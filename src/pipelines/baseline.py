@@ -57,7 +57,7 @@ parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 
 # data files
 parser.add_argument('--file_data_raw', type=str, help='Raw data file used for model training', required=True)
-parser.add_argument('--file_model_dir', type=str, help='Model output directory name', required=True)
+parser.add_argument('--file_checkpoint_dir', type=str, help='Model checkpoint directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
 # evaluation
@@ -144,6 +144,7 @@ def preprocess_data(args):
 def run(args):
     print('Experiment parameters: ', args)
 
+    os.makedirs(args.file_checkpoint_dir, exist_ok=True)
     os.makedirs('./reports', exist_ok=True)
     wandb.init(dir='./reports', config=args)
 
@@ -152,7 +153,9 @@ def run(args):
     df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args)
 
     model = Seq2SeqAttention(
-        default_save_dir=args.file_model_dir,
+        checkpoint_dir=args.file_checkpoint_dir,
+        input_vocab_index=input_vocab_index,
+        output_vocab_index=output_vocab_index,
         max_input_seq_length=args.max_input_length,
         max_output_seq_length=args.max_output_length,
         input_vocab_size=args.input_vocab_size,
@@ -202,11 +205,7 @@ def run(args):
         return prediction_texts
 
     def on_epoch_end():
-        raw_predictions = model.predict(
-            input_sequences=test_inputs,
-            start_token_index=output_vocab_index['<SOS>'],
-            end_token_index=output_vocab_index['<EOS>'],
-        )
+        raw_predictions = model.predict_raw(input_sequences=test_inputs)
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)
 

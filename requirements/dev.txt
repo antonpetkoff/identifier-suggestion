@@ -19,6 +19,7 @@ dill==0.3.1.1
 docker-pycreds==0.4.0
 entrypoints==0.3
 filelock==3.0.12
+Flask==1.1.2
 future==0.18.2
 gast==0.2.2
 gdown==3.10.3
@@ -30,6 +31,7 @@ google-pasta==0.2.0
 googleapis-common-protos==1.51.0
 gql==0.2.0
 graphql-core==1.1
+graphviz==0.14
 grpcio==1.28.1
 h5py==2.10.0
 idna==2.9
@@ -39,6 +41,7 @@ ipython==7.13.0
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
 isort==4.3.21
+itsdangerous==1.1.0
 javalang==0.13.0
 jedi==0.17.0
 Jinja2==2.11.2
@@ -92,6 +95,7 @@ psutil==5.7.0
 ptyprocess==0.6.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
+pydot==1.4.1
 Pygments==2.6.1
 pylint==2.4.4
 pyparsing==2.4.7
