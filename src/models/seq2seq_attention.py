@@ -702,7 +702,7 @@ class Seq2SeqAttention(tf.Module):
             inputs = next_inputs
             state = next_state
             outputs = np.expand_dims(outputs.sample_id, axis = -1)
-            predictions = np.append([predictions, outputs], axis = -1)
+            predictions = np.append(predictions, outputs, axis = -1)
 
         return predictions
 
