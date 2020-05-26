@@ -106,6 +106,8 @@ Fundamentals:
   - [ ] Preprocess data
     - [ ] Extract the preprocessing step as a method in the model
 
+- [ ] Do a hyperparameter sweep
+
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
     - [x] Read
