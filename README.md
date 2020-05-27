@@ -106,7 +106,13 @@ Fundamentals:
   - [ ] Preprocess data
     - [ ] Extract the preprocessing step as a method in the model
 
-- [ ] Do a hyperparameter sweep
+- [ ] Train an optimal model
+  - [ ] Do a hyperparameter sweep on
+    - [ ] Layer sizes
+    - [ ] Learning rate
+    - [ ] Regularization rates (e.g. dropout)
+  - [ ] Clean noise from data
+    - [ ] reduce vocabulary size by removing number literals, splitting snake-case, etc.
 
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
