@@ -114,6 +114,11 @@ Fundamentals:
   - [ ] Clean noise from data
     - [ ] reduce vocabulary size by removing number literals, splitting snake-case, etc.
 
+- [ ] Code refactoring
+  - [ ] Extract a logging module which controls what and where is logged (e.g. stdout, wandb, etc)
+  - [ ] Rewrite the Seq2Seq model without TensorFlow Addons
+    - [ ] Add plot of attention weights
+
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
     - [x] Read
