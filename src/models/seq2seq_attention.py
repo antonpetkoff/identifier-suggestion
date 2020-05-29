@@ -724,7 +724,7 @@ class Seq2SeqAttention(tf.Module):
         raw_predictions = self.predict_raw(input_sequences=tf.constant([encoded_tokens]))
 
         # TODO: document that this function works with numpy arrays, not with TF tensors
-        raw_prediction = raw_predictions.numpy()[0]
+        raw_prediction = raw_predictions[0]
 
         print('Raw prediction: ', raw_prediction)
 
