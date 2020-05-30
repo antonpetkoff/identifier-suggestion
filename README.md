@@ -77,23 +77,14 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 Fundamentals:
 
-- [x] Serve the trained model for predictions
-  - [x] Try to serialize the model TF SavedModel
-    - [x] Make the Seq2Seq class a tf.Module with @tf.functions with signatures so that it can be serialized
-    - [x] However, the Encoder and Decoder models are NOT properly serialized and multiple issues arise
-  - [x] Save Checkpoints (weights) of the model to disk on every 2nd epoch
-  - [x] Restore a model and its weights from a checkpoint
-  - [x] Preprocess the raw input text for the model and make a prediction
-  - [x] Expose an HTTP endpoint for predicting the method name for a given source code input
+- [ ] Start writing your thesis
+  - [ ] Document experiments
 
 - [ ] Implement an IDE suggestion plugin/extension for VSCode using LSP (Language Server Protocol)
   - [ ] Provide the method body by making a selection with the cursor
   - [ ] Query the served model by HTTP to receive a list of suggestions
 
 - [ ] Add Beam Search Decoder for making multiple suggestions
-
-- [ ] Start writing your thesis
-  - [ ] Document experiments
 
 - [ ] Increase Dataset to at least 1 million method samples for training
   - [ ] Select a set of Java repositories
@@ -118,6 +109,15 @@ Fundamentals:
   - [ ] Extract a logging module which controls what and where is logged (e.g. stdout, wandb, etc)
   - [ ] Rewrite the Seq2Seq model without TensorFlow Addons
     - [ ] Add plot of attention weights
+
+- [x] Serve the trained model for predictions
+  - [x] Try to serialize the model TF SavedModel
+    - [x] Make the Seq2Seq class a tf.Module with @tf.functions with signatures so that it can be serialized
+    - [x] However, the Encoder and Decoder models are NOT properly serialized and multiple issues arise
+  - [x] Save Checkpoints (weights) of the model to disk on every 2nd epoch
+  - [x] Restore a model and its weights from a checkpoint
+  - [x] Preprocess the raw input text for the model and make a prediction
+  - [x] Expose an HTTP endpoint for predicting the method name for a given source code input
 
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
