@@ -77,13 +77,6 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 Fundamentals:
 
-- [ ] Start writing your thesis
-  - [ ] Document experiments
-
-- [ ] Implement an IDE suggestion plugin/extension for VSCode using LSP (Language Server Protocol)
-  - [ ] Provide the method body by making a selection with the cursor
-  - [ ] Query the served model by HTTP to receive a list of suggestions
-
 - [ ] Add Beam Search Decoder for making multiple suggestions
 
 - [ ] Increase Dataset to at least 1 million method samples for training
@@ -118,6 +111,11 @@ Fundamentals:
   - [x] Restore a model and its weights from a checkpoint
   - [x] Preprocess the raw input text for the model and make a prediction
   - [x] Expose an HTTP endpoint for predicting the method name for a given source code input
+
+- [x] Implement an IDE suggestion extension for VSCode
+  - [x] Provide the method body by making a selection with the cursor
+  - [x] Query the served model by HTTP to receive a list of suggestions
+  - [x] Document the extension
 
 - [x] Create data input pipeline with tf.data Dataset API
   - [x] Preprocess raw text sequences into padded number sequences (IO efficient)
