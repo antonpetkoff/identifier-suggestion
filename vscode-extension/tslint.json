@@ -1,0 +1,7 @@
+{
+	"rules": {
+		"indent": [true, "tabs"],
+		"semicolon": [true, "always"],
+		"max-line-length": [true, 80]
+	}
+}
