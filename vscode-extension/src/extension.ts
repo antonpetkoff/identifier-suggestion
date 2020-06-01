@@ -1,18 +1,14 @@
-import got from 'got';
+import axios from 'axios';
 import * as vscode from 'vscode';
 
-interface SuggestionsResponse {
-	suggestions: string[];
-}
-
 export function activate(context: vscode.ExtensionContext) {
-	context.subscriptions.push(
-		vscode.languages.registerCodeActionsProvider(
-			'java',
-			new MethodNameRecommender(),
-			{ providedCodeActionKinds: MethodNameRecommender.providedCodeActionKinds}
-		)
-	);
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      'java',
+      new MethodNameRecommender(),
+      { providedCodeActionKinds: MethodNameRecommender.providedCodeActionKinds }
+    )
+  );
 }
 
 /**
@@ -20,53 +16,54 @@ export function activate(context: vscode.ExtensionContext) {
  */
 export class MethodNameRecommender implements vscode.CodeActionProvider {
 
-	public static readonly providedCodeActionKinds = [
-		vscode.CodeActionKind.QuickFix
-	];
+  public static readonly providedCodeActionKinds = [
+    vscode.CodeActionKind.QuickFix
+  ];
 
-	public async provideCodeActions(
-		document: vscode.TextDocument,
-		selectedRange: vscode.Range
-	): Promise<vscode.CodeAction[] | undefined> {
-		const selectedText = document.getText(selectedRange);
+  public async provideCodeActions(
+    document: vscode.TextDocument,
+    selectedRange: vscode.Range
+  ): Promise<vscode.CodeAction[] | undefined> {
+    const selectedText = document.getText(selectedRange);
 
-		const { body: { suggestions } } = await got.get<SuggestionsResponse>(
-			'localhost:5000/?input=' + selectedText,
-			{ responseType: 'json' }
-		);
+		// TODO: add error handling
+    const { data: { predictions } } = await axios.get<{predictions: string[]}>(
+      'http://localhost:5000/predict',
+      { params: { input: selectedText } }
+    );
 
-		const currentMethodNameEnd = selectedText.indexOf('(');
+    const currentMethodNameEnd = selectedText.indexOf('(');
 
-		const currentMethodNameRange = new vscode.Range(
-			selectedRange.start,
-			selectedRange.start.translate(0, currentMethodNameEnd + 1)
-		);
+    const currentMethodNameRange = new vscode.Range(
+      selectedRange.start,
+      selectedRange.start.translate(0, currentMethodNameEnd)
+    );
 
-		const fixes = suggestions.map(
-			suggestion => this.createFix(document, currentMethodNameRange, suggestion)
-		)
+    const fixes = predictions.map(
+      suggestion => this.createFix(document, currentMethodNameRange, suggestion)
+    )
 
-		// Marking a single fix as `preferred` means that users can apply it with a
-		// single keyboard shortcut using the `Auto Fix` command.
-		fixes[0].isPreferred = true;
+    // Marking a single fix as `preferred` means that users can apply it with a
+    // single keyboard shortcut using the `Auto Fix` command.
+    fixes[0].isPreferred = true;
 
-		return fixes;
-	}
+    return fixes;
+  }
 
-	private createFix(
-		document: vscode.TextDocument,
-		range: vscode.Range,
-		methodName: string
-	): vscode.CodeAction {
-		const fix = new vscode.CodeAction(
-			`Replace with ${methodName}`,
-			vscode.CodeActionKind.QuickFix
-		);
+  private createFix(
+    document: vscode.TextDocument,
+    range: vscode.Range,
+    methodName: string
+  ): vscode.CodeAction {
+    const fix = new vscode.CodeAction(
+      `Replace with ${methodName}`,
+      vscode.CodeActionKind.QuickFix
+    );
 
-		fix.edit = new vscode.WorkspaceEdit();
+    fix.edit = new vscode.WorkspaceEdit();
 
-		fix.edit.replace(document.uri, range, methodName);
+    fix.edit.replace(document.uri, range, methodName);
 
-		return fix;
-	}
+    return fix;
+  }
 }
