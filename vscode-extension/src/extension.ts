@@ -20,15 +20,23 @@ export class MethodNameRecommender implements vscode.CodeActionProvider {
     vscode.CodeActionKind.QuickFix
   ];
 
+	private static readonly defaultServerUrl = 'http://localhost:5000';
+
   public async provideCodeActions(
     document: vscode.TextDocument,
     selectedRange: vscode.Range
   ): Promise<vscode.CodeAction[] | undefined> {
     const selectedText = document.getText(selectedRange);
 
+		const configuredServerUrl = vscode.workspace
+			.getConfiguration()
+			.get<string>('methodNameRecommender.serverUrl');
+
+		const baseUrl = configuredServerUrl || MethodNameRecommender.defaultServerUrl;
+
 		// TODO: add error handling
     const { data: { predictions } } = await axios.get<{predictions: string[]}>(
-      'http://localhost:5000/predict',
+			`${baseUrl}/predict`,
       { params: { input: selectedText } }
     );
 
