@@ -4,3 +4,6 @@ Thumbs.db
 node_modules/
 /out/
 */.vs/
+
+# Ignore VSCode Integrated eXtensions
+*.vsix
