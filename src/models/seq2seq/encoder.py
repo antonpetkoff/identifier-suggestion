@@ -36,22 +36,18 @@ class Encoder(tf.keras.Model):
             # default bias_initializer is 'zeros'
         )
 
-        self.clear_initial_cell_state(batch_size=self.config['batch_size'])
+
+    def initialize_hidden_state(self, batch_size=None):
+        return tf.zeros((
+            batch_size or self.config['batch_size'],
+            self.config['rnn_units']
+        ))
 
 
-    def clear_initial_cell_state(self, batch_size):
-        self.encoder_initial_cell_state = [
-            tf.zeros((batch_size, self.config['rnn_units'])),
-            tf.zeros((batch_size, self.config['rnn_units'])),
-        ]
-
-
-    # annotating with @tf.function leads to None gradients while training
-    # @tf.function(input_signature=[tf.TensorSpec(shape=(None, None))])
-    def call(self, input_batch):
+    def call(self, input_batch, hidden):
         output, last_step_hidden_state, last_step_memory_state = self.encoder_rnn(
             self.embedding(input_batch),
-            initial_state=self.encoder_initial_cell_state
+            initial_state = hidden,
         )
 
         return (
