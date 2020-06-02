@@ -28,7 +28,7 @@ class Seq2Seq(tf.Module):
         input_embedding_dim = 256,
         output_embedding_dim = 256,
         rnn_units = 1024,
-        dense_units = 1024,
+        dense_units = 1024, # TODO: REMOVE ME
         batch_size = 64,
         eval_averaging = 'micro',
     ):
@@ -65,11 +65,9 @@ class Seq2Seq(tf.Module):
 
 
         self.decoder = Decoder(
-            max_output_seq_length=self.params['max_output_seq_length'],
             output_vocab_size=self.params['output_vocab_size'],
             embedding_dims=self.params['output_embedding_dim'],
             rnn_units=self.params['rnn_units'],
-            dense_units=self.params['dense_units'],
             batch_size=self.params['batch_size'],
         )
 
