@@ -7,6 +7,7 @@ import wandb
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 from datetime import datetime
 from itertools import takewhile
 
@@ -163,7 +164,6 @@ def run(args):
         input_embedding_dim=args.input_embedding_dim,
         output_embedding_dim=args.output_embedding_dim,
         rnn_units=args.latent_dim,
-        dense_units=args.latent_dim, # TODO: expose as a hyper parameter
         batch_size=args.batch_size,
         eval_averaging=args.eval_averaging,
     )

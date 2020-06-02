@@ -1,5 +1,4 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
 import numpy as np
 import wandb
 import os
@@ -28,7 +27,6 @@ class Seq2Seq(tf.Module):
         input_embedding_dim = 256,
         output_embedding_dim = 256,
         rnn_units = 1024,
-        dense_units = 1024, # TODO: REMOVE ME
         batch_size = 64,
         eval_averaging = 'micro',
     ):
@@ -41,7 +39,6 @@ class Seq2Seq(tf.Module):
             'input_embedding_dim': input_embedding_dim,
             'output_embedding_dim': output_embedding_dim,
             'rnn_units': rnn_units,
-            'dense_units': dense_units,
             'batch_size': batch_size,
             'eval_averaging': eval_averaging,
         }
@@ -198,7 +195,6 @@ class Seq2Seq(tf.Module):
             input_embedding_dim = config['input_embedding_dim'],
             output_embedding_dim = config['output_embedding_dim'],
             rnn_units = config['rnn_units'],
-            dense_units = config['dense_units'],
             batch_size = config['batch_size'],
             eval_averaging = config['eval_averaging'],
         )
