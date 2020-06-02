@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
 import numpy as np
 import wandb
 import os
@@ -52,14 +53,12 @@ class Seq2Seq(tf.Module):
             (i, token) for token, i in output_vocab_index.items()
         )
 
-
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
             embedding_dims=self.params['input_embedding_dim'],
             rnn_units=self.params['rnn_units'],
             batch_size=self.params['batch_size'],
         )
-
 
         self.decoder = Decoder(
             output_vocab_size=self.params['output_vocab_size'],
@@ -216,7 +215,7 @@ class Seq2Seq(tf.Module):
         # the CategoricalCrossentropy expects one-hot encoded y_true labels
         # that's why we use the Sparse version, because we don't need to one-hot encode the sequences
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, # y_pred will be logits, i.e. there will be a value for each class (token)
+            from_logits=True, # y_pred will contain predictions for each class before you would pass it through softmax
             reduction='none' # do not sum or reduce the computed loss values in any way
         )
 
@@ -239,39 +238,67 @@ class Seq2Seq(tf.Module):
         return loss
 
 
-    # TODO: what will happen if we annotate with @tf.function?
     def train_step(
         self,
-        input_batch,
-        output_batch,
+        input_batch, # (batch_size, max_input_seq_length)
+        target_batch, # (batch_size, max_output_seq_length)
+        encoder_hidden, # (batch_size, encoder_rnn_units) TODO: do we need to pass this?
     ):
-        loss = 0.0
+        batch_loss = 0.0
 
         with tf.GradientTape() as tape:
-            # apply teacher forcing
-            # ignore the <end> marker token for the decoder input
-            decoder_input = output_batch[:, :-1]
-            # shift the output sequences with +1
-            decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
+            encoder_outputs, encoder_hidden = self.encoder(input_batch, encoder_hidden)
 
-            # feed forward
-            logits = self.call(inputs=[input_batch, decoder_input], training = True)
-            # logits.shape is [batch_size, output_seq_length, output_vocab_size]
+            # initialize the decoder's hidden state with the final hidden state of the encoder
+            decoder_hidden = encoder_hidden
 
-            loss = self.loss_function(
-                y_true = decoder_output,
-                y_pred = logits
+            # TODO: extract the <SOS> token in a Common module
+
+            # shape: (batch_size, 1), where the 1 is the single <start> timestep
+            decoder_input = tf.expand_dims(
+                [self.output_vocab_index['<SOS>']] * self.params['batch_size'],
+                axis = 1 # expand the last dimension, leave the batch_size in tact
             )
 
-            self.train_metrics['sparse_categorical_accuracy'].update_state(
-                y_true=decoder_output,
-                y_pred=logits
-            )
+            target_seq_length = int(target_batch.shape[1])
+            # Teacher forcing - feeding the target as the next input
+            # we iterate timesteps from 1, not from 0, because this way we shift the target sequences by one
+            # i.e. if we have [<SOS>, get, search, data, <EOS>] as a target sequence
+            # we first feed <SOS> (index 0) into the decoder and expect it to predict "get" (index 1)
+            # and on the next step the "get" (index 1) is fed into the decoder, expecting it to predict "search" (index 2)
+            # and so on.
+            for t in range(1, target_seq_length): # for each timestep in the output sequence
+                # passing encoder_outputs to the decoder for a single timestep
+                # notice that we overwrite decoder_hidden on every timestep
+                predictions, decoder_hidden, _ = self.decoder(
+                    decoder_input,
+                    decoder_hidden,
+                    encoder_outputs
+                )
 
-            self.train_metrics['f1_score'].update_state(
-                y_true = decoder_output,
-                y_pred = logits,
-            )
+                y_true = target_batch[:, t]
+
+                # add to loss
+                loss += self.loss_function(y_true, predictions)
+
+                # TODO: extract the forward pass inside call(), use tf.scatter_update to produce a single tensor with all timesteps
+                # TODO: move the metrics state update after the forward pass
+                # TODO: the first token <SOS> can be removed from both y_true and y_pred
+                self.train_metrics['sparse_categorical_accuracy'].update_state(
+                    y_true = y_true,
+                    y_pred = predictions
+                )
+
+                self.train_metrics['f1_score'].update_state(
+                    y_true = y_true,
+                    y_pred = predictions,
+                )
+
+                # using teacher forcing
+                # pass the true target/output token from timestep t as input to the decoder for timestep t+1
+                decoder_input = tf.expand_dims(y_true, 1)
+
+            batch_loss = loss / target_seq_length
 
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
@@ -285,7 +312,7 @@ class Seq2Seq(tf.Module):
         # adjust the weights / parameters with the computed gradients
         self.optimizer.apply_gradients(grads_and_vars)
 
-        return loss
+        return batch_loss
 
 
     def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
@@ -308,11 +335,15 @@ class Seq2Seq(tf.Module):
             self.train_metrics['sparse_categorical_accuracy'].reset_states()
             self.train_metrics['f1_score'].reset_states()
 
+            # TODO: is this necessary?
+            encoder_hidden_state = self.encoder.initialize_hidden_state()
+
             for (step, (input_batch, output_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
                     # the models expect tf.float32
                     tf.cast(input_batch, dtype=tf.float32),
                     tf.cast(output_batch, dtype=tf.float32),
+                    encoder_hidden = encoder_hidden_state,
                 )
 
                 sparse_categorical_accuracy = self.train_metrics['sparse_categorical_accuracy'].result()
