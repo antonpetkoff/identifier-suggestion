@@ -208,36 +208,33 @@ class Seq2Seq(tf.Module):
         return model
 
 
-    # TODO: add documentation
     def loss_function(
         self,
-        y_pred, # shape: [batch_size, Ty, output_vocab_size]
-        y # shape: [batch_size, Ty]
+        y_true, # shape: [batch_size, max_output_seq_length]
+        y_pred, # shape: [batch_size, max_output_seq_length, output_vocab_size]
     ):
-        # TODO: why Sparse instead of non-sparse?
-        # TODO: what does from_logits mean? is it the output of a softmax layer?  i guess it means that we have a distribution, i.e. one dimension more
-        # TODO: what does the reduction parameter do?
+        # the CategoricalCrossentropy expects one-hot encoded y_true labels
+        # that's why we use the Sparse version, because we don't need to one-hot encode the sequences
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True,
-            reduction='none'
+            from_logits=True, # y_pred will be logits, i.e. there will be a value for each class (token)
+            reduction='none' # do not sum or reduce the computed loss values in any way
         )
 
         # compute the actual losses
-        loss = loss_fn(
-            y_true=y,
-            y_pred=y_pred
-        )
+        loss = loss_fn(y_true=y_true, y_pred=y_pred)
 
         # skip loss calculation for padding sequences which contain only zeroes (i.e. when y = 0)
         # mask the loss when padding sequence appears in the output sequence
         # e.g.
         # [ <start>,transform, search, response, data, 0, 0, 0, 0, ..., <end>]
         # [ 1      , 234     , 3234  , 423     , 3344, 0, 0, 0 ,0, ..., 2 ]
-        mask = tf.logical_not(tf.math.equal(y, 0)) # output 0 when y = 0, otherwise output 1
+        mask = tf.logical_not(tf.math.equal(y_true, 0)) # output 0 when y = 0, otherwise output 1
         mask = tf.cast(mask, dtype=loss.dtype)
 
         loss = mask * loss
-        loss = tf.reduce_mean(loss) # TODO: on which axises is the reduction done?
+
+        # all dimensions are reduced
+        loss = tf.reduce_mean(loss)
 
         return loss
 
@@ -261,7 +258,10 @@ class Seq2Seq(tf.Module):
             logits = self.call(inputs=[input_batch, decoder_input], training = True)
             # logits.shape is [batch_size, output_seq_length, output_vocab_size]
 
-            loss = self.loss_function(logits, decoder_output)
+            loss = self.loss_function(
+                y_true = decoder_output,
+                y_pred = logits
+            )
 
             self.train_metrics['sparse_categorical_accuracy'].update_state(
                 y_true=decoder_output,
@@ -368,10 +368,13 @@ class Seq2Seq(tf.Module):
         decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
 
         # feed forward
-        logits = self.call(inputs=[input_batch, decoder_input], training = True)
+        logits = self.call(inputs=[input_batch, decoder_input], training = False)
         # logits.shape is [batch_size, output_seq_length, output_vocab_size]
 
-        loss = self.loss_function(logits, decoder_output)
+        loss = self.loss_function(
+            y_true = decoder_output,
+            y_pred = logits
+        )
 
         self.test_metrics['sparse_categorical_accuracy'].update_state(
             y_true=decoder_output,
