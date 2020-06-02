@@ -77,7 +77,9 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 Fundamentals:
 
-- [ ] Add Beam Search Decoder for making multiple suggestions
+- [ ] Rewrite the Seq2Seq model without TensorFlow Addons
+  - [ ] Add Beam Search Decoder for making multiple suggestions
+  - [ ] Add plot of attention weights
 
 - [ ] Increase Dataset to at least 1 million method samples for training
   - [ ] Select a set of Java repositories
@@ -100,8 +102,6 @@ Fundamentals:
 
 - [ ] Code refactoring
   - [ ] Extract a logging module which controls what and where is logged (e.g. stdout, wandb, etc)
-  - [ ] Rewrite the Seq2Seq model without TensorFlow Addons
-    - [ ] Add plot of attention weights
 
 - [x] Serve the trained model for predictions
   - [x] Try to serialize the model TF SavedModel
