@@ -7,7 +7,6 @@ import wandb
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-import tensorflow_addons as tfa
 from datetime import datetime
 from itertools import takewhile
 
@@ -205,7 +204,10 @@ def run(args):
         return prediction_texts
 
     def on_epoch_end():
-        raw_predictions = model.predict_raw(input_sequences=test_inputs)
+        raw_predictions = np.array([
+            model.predict_raw(input_sequence = test_input)[0] # TODO: plot the attention weights plot
+            for test_input in test_inputs
+        ])
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)
 

@@ -1,5 +1,4 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
 import numpy as np
 import wandb
 import os
@@ -338,11 +337,11 @@ class Seq2Seq(tf.Module):
             # TODO: is this necessary?
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
-            for (step, (input_batch, output_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
+            for (step, (input_batch, target_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss = self.train_step(
                     # the models expect tf.float32
                     tf.cast(input_batch, dtype=tf.float32),
-                    tf.cast(output_batch, dtype=tf.float32),
+                    tf.cast(target_batch, dtype=tf.float32),
                     encoder_hidden = encoder_hidden_state,
                 )
 
@@ -459,96 +458,65 @@ class Seq2Seq(tf.Module):
         return test_results
 
 
-    def predict_raw(self, input_sequences):
-        """Predict the outputs for the given inputs.
+    def predict_raw(
+        self,
+        input_sequence # preprocessed sequence with input token ids
+    ):
+        """Predict the output for the given input.
 
         Args:
-            input_batch (tensor): A fully preprocessed batch of input sequences.
+            input_sequence (tensor): A fully preprocessed input sequence.
 
         Returns:
-            A tensor with the raw predicted output sequences as numbers.
+            A list with the predicted output token ids
+            along with a matrix with attention weights for plotting.
         """
 
-        start_token_index = self.output_vocab_index['<SOS>']
-        end_token_index = self.output_vocab_index['<EOS>']
+        start_of_seq_id = self.output_vocab_index['<SOS>']
+        end_of_seq_id = self.output_vocab_index['<EOS>']
 
-        # compute the size of input sequences batch
-        inference_batch_size = input_sequences.shape[0]
+        attention_plot = np.zeros((
+            self.params['max_output_seq_length'],
+            self.params['max_input_seq_length']
+        ))
 
-        # feed forward input sequences through the encoder
-        self.encoder.clear_initial_cell_state(batch_size = inference_batch_size)
-        encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(input_sequences)
+        hidden = self.encoder.initialize_hidden_state(batch_size = 1)
+        encoder_outputs, encoder_hidden = self.encoder(input_sequence, hidden)
 
-        # initialize decoder
+        # initialize the decoder hidden state with the hidden state of the encoder
+        decoder_hidden = encoder_hidden
 
-        # TODO: how is this different from? [start_token_index] * inference_batch_size
-        start_tokens = tf.fill(
-            [inference_batch_size],
-            start_token_index
-        )
+        # start decoding with the special start of sequence token
+        decoder_input = tf.expand_dims([start_of_seq_id], axis = 0)
 
-        end_token = end_token_index
+        result = []
 
-        # TODO: add a training=False argument to self.decoder.call()
-
-        # the sampler is initialized inside the basic decoder below
-        greedy_sampler = tfa.seq2seq.GreedyEmbeddingSampler()
-
-        # TODO: understand why and explain? isn't ([[start]] * batch_size) the same?
-        # TODO: understand how samplers work
-        # a new decoder is created because we use a different embedding sampler
-        decoder_instance = tfa.seq2seq.BasicDecoder(
-            cell=self.decoder.rnn_cell,
-            sampler=greedy_sampler,
-            output_layer=self.decoder.dense_layer
-        )
-
-        # TODO: load variable from checkpoint?
-        # instead of feeding forward through the decoder embedding layer
-        # we use an EmbeddingSampler
-        decoder_embedding_matrix = self.decoder.embedding.variables[0]
-
-        # setup self.decoder.decoder_initial_state
-        self.decoder.setup_memory_and_initial_state(
-            encoder_outputs=encoder_outputs,
-            encoder_states=[encoder_hidden_state, encoder_memory_state],
-            batch_size=inference_batch_size
-        )
-
-        # the kwargs being passed here are passed to the sampler itself
-        # and the first two values of the returned tuple are returned by the sampler initialization
-        _first_finished, first_inputs, first_state = decoder_instance.initialize(
-            decoder_embedding_matrix,
-            start_tokens=start_tokens,
-            end_token=end_token,
-            initial_state=self.decoder.decoder_initial_state,
-        )
-
-        # TODO: decide on a maximum output sequence length
-        # inference can produce output sequences longer than
-        # the limited length output sequences used during training
-        maximum_iterations = 2 * self.params['max_output_seq_length']
-
-        inputs = first_inputs
-        state = first_state
-
-        # TODO: prefer TF tensors over NumPy arrays
-        predictions = np.empty((inference_batch_size, 0), dtype = np.int32)
-        for step in range(maximum_iterations):
-            outputs, next_state, next_inputs, _finished = decoder_instance.step(
-                step,
-                inputs,
-                state
+        for t in range(self.params['max_output_seq_length']):
+            predictions, decoder_hidden, attention_weights = self.decoder(
+                input_batch = decoder_input,
+                hidden_state = decoder_hidden,
+                encoder_outputs = encoder_outputs
             )
 
-            inputs = next_inputs
-            state = next_state
-            outputs = np.expand_dims(outputs.sample_id, axis = -1)
-            predictions = np.append(predictions, outputs, axis = -1)
+            predicted_id = tf.argmax(predictions[0]).numpy()
 
-        return predictions
+            # the next decoder_input is the last predicted_id
+            decoder_input = tf.expand_dims([predicted_id], axis = 0)
+
+            result.append(predicted_id)
+
+            # since the shape of attention_weights is (batch_size, max_input_seq_length, 1)
+            # and batch_size is 1, then reshape the weights
+            # and store them as a row in the attention plot at timestep t
+            attention_plot[t] = tf.reshape(attention_weights, shape = (-1, )).numpy()
+
+            if predicted_id == end_of_seq_id:
+                break
+
+        return result, attention_plot
 
 
+    # TODO: document that this function works with numpy arrays, not with TF tensors
     def predict(self, input_text):
         print('Input text: ', input_text)
 
@@ -563,10 +531,7 @@ class Seq2Seq(tf.Module):
 
         print('Encoded tokens: ', encoded_tokens)
 
-        raw_predictions = self.predict_raw(input_sequences=tf.constant([encoded_tokens]))
-
-        # TODO: document that this function works with numpy arrays, not with TF tensors
-        raw_prediction = raw_predictions[0]
+        raw_prediction, attention_plot = self.predict_raw(input_sequences=tf.constant(encoded_tokens))
 
         print('Raw prediction: ', raw_prediction)
 
@@ -582,4 +547,4 @@ class Seq2Seq(tf.Module):
 
         print('Predicted text: ', predicted_text)
 
-        return predicted_text
+        return predicted_text, attention_plot
