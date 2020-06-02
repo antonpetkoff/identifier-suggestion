@@ -19,7 +19,7 @@ from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 from src.preprocessing.sequence import preprocess_sequences
 
-from src.models.seq2seq_attention import Seq2SeqAttention
+from src.models.seq2seq import Seq2Seq
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
@@ -152,7 +152,7 @@ def run(args):
 
     df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args)
 
-    model = Seq2SeqAttention(
+    model = Seq2Seq(
         checkpoint_dir=args.file_checkpoint_dir,
         input_vocab_index=input_vocab_index,
         output_vocab_index=output_vocab_index,
