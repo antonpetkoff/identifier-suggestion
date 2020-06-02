@@ -458,6 +458,7 @@ class Seq2Seq(tf.Module):
         return test_results
 
 
+    # TODO: make it work with batches
     def predict_raw(
         self,
         input_sequence # preprocessed sequence with input token ids
@@ -481,7 +482,11 @@ class Seq2Seq(tf.Module):
         ))
 
         hidden = self.encoder.initialize_hidden_state(batch_size = 1)
-        encoder_outputs, encoder_hidden = self.encoder(input_sequence, hidden)
+
+        encoder_outputs, encoder_hidden = self.encoder(
+            tf.convert_to_tensor(input_sequence),
+            hidden
+        )
 
         # initialize the decoder hidden state with the hidden state of the encoder
         decoder_hidden = encoder_hidden
@@ -531,7 +536,7 @@ class Seq2Seq(tf.Module):
 
         print('Encoded tokens: ', encoded_tokens)
 
-        raw_prediction, attention_plot = self.predict_raw(input_sequences=tf.constant(encoded_tokens))
+        raw_prediction, attention_plot = self.predict_raw(encoded_tokens)
 
         print('Raw prediction: ', raw_prediction)
 
