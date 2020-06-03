@@ -12,9 +12,13 @@ class BahdanauAttention(tf.keras.layers.Layer):
 
     def call(
         self,
-        query, # (i.e. hiddent state) shape is (batch_size, hidden_size)
-        values # (i.e. encoder outputs) shape is (batch_size, max_input_seq_length, hidden_size)
+        inputs, # query (i.e. hiddent state) shape is (batch_size, hidden_size)
+        values # values (i.e. encoder outputs) shape is (batch_size, max_input_seq_length, hidden_size)
     ):
+        # the first argument must be named "inputs" in order to resolve the following error
+        # TypeError: __call__() missing 1 required positional argument: 'inputs'
+        query = inputs
+
         # add a dimension for timesteps to the query
         # shape is (batch_size, 1, hidden_size)
         query_with_time_axis = tf.expand_dims(query, 1)

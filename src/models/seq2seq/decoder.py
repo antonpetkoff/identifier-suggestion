@@ -51,7 +51,7 @@ class Decoder(tf.keras.Model):
         encoder_outputs # shape = (batch_size, max_input_seq_length, hidden_size)
     ):
         context_vector, attention_weights = self.attention(
-            query = hidden_state,
+            inputs = hidden_state,
             values = encoder_outputs
         )
 
@@ -68,7 +68,7 @@ class Decoder(tf.keras.Model):
         )
 
         # decoder output shape is (batch_size, 1, rnn_units)
-        decoder_output, decoder_hidden_state = self.decoder_rnn(decoder_input)
+        decoder_output, decoder_hidden_state, _decoder_cell_state = self.decoder_rnn(decoder_input)
 
         # squash the timestep dimension of the decoder_output, because we have a single timestep
         # thus the shape becomes (batch_size, rnn_units)

@@ -247,7 +247,9 @@ class Seq2Seq(tf.Module):
         batch_loss = 0.0
 
         with tf.GradientTape() as tape:
-            encoder_outputs, encoder_hidden = self.encoder(input_batch, encoder_hidden)
+            loss = 0.0
+
+            encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(input_batch, encoder_hidden)
 
             # initialize the decoder's hidden state with the final hidden state of the encoder
             decoder_hidden = encoder_hidden
