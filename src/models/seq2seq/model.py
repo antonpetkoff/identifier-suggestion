@@ -102,29 +102,71 @@ class Seq2Seq(tf.Module):
         )
 
 
-    # TODO: update call method with new model internals
-    def call(self, inputs, training=False):
+    def call(
+        self,
+        inputs,
+        encoder_hidden,
+        training=False
+    ):
         # TODO: differentiate between training and NOT training, if you add a Dropout layer
 
-        encoder_inputs, decoder_inputs = inputs
+        input_batch, target_batch = inputs
+        batch_size = input_batch.shape[0]
+        target_seq_length = target_batch.shape[1]
+        output_vocab_size = len(self.output_vocab_index)
 
         # feed forward through encoder
-        self.encoder.clear_initial_cell_state(batch_size=encoder_inputs.shape[0])
-        encoder_outputs, encoder_hidden_state, encoder_memory_state = self.encoder(encoder_inputs)
+        encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(input_batch, encoder_hidden)
 
-        # feed forward through decoder
+        # initialize the decoder's hidden state with the final hidden state of the encoder
+        decoder_hidden = encoder_hidden
 
-        # set up decoder memory from encoder output
-        # this also sets up the decoder initial state based on the encoder last hidden and memory states
-        self.decoder.setup_memory_and_initial_state(
-            encoder_outputs=encoder_outputs,
-            encoder_states=[encoder_hidden_state, encoder_memory_state],
+        # TODO: extract the <SOS> token in a Common module
+
+        # shape: (batch_size, 1), where the 1 is the single <start> timestep
+        decoder_input = tf.expand_dims(
+            [self.output_vocab_index['<SOS>']] * self.params['batch_size'],
+            axis = 1 # expand the last dimension, leave the batch_size in tact
         )
 
-        # ignore hidden state and cell state from decoder RNN
-        outputs, _, _ = self.decoder(decoder_inputs)
+        # this list will accumulate the predictions of each timestep during teacher forcing
+        # when all timestep predictions are accumulated, they are stacked along the timestep axis
+        predictions = []
 
-        return outputs.rnn_output # [batch_size, output_seq_length, output_vocab_size]
+        # feed forward through decoder using
+        # the teacher forcing training algorithm - feeding the target as the next input
+        # we iterate timesteps from 1, not from 0, because this way we shift the target sequences by one
+        # i.e. if we have [<SOS>, get, search, data, <EOS>] as a target sequence
+        # we first feed <SOS> (index 0) into the decoder and expect it to predict "get" (index 1)
+        # and on the next step the "get" (index 1) is fed into the decoder, expecting it to predict "search" (index 2)
+        # and so on.
+        for t in range(1, target_seq_length): # for each timestep in the output sequence
+            # passing encoder_outputs to the decoder for a single timestep
+            # notice that we overwrite decoder_hidden on every timestep
+            timestep_predictions, decoder_hidden, _attention_weights = self.decoder(
+                decoder_input,
+                decoder_hidden,
+                encoder_outputs
+            )
+
+            y_true = target_batch[:, t]
+
+            predictions.append(timestep_predictions)
+
+            # using teacher forcing
+            # pass the true target/output token from timestep t as input to the decoder for timestep t+1
+            decoder_input = tf.expand_dims(y_true, 1)
+
+        # stack the predictions for all timesteps along the the timestep axis
+        # after tf.stack the shape becomes [batch_size, output_seq_length - 1, 1, output_vocab_size]
+        combined_predictions = tf.stack(predictions, axis = 1) # axis = 1 is the timestep axis
+
+        # because tf.stack adds another unneeded dimension, we squash it with a reshape
+        combined_predictions = tf.reshape(combined_predictions, shape = (batch_size, -1, output_vocab_size))
+
+        # TODO: return attention_weights?
+
+        return combined_predictions # [batch_size, output_seq_length - 1, output_vocab_size]
 
 
     def get_config(self):
@@ -254,63 +296,31 @@ class Seq2Seq(tf.Module):
         target_batch, # (batch_size, max_output_seq_length)
         encoder_hidden, # (batch_size, encoder_rnn_units) TODO: do we need to pass this?
     ):
-        batch_loss = 0.0
+        # ignore the first timestep, because it is always the start of sequence token
+        y_true = target_batch[:, 1:]
+        # TODO: check the shape of y_true
+
+        loss = 0.0
 
         with tf.GradientTape() as tape:
-            loss = 0.0
-
-            encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(input_batch, encoder_hidden)
-
-            # initialize the decoder's hidden state with the final hidden state of the encoder
-            decoder_hidden = encoder_hidden
-
-            # TODO: extract the <SOS> token in a Common module
-
-            # shape: (batch_size, 1), where the 1 is the single <start> timestep
-            decoder_input = tf.expand_dims(
-                [self.output_vocab_index['<SOS>']] * self.params['batch_size'],
-                axis = 1 # expand the last dimension, leave the batch_size in tact
+            predictions = self.call(
+                inputs = [input_batch, target_batch],
+                encoder_hidden = encoder_hidden,
+                training = True,
             )
 
-            target_seq_length = int(target_batch.shape[1])
-            # Teacher forcing - feeding the target as the next input
-            # we iterate timesteps from 1, not from 0, because this way we shift the target sequences by one
-            # i.e. if we have [<SOS>, get, search, data, <EOS>] as a target sequence
-            # we first feed <SOS> (index 0) into the decoder and expect it to predict "get" (index 1)
-            # and on the next step the "get" (index 1) is fed into the decoder, expecting it to predict "search" (index 2)
-            # and so on.
-            for t in range(1, target_seq_length): # for each timestep in the output sequence
-                # passing encoder_outputs to the decoder for a single timestep
-                # notice that we overwrite decoder_hidden on every timestep
-                predictions, decoder_hidden, _ = self.decoder(
-                    decoder_input,
-                    decoder_hidden,
-                    encoder_outputs
-                )
+            # compute loss
+            loss = self.loss_function(y_true, predictions)
 
-                y_true = target_batch[:, t]
+            self.train_metrics['sparse_categorical_accuracy'].update_state(
+                y_true = y_true,
+                y_pred = predictions
+            )
 
-                # add to loss
-                loss += self.loss_function(y_true, predictions)
-
-                # TODO: extract the forward pass inside call(), use tf.scatter_update to produce a single tensor with all timesteps
-                # TODO: move the metrics state update after the forward pass
-                # TODO: the first token <SOS> can be removed from both y_true and y_pred
-                self.train_metrics['sparse_categorical_accuracy'].update_state(
-                    y_true = y_true,
-                    y_pred = predictions
-                )
-
-                self.train_metrics['f1_score'].update_state(
-                    y_true = y_true,
-                    y_pred = predictions,
-                )
-
-                # using teacher forcing
-                # pass the true target/output token from timestep t as input to the decoder for timestep t+1
-                decoder_input = tf.expand_dims(y_true, 1)
-
-            batch_loss = loss / target_seq_length
+            self.train_metrics['f1_score'].update_state(
+                y_true = y_true,
+                y_pred = predictions,
+            )
 
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
@@ -324,7 +334,7 @@ class Seq2Seq(tf.Module):
         # adjust the weights / parameters with the computed gradients
         self.optimizer.apply_gradients(grads_and_vars)
 
-        return batch_loss
+        return loss
 
 
     def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
@@ -411,7 +421,13 @@ class Seq2Seq(tf.Module):
         decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
 
         # feed forward
-        logits = self.call(inputs=[input_batch, decoder_input], training = False)
+        logits = self.call(
+            inputs = [input_batch, decoder_input],
+
+            # TODO: do we need to initialize this hidden state everytime? move it inside call then?
+            encoder_hidden = self.encoder.initialize_hidden_state(),
+            training = False
+        )
         # logits.shape is [batch_size, output_seq_length, output_vocab_size]
 
         loss = self.loss_function(
