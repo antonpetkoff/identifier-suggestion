@@ -102,6 +102,7 @@ class Seq2Seq(tf.Module):
         )
 
 
+    # TODO: update call method with new model internals
     def call(self, inputs, training=False):
         # TODO: differentiate between training and NOT training, if you add a Dropout layer
 

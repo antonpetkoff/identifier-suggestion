@@ -38,13 +38,18 @@ class Encoder(tf.keras.Model):
 
 
     def initialize_hidden_state(self, batch_size=None):
-        return tf.zeros((
-            batch_size or self.config['batch_size'],
-            self.config['rnn_units']
-        ))
+        bsz = batch_size or self.config['batch_size']
+
+        return [
+            tf.zeros((bsz, self.config['rnn_units'])),
+            tf.zeros((bsz, self.config['rnn_units'])),
+        ]
 
 
-    def call(self, input_batch, hidden):
+    def call(self, input_batch, hidden = None):
+        if hidden is None:
+            hidden = self.initialize_hidden_state()
+
         output, last_step_hidden_state, last_step_memory_state = self.encoder_rnn(
             self.embedding(input_batch),
             initial_state = hidden,
