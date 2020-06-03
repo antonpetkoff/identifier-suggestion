@@ -111,9 +111,6 @@ class Seq2Seq(tf.Module):
         # TODO: differentiate between training and NOT training, if you add a Dropout layer
 
         input_batch, target_batch = inputs
-        batch_size = input_batch.shape[0]
-        target_seq_length = target_batch.shape[1]
-        output_vocab_size = len(self.output_vocab_index)
 
         # feed forward through encoder
         encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(input_batch, encoder_hidden)
@@ -132,6 +129,8 @@ class Seq2Seq(tf.Module):
         # this list will accumulate the predictions of each timestep during teacher forcing
         # when all timestep predictions are accumulated, they are stacked along the timestep axis
         predictions = []
+
+        target_seq_length = target_batch.shape[1]
 
         # feed forward through decoder using
         # the teacher forcing training algorithm - feeding the target as the next input
@@ -160,9 +159,6 @@ class Seq2Seq(tf.Module):
         # stack the predictions for all timesteps along the the timestep axis
         # after tf.stack the shape becomes [batch_size, output_seq_length - 1, 1, output_vocab_size]
         combined_predictions = tf.stack(predictions, axis = 1) # axis = 1 is the timestep axis
-
-        # because tf.stack adds another unneeded dimension, we squash it with a reshape
-        combined_predictions = tf.reshape(combined_predictions, shape = (batch_size, -1, output_vocab_size))
 
         # TODO: return attention_weights?
 
