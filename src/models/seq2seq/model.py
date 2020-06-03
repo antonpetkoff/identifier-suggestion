@@ -133,7 +133,17 @@ class Seq2Seq(tf.Module):
 
     def build(self):
         self.encoder.build(input_shape=(self.params['batch_size'], self.params['max_input_seq_length']))
-        self.decoder.build(input_shape=(self.params['batch_size'], self.params['max_output_seq_length']))
+
+        self.decoder.set_state_from_encoder(
+            hidden_state = tf.zeros((self.params['batch_size'], self.params['rnn_units'])),
+            encoder_outputs = tf.zeros((
+                self.params['batch_size'],
+                self.params['max_input_seq_length'],
+                self.params['rnn_units']
+            ))
+        )
+
+        self.decoder.build(input_shape=(self.params['batch_size'], 1)) # the decoder processes one token at a time
 
 
     def summary(self):

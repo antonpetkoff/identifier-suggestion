@@ -44,12 +44,24 @@ class Decoder(tf.keras.Model):
         self.attention = BahdanauAttention(self.config['rnn_units'])
 
 
+    # this method is added for flexibility, so that we can call build() in the main model
+    def set_state_from_encoder(self, hidden_state, encoder_outputs):
+        self.hidden_state = hidden_state
+        self.encoder_outputs = encoder_outputs
+
+
     def call(
         self,
         input_batch,
-        hidden_state, # shape = (hidden_size,)
-        encoder_outputs # shape = (batch_size, max_input_seq_length, hidden_size)
+        hidden_state = None,
+        encoder_outputs = None,
     ):
+        if hidden_state is None:
+            hidden_state = self.hidden_state
+
+        if encoder_outputs is None:
+            encoder_outputs = self.encoder_outputs
+
         context_vector, attention_weights = self.attention(
             inputs = hidden_state,
             values = encoder_outputs

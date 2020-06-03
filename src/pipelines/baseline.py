@@ -167,8 +167,7 @@ def run(args):
         eval_averaging=args.eval_averaging,
     )
 
-    # TODO: fix model summary
-    # model.summary()
+    model.summary()
 
     model.save()
 
