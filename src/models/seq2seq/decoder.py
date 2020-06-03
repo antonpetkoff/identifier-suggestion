@@ -62,9 +62,12 @@ class Decoder(tf.keras.Model):
         if encoder_outputs is None:
             encoder_outputs = self.encoder_outputs
 
+        # if you use keyword args, then there will be an error
+        # TypeError: __call__() missing 1 required positional argument: 'inputs'
+        # oh well...
         context_vector, attention_weights = self.attention(
-            inputs = hidden_state,
-            values = encoder_outputs
+            hidden_state, # query
+            encoder_outputs # values
         )
 
         # shape of x is (batch_size, 1, embedding_dim), where 1 is the timestep, i.e. one timestep

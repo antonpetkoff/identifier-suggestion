@@ -496,8 +496,8 @@ class Seq2Seq(tf.Module):
 
         hidden = self.encoder.initialize_hidden_state(batch_size = 1)
 
-        encoder_outputs, encoder_hidden = self.encoder(
-            tf.convert_to_tensor(input_sequence),
+        encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
+            tf.convert_to_tensor([input_sequence]), # the array brackets are needed for the batch_size dimension
             hidden
         )
 
@@ -510,10 +510,13 @@ class Seq2Seq(tf.Module):
         result = []
 
         for t in range(self.params['max_output_seq_length']):
+            # if you use keyword args, then there will be an error
+            # TypeError: __call__() missing 1 required positional argument: 'inputs'
+            # oh well...
             predictions, decoder_hidden, attention_weights = self.decoder(
-                input_batch = decoder_input,
-                hidden_state = decoder_hidden,
-                encoder_outputs = encoder_outputs
+                decoder_input,
+                decoder_hidden,
+                encoder_outputs
             )
 
             predicted_id = tf.argmax(predictions[0]).numpy()
