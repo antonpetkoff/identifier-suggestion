@@ -294,7 +294,6 @@ class Seq2Seq(tf.Module):
     ):
         # ignore the first timestep, because it is always the start of sequence token
         y_true = target_batch[:, 1:]
-        # TODO: check the shape of y_true
 
         loss = 0.0
 
@@ -408,17 +407,15 @@ class Seq2Seq(tf.Module):
     def evaluation_step(
         self,
         input_batch,
-        output_batch,
+        target_batch,
     ):
         # apply teacher forcing
-        # ignore the <end> marker token for the decoder input
-        decoder_input = output_batch[:, :-1]
         # shift the output sequences with +1
-        decoder_output = output_batch[:, 1:] # [batch_size, output_seq_length]
+        y_true = target_batch[:, 1:] # [batch_size, output_seq_length]
 
         # feed forward
         logits = self.call(
-            inputs = [input_batch, decoder_input],
+            inputs = [input_batch, target_batch],
 
             # TODO: do we need to initialize this hidden state everytime? move it inside call then?
             encoder_hidden = self.encoder.initialize_hidden_state(),
@@ -427,17 +424,17 @@ class Seq2Seq(tf.Module):
         # logits.shape is [batch_size, output_seq_length, output_vocab_size]
 
         loss = self.loss_function(
-            y_true = decoder_output,
+            y_true = y_true,
             y_pred = logits
         )
 
         self.test_metrics['sparse_categorical_accuracy'].update_state(
-            y_true=decoder_output,
-            y_pred=logits
+            y_true = y_true,
+            y_pred = logits
         )
 
         self.test_metrics['f1_score'].update_state(
-            y_true = decoder_output,
+            y_true = y_true,
             y_pred = logits,
         )
 
