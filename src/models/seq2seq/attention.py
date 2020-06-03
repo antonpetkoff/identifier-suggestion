@@ -2,8 +2,8 @@ import tensorflow as tf
 
 
 class BahdanauAttention(tf.keras.layers.Layer):
-    def __init__(self, units, *args, **kwargs):
-        super().__init__(args, kwargs)
+    def __init__(self, units):
+        super(BahdanauAttention, self).__init__()
 
         self.W1 = tf.keras.layers.Dense(units)
         self.W2 = tf.keras.layers.Dense(units)
