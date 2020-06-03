@@ -4,6 +4,7 @@ import wandb
 import os
 import time
 import json
+import math
 
 from collections import Counter
 from itertools import takewhile
@@ -543,7 +544,83 @@ class Seq2Seq(tf.Module):
             if predicted_id == end_of_seq_id:
                 break
 
+        print(result)
+
         return result, attention_plot
+
+
+    # TODO: add documentation
+    def beam_search_predict_raw(self, input_sequence, k = 3, alpha = 0.7):
+        start_of_seq_id = self.output_vocab_index['<SOS>']
+        end_of_seq_id = self.output_vocab_index['<EOS>']
+
+        encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
+            tf.convert_to_tensor([input_sequence]), # the array brackets are needed for the batch_size dimension
+            self.encoder.initialize_hidden_state(batch_size = 1)
+        )
+
+        # initialize the decoder hidden state with the hidden state of the encoder
+        decoder_hidden = encoder_hidden
+
+        best = []
+
+        # start decoding with the special start of sequence token
+        running_best = [
+            # triplet: path with token ids, score, decoder_hidden_state
+            [[start_of_seq_id], 0, decoder_hidden]
+        ]
+
+        # TODO: to how many timesteps should the search be limited?
+        for _timestep in range(self.params['max_output_seq_length']):
+            candidates = []
+
+            # continue the beam search from where it left off on the last iteration
+            for path, score, decoder_hidden in running_best:
+                # the next decoder_input is the last predicted_id
+                last_predicted_id = path[-1]
+                decoder_input = tf.expand_dims([last_predicted_id], axis = 0)
+
+                predictions, decoder_hidden, _attention_weights = self.decoder(
+                    decoder_input,
+                    decoder_hidden,
+                    encoder_outputs
+                )
+
+                top_k_probabilities, top_k_indices = tf.math.top_k(predictions[0], k = k)
+
+                for top_token_id, probability in zip(top_k_indices.numpy(), top_k_probabilities.numpy()):
+                    candidates.append([
+                        path + [top_token_id],
+                        score + math.log(probability),
+                        decoder_hidden
+                    ])
+
+                # TODO if top_token_id == end_of_seq_id:
+
+            best_k_candidates = sorted(
+                candidates,
+                key = lambda triple: triple[1], # sort by score
+                reverse = True # in descending order
+            )[:k]
+
+            # this iteration's top k candidates will be used to continue the search on the next step
+            running_best = best_k_candidates
+
+            # accumulate this iteration's top k candidates in the overall best selection
+            best += [[path, score] for path, score, _decoder_hidden in best_k_candidates]
+
+        # choose the final k best based on the score normalized by sequence length
+        top_k = sorted(
+            [
+                [path, score / (len(score) ** alpha)]
+                for path, score in best
+            ],
+            key = lambda tuple: tuple[1], # sort by the normalized score
+            reverse = True # in descending order
+        )[:k] # take only the top k
+
+        # return the paths along their normalized scores
+        return top_k
 
 
     # TODO: document that this function works with numpy arrays, not with TF tensors
