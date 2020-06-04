@@ -593,13 +593,15 @@ class Seq2Seq(tf.Module):
                 )
 
                 for top_token_id, probability in zip(top_k_indices.numpy(), top_k_probabilities.numpy()):
+                    # ignore end of sequence tokens
+                    if top_token_id == end_of_seq_id:
+                        continue
+
                     candidates.append([
                         path + [top_token_id],
                         score + math.log(probability),
                         decoder_hidden
                     ])
-
-                # TODO if top_token_id == end_of_seq_id:
 
             best_k_candidates = sorted(
                 candidates,
