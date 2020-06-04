@@ -1,6 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import wandb
 import os
 import time
 import json
@@ -18,6 +17,7 @@ from src.preprocessing.tokens import tokenize_method
 class Seq2Seq(tf.Module):
     def __init__(
         self,
+        logger,
         checkpoint_dir,
         input_vocab_index,
         output_vocab_index,
@@ -31,6 +31,8 @@ class Seq2Seq(tf.Module):
         batch_size = 64,
         eval_averaging = 'micro',
     ):
+        self.logger = logger
+
         self.params = {
             'checkpoint_dir': checkpoint_dir,
             'max_input_seq_length': max_input_seq_length,
@@ -193,10 +195,13 @@ class Seq2Seq(tf.Module):
 
 
     def save_checkpoint(self):
+        self.logger.log_message('Saving checkpoint...')
+
         save_path = self.checkpoint_manager.save()
 
-        print('Saving checkpoint in wandb')
-        wandb.save(save_path)
+        self.logger.persist(save_path)
+
+        self.logger.log_message(f'Saved checkpoint: {save_path}')
 
         return save_path
 
@@ -208,8 +213,8 @@ class Seq2Seq(tf.Module):
         with open(config_filename, 'w') as f:
             json.dump(self.params, f)
 
-        wandb.save(config_filename)
-        print('Done saving model')
+        self.logger.persist(config_filename)
+        self.logger.log_message('Done saving model')
 
 
     def restore_latest_checkpoint(self):
@@ -371,7 +376,7 @@ class Seq2Seq(tf.Module):
 
                 total_loss += batch_loss
 
-                wandb.log({
+                self.logger.log_data({
                     'batch': step,
                     'loss': batch_loss,
                     'sparse_categorical_accuracy': sparse_categorical_accuracy,
@@ -380,12 +385,16 @@ class Seq2Seq(tf.Module):
                     'f1': f1,
                 })
 
+                on_epoch_end()
+
                 if (step + 1) % 10 == 0:
                     # TODO: just log the dict above? also format the numbers to 2 decimal places?
-                    print(f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}')
+                    self.logger.log_message(
+                        f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}'
+                    )
 
-            print(f'epoch {epoch} training time: {time.time() - start_time} sec')
-            wandb.log({
+            self.logger.log_message(f'epoch {epoch} training time: {time.time() - start_time} sec')
+            self.logger.log_data({
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
                 'epoch_sparse_categorical_accuracy': sparse_categorical_accuracy,
@@ -474,9 +483,8 @@ class Seq2Seq(tf.Module):
             'epoch_test_f1': f1,
         }
 
-        # TODO: have better logging
-        wandb.log(test_results)
-        print('epoch evaluation: ', test_results)
+        self.logger.log_data(test_results)
+        self.logger.log_message('epoch evaluation: ', test_results)
 
         return test_results
 

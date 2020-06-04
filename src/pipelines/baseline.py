@@ -3,7 +3,6 @@ import json
 import os
 import sys
 import resource
-import wandb
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -14,6 +13,7 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, LSTM, Dense
 
 # custom imports
+from src.utils.logger import Logger
 from src.utils.random import set_random_seeds
 from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
@@ -81,7 +81,7 @@ parser.add_argument('--batch_size', type=int, help='Batch Size', required=True)
 parser.add_argument('--random_seed', type=int, help='Random Seed', required=True)
 
 
-def preprocess_data(args):
+def preprocess_data(args, logger):
     df_train_path = os.path.join(args.dir_preprocessed_data, 'sequences.train.h5')
     df_validation_path = os.path.join(args.dir_preprocessed_data, 'sequences.validation.h5')
     df_test_path = os.path.join(args.dir_preprocessed_data, 'sequences.test.h5')
@@ -94,7 +94,7 @@ def preprocess_data(args):
     ))
 
     if not files_exist:
-        print('Preprocessed files not found. Preprocessing...')
+        logger.log_message('Preprocessed files not found. Preprocessing...')
         # Preprocess raw data
         df_train, df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_sequences(
             csv_filename=args.file_data_raw,
@@ -105,7 +105,7 @@ def preprocess_data(args):
             random_seed=RANDOM_SEED,
         )
 
-        print('Done preprocessing. Saving...')
+        logger.log_message('Done preprocessing. Saving...')
 
         # Save preprocessed data
         os.makedirs(args.dir_preprocessed_data, exist_ok=True)
@@ -120,39 +120,45 @@ def preprocess_data(args):
         with open(output_vocab_path, 'w') as f:
             json.dump(output_vocab_index, f)
 
-    print('Loading preprocessed files...')
+    logger.log_message('Loading preprocessed files...')
 
     with open(input_vocab_path) as f:
         input_vocab_index = json.load(f)
 
-    print('Loaded input vocabulary.')
+    logger.log_message('Loaded input vocabulary.')
 
     with open(output_vocab_path) as f:
         output_vocab_index = json.load(f)
 
-    print('Loaded output vocabulary.')
+    logger.log_message('Loaded output vocabulary.')
 
     df_train = pd.read_hdf(df_train_path, key='data')
     df_validation = pd.read_hdf(df_validation_path, key='data')
     df_test = pd.read_hdf(df_test_path, key='data')
 
-    print('Loaded preprocessed files.')
+    logger.log_message('Loaded preprocessed files.')
 
     return df_train, df_validation, df_test, input_vocab_index, output_vocab_index
 
 
 def run(args):
-    print('Experiment parameters: ', args)
-
     os.makedirs(args.file_checkpoint_dir, exist_ok=True)
     os.makedirs('./reports', exist_ok=True)
-    wandb.init(dir='./reports', config=args)
 
-    # TODO: persist configuration in experiment folter
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-    df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args)
+    logger = Logger(
+        experiment_config = args,
+        wandb_save_dir = './reports',
+        image_save_dir = f'./reports/figures/{timestamp}'
+    )
+
+    logger.log_message('Experiment parameters: ', args)
+
+    df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args, logger)
 
     model = Seq2Seq(
+        logger=logger,
         checkpoint_dir=args.file_checkpoint_dir,
         input_vocab_index=input_vocab_index,
         output_vocab_index=output_vocab_index,
@@ -211,14 +217,7 @@ def run(args):
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)
 
-        examples_table = wandb.Table(
-            data=np.stack([input_texts, predicted_texts, expected_texts], axis=1).tolist(),
-            columns=['Input', 'Predicted', 'Actual']
-        )
-        wandb.log({ 'examples': examples_table })
-
-    # TODO: expose callback and use the model to predict a sample of 10 sequences.
-    # TODO: Log the predictions as text tables to observe the progress of the training
+        logger.log_examples_table(input_texts, predicted_texts, expected_texts)
 
     model.train(
         X_train=np.stack(df_train['inputs'].values),
