@@ -499,11 +499,6 @@ class Seq2Seq(tf.Module):
         start_of_seq_id = self.output_vocab_index['<SOS>']
         end_of_seq_id = self.output_vocab_index['<EOS>']
 
-        attention_plot = np.zeros((
-            self.params['max_output_seq_length'],
-            self.params['max_input_seq_length']
-        ))
-
         hidden = self.encoder.initialize_hidden_state(batch_size = 1)
 
         encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
@@ -518,6 +513,8 @@ class Seq2Seq(tf.Module):
         decoder_input = tf.expand_dims([start_of_seq_id], axis = 0)
 
         result = []
+
+        attention_rows = []
 
         for t in range(self.params['max_output_seq_length']):
             # if you use keyword args, then there will be an error
@@ -539,12 +536,16 @@ class Seq2Seq(tf.Module):
             # since the shape of attention_weights is (batch_size, max_input_seq_length, 1)
             # and batch_size is 1, then reshape the weights
             # and store them as a row in the attention plot at timestep t
-            attention_plot[t] = tf.reshape(attention_weights, shape = (-1, )).numpy()
+            attention_rows.append(tf.reshape(attention_weights, shape = (-1, )))
 
             if predicted_id == end_of_seq_id:
                 break
 
-        print(result)
+        attention_plot = tf.stack(attention_rows, axis = 0)
+
+        # transpose the matrix so that each row is a token from the input sequence
+        # and each column is a token from the output sequence
+        attention_plot = tf.transpose(attention_plot)
 
         return result, attention_plot
 
@@ -635,6 +636,8 @@ class Seq2Seq(tf.Module):
 
         tokens = tokenize_method(input_text)
 
+        input_tokens = tokens
+
         print('Tokenized text: ', tokens)
 
         encoded_tokens = np.array([
@@ -644,9 +647,14 @@ class Seq2Seq(tf.Module):
 
         print('Encoded tokens: ', encoded_tokens)
 
-        raw_prediction, attention_plot = self.predict_raw(encoded_tokens)
+        raw_prediction, attention_weights = self.predict_raw(encoded_tokens)
 
         print('Raw prediction: ', raw_prediction)
+
+        output_tokens = [
+            self.reverse_output_index.get(index, '<OOV>')
+            for index in raw_prediction
+        ]
 
         clean_raw_prediction = takewhile(
             lambda index: index != self.output_vocab_index['<EOS>'],
@@ -660,7 +668,7 @@ class Seq2Seq(tf.Module):
 
         print('Predicted text: ', predicted_text)
 
-        return predicted_text, attention_plot
+        return predicted_text, attention_weights, input_tokens, output_tokens
 
 
     # TODO: reduce duplication of predict methods

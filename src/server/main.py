@@ -6,6 +6,7 @@ from flask import Flask
 from flask import request
 
 from src.models.seq2seq import Seq2Seq
+from src.visualization.plot import plot_attention_weights
 
 
 parser = argparse.ArgumentParser(description='Seq2Seq model server')
@@ -61,6 +62,12 @@ def predict():
     input_text = request.args.get('input')
 
     print(f'input_text: {input_text}')
+
+    prediction, attention_weights, input_tokens, output_tokens = model.predict(input_text)
+
+    print('prediction: ', prediction)
+
+    plot_attention_weights(attention_weights, input_tokens, output_tokens).show()
 
     predictions = model.predict_beam_search(input_text=input_text)
 
