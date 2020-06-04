@@ -199,7 +199,7 @@ class Seq2Seq(tf.Module):
 
         save_path = self.checkpoint_manager.save()
 
-        self.logger.persist(save_path)
+        self.logger.persist_data(save_path)
 
         self.logger.log_message(f'Saved checkpoint: {save_path}')
 
@@ -213,7 +213,7 @@ class Seq2Seq(tf.Module):
         with open(config_filename, 'w') as f:
             json.dump(self.params, f)
 
-        self.logger.persist(config_filename)
+        self.logger.persist_data(config_filename)
         self.logger.log_message('Done saving model')
 
 
@@ -379,11 +379,11 @@ class Seq2Seq(tf.Module):
 
                 self.logger.log_data({
                     'batch': step,
-                    'loss': batch_loss,
-                    'sparse_categorical_accuracy': sparse_categorical_accuracy,
-                    'precision': precision,
-                    'recall': recall,
-                    'f1': f1,
+                    'loss': round(batch_loss.numpy(), 3),
+                    'sparse_categorical_accuracy': round(sparse_categorical_accuracy.numpy(), 3),
+                    'precision': round(precision.numpy(), 3),
+                    'recall': round(recall.numpy(), 3),
+                    'f1': round(f1.numpy(), 3),
                 })
 
                 on_epoch_end()
