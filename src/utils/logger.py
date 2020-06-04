@@ -62,6 +62,14 @@ class Logger:
             print(predicted_texts)
 
 
+    def log_plot(self, plt, save_name = None):
+        if self.wandb_enabled:
+            wandb.log({ f'attention_heatmap_{id}': plt })
+
+        if self.image_save_dir and save_name:
+            plt.savefig(fname = os.path.join(self.image_save_dir, save_name))
+
+
     def log_attention_heatmap(
         self,
         attention_weights,
@@ -86,7 +94,8 @@ class Logger:
                 input_tokens,
                 output_tokens,
             ).savefig(
-                fname = os.path.join(self.image_save_dir, save_name)
+                fname = os.path.join(self.image_save_dir, save_name + '.png'),
+                bbox_inches='tight'
             )
 
 

@@ -404,7 +404,7 @@ class Seq2Seq(tf.Module):
 
             self.evaluate(X_test, Y_test, batch_size, epoch)
 
-            on_epoch_end()
+            on_epoch_end(epoch)
 
             # TODO: extract in on_epoch_end()?
             # save the whole model on every 3rd epoch

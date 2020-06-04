@@ -18,6 +18,7 @@ from src.utils.random import set_random_seeds
 from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 from src.preprocessing.sequence import preprocess_sequences
+from src.visualization.plot import plot_attention_weights
 
 from src.models.seq2seq import Seq2Seq
 
@@ -209,7 +210,7 @@ def run(args):
 
         return prediction_texts
 
-    def on_epoch_end():
+    def on_epoch_end(epoch):
         predicted_texts = []
 
         for sample_id, test_input in enumerate(test_inputs):
@@ -227,12 +228,23 @@ def run(args):
                 for token_id in predicted_token_ids[:(index_of_first_end_of_seq + 1)]
             ]
 
-            logger.log_attention_heatmap(
-                attention_weights,
+            # logger.log_attention_heatmap(
+            #     attention_weights,
+            #     input_tokens,
+            #     output_tokens,
+            #     id = sample_id,
+            # )
+
+            plt = plot_attention_weights(
+                attention_weights[:len(input_tokens), :len(output_tokens)],
                 input_tokens,
                 output_tokens,
-                id = sample_id,
             )
+
+            logger.log_plot(plt, save_name = f'id-{sample_id}-epoch-{epoch}')
+
+            # do not forget to close the figure!
+            plt.close()
 
             predicted_texts.append(''.join(output_tokens))
 

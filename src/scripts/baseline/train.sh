@@ -14,5 +14,5 @@ PYTHONPATH=. python src/pipelines/baseline.py \
   --latent_dim 512 \
   --learning_rate 0.0001 \
   --epochs 1 \
-  --batch_size 256 \
+  --batch_size 128 \
   --random_seed 1
