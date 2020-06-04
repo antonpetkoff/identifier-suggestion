@@ -210,13 +210,34 @@ def run(args):
         return prediction_texts
 
     def on_epoch_end():
-        raw_predictions = np.array([
-            model.predict_raw(input_sequence = test_input)[0] # TODO: plot the attention weights plot
-            for test_input in test_inputs
-        ])
-        predicted_texts = map_raw_predictions_to_texts(raw_predictions)
-        expected_texts = map_raw_predictions_to_texts(test_outputs)
+        predicted_texts = []
 
+        for sample_id, test_input in enumerate(test_inputs):
+            predicted_token_ids, attention_weights = model.predict_raw(input_sequence = test_input)
+
+            input_tokens = [
+                reverse_input_index.get(index, '<OOV>')
+                for index in test_input
+                if index != 0
+            ]
+
+            index_of_first_end_of_seq = predicted_token_ids.index(output_vocab_index['<EOS>'])
+            output_tokens = [
+                reverse_output_index.get(token_id, '<OOV>')
+                for token_id in predicted_token_ids[:(index_of_first_end_of_seq + 1)]
+            ]
+
+            logger.log_attention_heatmap(
+                attention_weights,
+                input_tokens,
+                output_tokens,
+                id = sample_id,
+            )
+
+            predicted_texts.append(''.join(output_tokens))
+
+        # log tables
+        expected_texts = map_raw_predictions_to_texts(test_outputs)
         logger.log_examples_table(input_texts, predicted_texts, expected_texts)
 
     model.train(

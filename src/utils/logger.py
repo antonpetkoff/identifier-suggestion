@@ -67,11 +67,12 @@ class Logger:
         attention_weights,
         input_tokens,
         output_tokens,
+        id,
         save_name = None
     ):
         if self.wandb_enabled:
             wandb.log({
-                'attention_heatmap': wandb.plots.HeatMap(
+                f'attention_heatmap_{id}': wandb.plots.HeatMap(
                     x_labels = output_tokens,
                     y_labels = input_tokens,
                     matrix_values = attention_weights,

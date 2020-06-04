@@ -386,8 +386,6 @@ class Seq2Seq(tf.Module):
                     'f1': round(f1.numpy(), 3),
                 })
 
-                on_epoch_end()
-
                 if (step + 1) % 10 == 0:
                     # TODO: just log the dict above? also format the numbers to 2 decimal places?
                     self.logger.log_message(
