@@ -145,12 +145,12 @@ def run(args):
     os.makedirs(args.file_checkpoint_dir, exist_ok=True)
     os.makedirs('./reports', exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
     logger = Logger(
         experiment_config = args,
         wandb_save_dir = './reports',
-        image_save_dir = f'./reports/figures/{timestamp}'
+        image_save_dir = f'./reports/figures/train-{timestamp}'
     )
 
     logger.log_message('Experiment parameters: ', args)

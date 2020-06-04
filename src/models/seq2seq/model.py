@@ -223,21 +223,22 @@ class Seq2Seq(tf.Module):
         self.checkpoint.restore(latest_checkpoint)
 
         if latest_checkpoint:
-            print("Restored from {}".format(latest_checkpoint))
+            self.logger.log_message("Restored from {}".format(latest_checkpoint))
         else:
-            print("Initializing from scratch.")
+            self.logger.log_message("Initializing from scratch.")
 
 
     @staticmethod
-    def restore(checkpoint_dir, input_vocab_index, output_vocab_index):
-        print('Restoring model config')
+    def restore(checkpoint_dir, logger, input_vocab_index, output_vocab_index):
+        logger('Restoring model config')
 
         with open(os.path.join(checkpoint_dir, 'config.json')) as f:
             config = json.load(f)
 
-        print('Loaded model config: ', config)
+        logger('Loaded model config: ', config)
 
         model = Seq2Seq(
+            logger = logger,
             checkpoint_dir = checkpoint_dir,
             input_vocab_index = input_vocab_index,
             output_vocab_index = output_vocab_index,
@@ -256,7 +257,7 @@ class Seq2Seq(tf.Module):
 
         model.build() # it is necessary to build the model before accessing its variables
 
-        print('Done restoring model')
+        logger('Done restoring model')
 
         return model
 
@@ -411,7 +412,7 @@ class Seq2Seq(tf.Module):
             # save the whole model on every 3rd epoch
             if epoch % 3 == 0:
                 save_path = self.checkpoint_manager.save()
-                print("epoch {} saved checkpoint: {}".format(epoch, save_path))
+                self.logger.log_message("epoch {} saved checkpoint: {}".format(epoch, save_path))
 
 
     def evaluation_step(
@@ -472,7 +473,7 @@ class Seq2Seq(tf.Module):
         sparse_categorical_accuracy = self.test_metrics['sparse_categorical_accuracy'].result()
         f1, precision, recall = self.test_metrics['f1_score'].result()
 
-        print(f'epoch {epoch} evaluation time: {time.time() - start_time} sec')
+        self.logger.log_message(f'epoch {epoch} evaluation time: {time.time() - start_time} sec')
 
         test_results = {
             'epoch': epoch,
@@ -640,24 +641,24 @@ class Seq2Seq(tf.Module):
 
     # TODO: document that this function works with numpy arrays, not with TF tensors
     def predict(self, input_text):
-        print('Input text: ', input_text)
+        self.logger.log_message('Input text: ', input_text)
 
         tokens = tokenize_method(input_text)
 
         input_tokens = tokens
 
-        print('Tokenized text: ', tokens)
+        self.logger.log_message('Tokenized text: ', tokens)
 
         encoded_tokens = np.array([
             self.input_vocab_index.get(token, 0)
             for token in tokens
         ])
 
-        print('Encoded tokens: ', encoded_tokens)
+        self.logger.log_message('Encoded tokens: ', encoded_tokens)
 
         raw_prediction, attention_weights = self.predict_raw(encoded_tokens)
 
-        print('Raw prediction: ', raw_prediction)
+        self.logger.log_message('Raw prediction: ', raw_prediction)
 
         output_tokens = [
             self.reverse_output_index.get(index, '<OOV>')
@@ -674,35 +675,35 @@ class Seq2Seq(tf.Module):
             for index in clean_raw_prediction
         ])
 
-        print('Predicted text: ', predicted_text)
+        self.logger.log_message('Predicted text: ', predicted_text)
 
         return predicted_text, attention_weights, input_tokens, output_tokens
 
 
     # TODO: reduce duplication of predict methods
     def predict_beam_search(self, input_text):
-        print('Input text: ', input_text)
+        self.logger.log_message('Input text: ', input_text)
 
         tokens = tokenize_method(input_text)
 
-        print('Tokenized text: ', tokens)
+        self.logger.log_message('Tokenized text: ', tokens)
 
         encoded_tokens = np.array([
             self.input_vocab_index.get(token, 0)
             for token in tokens
         ])
 
-        print('Encoded tokens: ', encoded_tokens)
+        self.logger.log_message('Encoded tokens: ', encoded_tokens)
 
         raw_predictions = self.beam_search_predict_raw(
             encoded_tokens
         )
 
-        print('Raw predictions with scores: ', raw_predictions)
+        self.logger.log_message('Raw predictions with scores: ', raw_predictions)
 
         raw_predictions = [path for path, score in raw_predictions]
 
-        print('Raw predictions: ', raw_predictions)
+        self.logger.log_message('Raw predictions: ', raw_predictions)
 
         clean_raw_predictions = [
             takewhile(
@@ -720,6 +721,6 @@ class Seq2Seq(tf.Module):
             for clean_raw_prediction in clean_raw_predictions
         ]
 
-        print('Predicted texts: ', predicted_texts)
+        self.logger.log_message('Predicted texts: ', predicted_texts)
 
         return predicted_texts

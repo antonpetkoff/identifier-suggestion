@@ -2,11 +2,14 @@ import argparse
 import os
 import json
 
+from datetime import datetime
+
 from flask import Flask
 from flask import request
 
 from src.models.seq2seq import Seq2Seq
 from src.visualization.plot import plot_attention_weights
+from src.utils.logger import Logger
 
 
 parser = argparse.ArgumentParser(description='Seq2Seq model server')
@@ -39,8 +42,17 @@ def initialize_model(args):
         vocab_path=args.vocab_path
     )
 
+    timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
+    logger = Logger(
+        experiment_config = args,
+        wandb_save_dir = None,
+        image_save_dir = f'./reports/figures/serve-{timestamp}'
+    )
+
     model = Seq2Seq.restore(
         args.file_checkpoint_dir,
+        logger,
         input_vocab_index,
         output_vocab_index
     )
