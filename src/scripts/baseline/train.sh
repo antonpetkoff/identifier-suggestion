@@ -8,9 +8,9 @@ PYTHONPATH=. python src/pipelines/baseline.py \
   --max_input_length 200 \
   --max_output_length 8 \
   --input_vocab_size 20000 \
-  --input_embedding_dim 128 \
+  --input_embedding_dim 64 \
   --output_vocab_size 6000 \
-  --output_embedding_dim 128 \
+  --output_embedding_dim 64 \
   --latent_dim 512 \
   --learning_rate 0.0001 \
   --epochs 1 \

@@ -19,7 +19,7 @@ from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 from src.preprocessing.sequence import preprocess_sequences
 
-from src.models.seq2seq_attention import Seq2SeqAttention
+from src.models.seq2seq import Seq2Seq
 
 # import tqdm and enable it for pandas for progress_apply
 from tqdm import tqdm
@@ -152,7 +152,7 @@ def run(args):
 
     df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args)
 
-    model = Seq2SeqAttention(
+    model = Seq2Seq(
         checkpoint_dir=args.file_checkpoint_dir,
         input_vocab_index=input_vocab_index,
         output_vocab_index=output_vocab_index,
@@ -163,7 +163,6 @@ def run(args):
         input_embedding_dim=args.input_embedding_dim,
         output_embedding_dim=args.output_embedding_dim,
         rnn_units=args.latent_dim,
-        dense_units=args.latent_dim, # TODO: expose as a hyper parameter
         batch_size=args.batch_size,
         eval_averaging=args.eval_averaging,
     )
@@ -205,7 +204,10 @@ def run(args):
         return prediction_texts
 
     def on_epoch_end():
-        raw_predictions = model.predict_raw(input_sequences=test_inputs)
+        raw_predictions = np.array([
+            model.predict_raw(input_sequence = test_input)[0] # TODO: plot the attention weights plot
+            for test_input in test_inputs
+        ])
         predicted_texts = map_raw_predictions_to_texts(raw_predictions)
         expected_texts = map_raw_predictions_to_texts(test_outputs)
 
