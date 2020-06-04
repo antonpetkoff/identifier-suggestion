@@ -550,7 +550,7 @@ class Seq2Seq(tf.Module):
 
 
     # TODO: add documentation
-    def beam_search_predict_raw(self, input_sequence, k = 3, alpha = 0.7):
+    def beam_search_predict_raw(self, input_sequence, k = 5, alpha = 0.7):
         start_of_seq_id = self.output_vocab_index['<SOS>']
         end_of_seq_id = self.output_vocab_index['<EOS>']
 
@@ -586,7 +586,11 @@ class Seq2Seq(tf.Module):
                     encoder_outputs
                 )
 
-                top_k_probabilities, top_k_indices = tf.math.top_k(predictions[0], k = k)
+                # the predictions are raw, so we use softmax to normalize to probabilities
+                top_k_probabilities, top_k_indices = tf.math.top_k(
+                    tf.nn.softmax(predictions[0]),
+                    k = k
+                )
 
                 for top_token_id, probability in zip(top_k_indices.numpy(), top_k_probabilities.numpy()):
                     candidates.append([
@@ -612,7 +616,7 @@ class Seq2Seq(tf.Module):
         # choose the final k best based on the score normalized by sequence length
         top_k = sorted(
             [
-                [path, score / (len(score) ** alpha)]
+                [path, score / (len(path) ** alpha)]
                 for path, score in best
             ],
             key = lambda tuple: tuple[1], # sort by the normalized score
@@ -655,3 +659,49 @@ class Seq2Seq(tf.Module):
         print('Predicted text: ', predicted_text)
 
         return predicted_text, attention_plot
+
+
+    # TODO: reduce duplication of predict methods
+    def predict_beam_search(self, input_text):
+        print('Input text: ', input_text)
+
+        tokens = tokenize_method(input_text)
+
+        print('Tokenized text: ', tokens)
+
+        encoded_tokens = np.array([
+            self.input_vocab_index.get(token, 0)
+            for token in tokens
+        ])
+
+        print('Encoded tokens: ', encoded_tokens)
+
+        raw_predictions = self.beam_search_predict_raw(
+            encoded_tokens
+        )
+
+        print('Raw predictions with scores: ', raw_predictions)
+
+        raw_predictions = [path for path, score in raw_predictions]
+
+        print('Raw predictions: ', raw_predictions)
+
+        clean_raw_predictions = [
+            takewhile(
+                lambda index: index != self.output_vocab_index['<EOS>'],
+                raw_prediction
+            )
+            for raw_prediction in raw_predictions
+        ]
+
+        predicted_texts = [
+            ''.join([
+                self.reverse_output_index.get(index, '<OOV>')
+                for index in clean_raw_prediction
+            ])
+            for clean_raw_prediction in clean_raw_predictions
+        ]
+
+        print('Predicted texts: ', predicted_texts)
+
+        return predicted_texts

@@ -62,11 +62,11 @@ def predict():
 
     print(f'input_text: {input_text}')
 
-    prediction = model.predict(input_text=input_text)
+    predictions = model.predict_beam_search(input_text=input_text)
 
-    print(f'prediction: {prediction}')
+    print(f'predictions: {predictions}')
 
-    return {'predictions': [prediction]}
+    return {'predictions': [predictions]}
 
 
 if __name__ == '__main__':
