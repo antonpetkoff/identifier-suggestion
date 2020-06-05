@@ -31,10 +31,10 @@ class Logger:
 
 
     def log_data(self, data):
-        print(data)
-
         if self.wandb_enabled:
             wandb.log(data)
+        else:
+            print(data)
 
 
     def log_examples_table(
@@ -89,14 +89,18 @@ class Logger:
             })
 
         if self.image_save_dir and save_name:
-            plot_attention_weights(
-                attention_weights,
+            plt = plot_attention_weights(
+                attention_weights[:len(input_tokens), :len(output_tokens)],
                 input_tokens,
                 output_tokens,
-            ).savefig(
+            )
+
+            plt.savefig(
                 fname = os.path.join(self.image_save_dir, save_name + '.png'),
                 bbox_inches='tight'
             )
+
+            plt.close()
 
 
     def persist_data(self, data_path):

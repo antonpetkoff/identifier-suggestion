@@ -228,23 +228,13 @@ def run(args):
                 for token_id in predicted_token_ids[:(index_of_first_end_of_seq + 1)]
             ]
 
-            # logger.log_attention_heatmap(
-            #     attention_weights,
-            #     input_tokens,
-            #     output_tokens,
-            #     id = sample_id,
-            # )
-
-            plt = plot_attention_weights(
-                attention_weights[:len(input_tokens), :len(output_tokens)],
+            logger.log_attention_heatmap(
+                attention_weights,
                 input_tokens,
                 output_tokens,
+                id = sample_id,
+                save_name = f'id-{sample_id}-epoch-{epoch}'
             )
-
-            logger.log_plot(plt, save_name = f'id-{sample_id}-epoch-{epoch}')
-
-            # do not forget to close the figure!
-            plt.close()
 
             predicted_texts.append(''.join(output_tokens))
 

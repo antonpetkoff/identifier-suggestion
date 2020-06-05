@@ -230,12 +230,12 @@ class Seq2Seq(tf.Module):
 
     @staticmethod
     def restore(checkpoint_dir, logger, input_vocab_index, output_vocab_index):
-        logger('Restoring model config')
+        logger.log_message('Restoring model config')
 
         with open(os.path.join(checkpoint_dir, 'config.json')) as f:
             config = json.load(f)
 
-        logger('Loaded model config: ', config)
+        logger.log_message('Loaded model config: ', config)
 
         model = Seq2Seq(
             logger = logger,
@@ -257,7 +257,7 @@ class Seq2Seq(tf.Module):
 
         model.build() # it is necessary to build the model before accessing its variables
 
-        logger('Done restoring model')
+        logger.log_message('Done restoring model')
 
         return model
 

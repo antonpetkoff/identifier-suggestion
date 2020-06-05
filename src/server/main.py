@@ -85,7 +85,7 @@ def predict():
 
     print(f'predictions: {predictions}')
 
-    return {'predictions': [predictions]}
+    return {'predictions': predictions}
 
 
 if __name__ == '__main__':
