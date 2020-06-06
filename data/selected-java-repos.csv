@@ -1,0 +1,21 @@
+full_name;stargazers_count;forks;created_at;clone_url;description
+*apache/groovy;3699;1500;;https://github.com/apache/groovy.git;null
+*elastic/elasticsearch;49249;16898;2010-02-08T13:20:56Z;https://github.com/elastic/elasticsearch.git;Open Source, Distributed, RESTful Search Engine
+*ReactiveX/RxJava;42828;7165;2013-01-08T20:11:48Z;https://github.com/ReactiveX/RxJava.git;RxJava – Reactive Extensions for the JVM – a library for composing asynchronous and event-based programs using observable sequences for the Java VM.
+*google/guava;37594;8440;2014-05-29T16:23:17Z;https://github.com/google/guava.git;Google core libraries for Java
+*spring-projects/spring-framework;37510;25286;2010-12-08T04:04:45Z;https://github.com/spring-projects/spring-framework.git;Spring Framework
+*netty/netty;23748;11346;2010-11-09T09:22:21Z;https://github.com/netty/netty.git;Netty project - an event-driven asynchronous network application framework
+*google/gson;17960;3494;2015-03-19T18:21:20Z;https://github.com/google/gson.git;A Java serialization/deserialization library to convert Java Objects into JSON and back
+*SeleniumHQ/selenium;17826;5726;2013-01-14T21:40:56Z;https://github.com/SeleniumHQ/selenium.git;A browser automation framework and ecosystem.
+*libgdx/libgdx;17013;6036;2012-08-10T19:34:38Z;https://github.com/libgdx/libgdx.git;Desktop/Android/HTML5/iOS Java game development framework
+*apache/kafka;15950;8465;2011-08-15T18:06:16Z;https://github.com/apache/kafka.git;Mirror of Apache Kafka
+*google/ExoPlayer;15660;4697;2014-06-13T21:19:18Z;https://github.com/google/ExoPlayer.git;An extensible media player for Android
+*jenkinsci/jenkins;15623;6260;2010-11-22T21:21:23Z;https://github.com/jenkinsci/jenkins.git;Jenkins automation server
+*bazelbuild/bazel;14799;2552;2014-06-12T16:00:38Z;https://github.com/bazelbuild/bazel.git;a fast, scalable, multi-language and extensible build system
+*dbeaver/dbeaver;13717;1248;2015-10-21T08:26:28Z;https://github.com/dbeaver/dbeaver.git;Free universal database tool and SQL client
+*apache/flink;13177;7111;2014-06-07T07:00:10Z;https://github.com/apache/flink.git;Apache Flink
+*brettwooldridge/HikariCP;13096;2038;2013-10-08T05:43:03Z;https://github.com/brettwooldridge/HikariCP.git;光 HikariCP・A solid, high-performance, JDBC connection pool at last.
+*oracle/graal;12670;897;2016-01-14T17:11:35Z;https://github.com/oracle/graal.git;GraalVM: Run Programs Faster Anywhere :rocket:
+*junit-team/junit4;7878;2987;2009-01-13T03:41:26Z;https://github.com/junit-team/junit4.git;A programmer-oriented testing framework for Java.
+*antlr/antlr4;7848;1950;2010-02-04T01:36:28Z;https://github.com/antlr/antlr4.git;ANTLR (ANother Tool for Language Recognition) is a powerful parser generator for reading, processing, executing, or translating structured text or binary files.
+*neo4j/neo4j;7817;1839;2012-11-12T08:46:15Z;https://github.com/neo4j/neo4j.git;Graphs for Everyone
