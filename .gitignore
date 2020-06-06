@@ -1,5 +1,7 @@
 # Data which must be reproducible by the code in src/
-/data/
+/data/raw
+/data/external
+/data/interim
 
 # Trained and serialized models, model predictions, or model summaries
 /models/
