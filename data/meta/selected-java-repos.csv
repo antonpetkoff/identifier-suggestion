@@ -1,14 +1,14 @@
 full_name;stargazers_count;forks;created_at;clone_url;description
-apache/hadoop;;;;https://github.com/apache/hadoop.git;TODO
-mockito/mockito;;;;https://github.com/mockito/mockito.git;TODO
-scribejava/scribejava;;;;https://github.com/scribejava/scribejava.git;TODO
-zxing/zxing;;;;https://github.com/zxing/zxing.git;TODO
-apache/dubbo;;;;https://github.com/apache/dubbo.git;TODO
-clojure/clojure;;;;https://github.com/clojure/clojure.git;TODO
-bigbluebutton/bigbluebutton;;;;https://github.com/bigbluebutton/bigbluebutton.git;TODO
-apache/commons-lang;;;;https://github.com/apache/commons-lang.git;TODO
-apache/commons-io;;;;htps://github.com/apache/commons-io.git;TODO
-apache/groovy;3699;1500;;https://github.com/apache/groovy.git;null
+apache/hadoop;10510;6506;2014-08-28T07:00:08Z;https://github.com/apache/hadoop.git;Apache Hadoop
+mockito/mockito;10604;1889;2012-10-13T20:27:12Z;https://github.com/mockito/mockito.git;Most popular Mocking framework for unit tests written in Java
+scribejava/scribejava;5044;1657;2010-09-05T19:11:40Z;https://github.com/scribejava/scribejava.git;Simple OAuth library for Java
+zxing/zxing;25491;8693;2011-10-12T14:07:27Z;https://github.com/zxing/zxing.git;ZXing (\"Zebra Crossing\") barcode scanning library for Java, Android
+apache/dubbo;32568;21218;2012-06-19T07:56:02Z;https://github.com/apache/dubbo.git;Apache Dubbo is a high-performance, java based, open source RPC framework.
+clojure/clojure;8399;1305;2010-06-29T20:03:33Z;https://github.com/clojure/clojure.git;The Clojure programming language
+bigbluebutton/bigbluebutton;4815;4677;2010-05-25T01:42:41Z;https://github.com/bigbluebutton/bigbluebutton.git;Complete open source web conferencing system.
+apache/commons-lang;1930;1177;2009-05-21T01:24:46Z;https://github.com/apache/commons-lang.git;Mirror of Apache Commons Lang
+apache/commons-io;696;455;2009-05-21T01:38:37Z;https://github.com/apache/commons-io.git;Mirror of Apache Commons IO
+apache/groovy;3700;1450;2015-04-16T07:00:05Z;https://github.com/apache/groovy.git;Apache Groovy: A powerful multi-faceted programming language for the JVM platform
 elastic/elasticsearch;49249;16898;2010-02-08T13:20:56Z;https://github.com/elastic/elasticsearch.git;Open Source, Distributed, RESTful Search Engine
 ReactiveX/RxJava;42828;7165;2013-01-08T20:11:48Z;https://github.com/ReactiveX/RxJava.git;RxJava – Reactive Extensions for the JVM – a library for composing asynchronous and event-based programs using observable sequences for the Java VM.
 google/guava;37594;8440;2014-05-29T16:23:17Z;https://github.com/google/guava.git;Google core libraries for Java
