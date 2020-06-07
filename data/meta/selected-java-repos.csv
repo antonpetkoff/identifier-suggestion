@@ -1,30 +1,30 @@
-full_name;commits;contributors;stargazers_count;forks;created_at;clone_url;description
-antlr/antlr4;7448;194;7848;1950;2010-02-04T01:36:28Z;https://github.com/antlr/antlr4.git;ANTLR (ANother Tool for Language Recognition) is a powerful parser generator for reading, processing, executing, or translating structured text or binary files.
-apache/commons-io;2358;57;696;455;2009-05-21T01:38:37Z;https://github.com/apache/commons-io.git;Mirror of Apache Commons IO
-apache/commons-lang;5734;139;1930;1177;2009-05-21T01:24:46Z;https://github.com/apache/commons-lang.git;Mirror of Apache Commons Lang
-apache/dubbo;4327;302;32568;21218;2012-06-19T07:56:02Z;https://github.com/apache/dubbo.git;Apache Dubbo is a high-performance, java based, open source RPC framework.
-apache/flink;22428;676;13177;7111;2014-06-07T07:00:10Z;https://github.com/apache/flink.git;Apache Flink
-apache/groovy;17202;302;3700;1450;2015-04-16T07:00:05Z;https://github.com/apache/groovy.git;Apache Groovy: A powerful multi-faceted programming language for the JVM platform
-apache/hadoop;23913;253;10510;6506;2014-08-28T07:00:08Z;https://github.com/apache/hadoop.git;Apache Hadoop
-apache/kafka;7656;341;15950;8465;2011-08-15T18:06:16Z;https://github.com/apache/kafka.git;Mirror of Apache Kafka
-bazelbuild/bazel;26335;568;14799;2552;2014-06-12T16:00:38Z;https://github.com/bazelbuild/bazel.git;a fast, scalable, multi-language and extensible build system
-bigbluebutton/bigbluebutton;26942;111;4815;4677;2010-05-25T01:42:41Z;https://github.com/bigbluebutton/bigbluebutton.git;Complete open source web conferencing system.
-brettwooldridge/HikariCP;2728;97;13096;2038;2013-10-08T05:43:03Z;https://github.com/brettwooldridge/HikariCP.git;光 HikariCP・A solid, high-performance, JDBC connection pool at last.
-clojure/clojure;3298;143;8399;1305;2010-06-29T20:03:33Z;https://github.com/clojure/clojure.git;The Clojure programming language
-dbeaver/dbeaver;16159;131;13717;1248;2015-10-21T08:26:28Z;https://github.com/dbeaver/dbeaver.git;Free universal database tool and SQL client
-elastic/elasticsearch;52804;356;49249;16898;2010-02-08T13:20:56Z;https://github.com/elastic/elasticsearch.git;Open Source, Distributed, RESTful Search Engine
-google/ExoPlayer;7946;157;15660;4697;2014-06-13T21:19:18Z;https://github.com/google/ExoPlayer.git;An extensible media player for Android
-google/gson;1485;103;17960;3494;2015-03-19T18:21:20Z;https://github.com/google/gson.git;A Java serialization/deserialization library to convert Java Objects into JSON and back
-google/guava;5274;237;37594;8440;2014-05-29T16:23:17Z;https://github.com/google/guava.git;Google core libraries for Java
-jenkinsci/jenkins;30023;613;15623;6260;2010-11-22T21:21:23Z;https://github.com/jenkinsci/jenkins.git;Jenkins automation server
-junit-team/junit4;2432;143;7878;2987;2009-01-13T03:41:26Z;https://github.com/junit-team/junit4.git;A programmer-oriented testing framework for Java.
-libgdx/libgdx;14161;344;17013;6036;2012-08-10T19:34:38Z;https://github.com/libgdx/libgdx.git;Desktop/Android/HTML5/iOS Java game development framework
-mockito/mockito;5260;189;10604;1889;2012-10-13T20:27:12Z;https://github.com/mockito/mockito.git;Most popular Mocking framework for unit tests written in Java
-neo4j/neo4j;68479;188;7817;1839;2012-11-12T08:46:15Z;https://github.com/neo4j/neo4j.git;Graphs for Everyone
-netty/netty;9880;359;23748;11346;2010-11-09T09:22:21Z;https://github.com/netty/netty.git;Netty project - an event-driven asynchronous network application framework
-oracle/graal;44950;174;12670;897;2016-01-14T17:11:35Z;https://github.com/oracle/graal.git;GraalVM: Run Prog1rams Faster Anywhere :rocket:
-ReactiveX/RxJava;5750;253;42828;7165;2013-01-08T20:11:48Z;https://github.com/ReactiveX/RxJava.git;RxJava – Reactive Extensions for the JVM – a library for composing asynchronous and event-based programs using observable sequences for the Java VM.
-scribejava/scribejava;1145;103;5044;1657;2010-09-05T19:11:40Z;https://github.com/scribejava/scribejava.git;Simple OAuth library for Java
-SeleniumHQ/selenium;25269;390;17826;5726;2013-01-14T21:40:56Z;https://github.com/SeleniumHQ/selenium.git;A browser automation framework and ecosystem.
-spring-projects/spring-framework;20933;391;37510;25286;2010-12-08T04:04:45Z;https://github.com/spring-projects/spring-framework.git;Spring Framework
-zxing/zxing;3535;98;25491;8693;2011-10-12T14:07:27Z;https://github.com/zxing/zxing.git;ZXing (\"Zebra Crossing\") barcode scanning library for Java, Android
+repo_owner_and_name;hash;commits;contributors;stargazers_count;forks;created_at;clone_url;description
+antlr/antlr4;0b35a76e9b0931465afe9021058cf4deb0328b4d;7448;194;7848;1950;2010-02-04T01:36:28Z;https://github.com/antlr/antlr4.git;ANTLR (ANother Tool for Language Recognition) is a powerful parser generator for reading, processing, executing, or translating structured text or binary files.
+apache/commons-io;cd7787277b170d5f439df03850ca0c574566e539;2358;57;696;455;2009-05-21T01:38:37Z;https://github.com/apache/commons-io.git;Mirror of Apache Commons IO
+apache/commons-lang;115a6c64bc6dad12edaf3c5deaac7bffa0fa3b86;5734;139;1930;1177;2009-05-21T01:24:46Z;https://github.com/apache/commons-lang.git;Mirror of Apache Commons Lang
+apache/dubbo;da6c3ebf5c2aa529c0732d4f354d0d390a471bac;4327;302;32568;21218;2012-06-19T07:56:02Z;https://github.com/apache/dubbo.git;Apache Dubbo is a high-performance, java based, open source RPC framework.
+apache/flink;674817c1cdd6a15dc4638d2be26faebee000cecf;22428;676;13177;7111;2014-06-07T07:00:10Z;https://github.com/apache/flink.git;Apache Flink
+apache/groovy;57a4887028304dc088de1063fb59d32c75c4f7cc;17202;302;3700;1450;2015-04-16T07:00:05Z;https://github.com/apache/groovy.git;Apache Groovy: A powerful multi-faceted programming language for the JVM platform
+apache/hadoop;3ca15292c5584ec220b3eeaf76da85d228bcbd8b;23913;253;10510;6506;2014-08-28T07:00:08Z;https://github.com/apache/hadoop.git;Apache Hadoop
+apache/kafka;d4ef46c69dbc525f55a6d9ae5c9ae6da795f98fb;7656;341;15950;8465;2011-08-15T18:06:16Z;https://github.com/apache/kafka.git;Mirror of Apache Kafka
+bazelbuild/bazel;1af65cf2ca952671ab483921f240bbc6bf106725;26335;568;14799;2552;2014-06-12T16:00:38Z;https://github.com/bazelbuild/bazel.git;a fast, scalable, multi-language and extensible build system
+bigbluebutton/bigbluebutton;18bb82f764d88af25407748135ec84938a9282fa;26942;111;4815;4677;2010-05-25T01:42:41Z;https://github.com/bigbluebutton/bigbluebutton.git;Complete open source web conferencing system.
+brettwooldridge/HikariCP;8a28f6ebb36a8d44e25333ee4ecb2c8fd3eea99f;2728;97;13096;2038;2013-10-08T05:43:03Z;https://github.com/brettwooldridge/HikariCP.git;光 HikariCP・A solid, high-performance, JDBC connection pool at last.
+clojure/clojure;30a36cbe0ef936e57ddba238b7fa6d58ee1cbdce;3298;143;8399;1305;2010-06-29T20:03:33Z;https://github.com/clojure/clojure.git;The Clojure programming language
+dbeaver/dbeaver;2aa7f923c325dce26a03a4be21e066d36ad9ff94;16159;131;13717;1248;2015-10-21T08:26:28Z;https://github.com/dbeaver/dbeaver.git;Free universal database tool and SQL client
+elastic/elasticsearch;853dd1b873d02d04231c32722d4784c9da1068dc;52804;356;49249;16898;2010-02-08T13:20:56Z;https://github.com/elastic/elasticsearch.git;Open Source, Distributed, RESTful Search Engine
+google/ExoPlayer;6bfdf8f8f65a2d7a03d90e5e2e3bcdf80af31a94;7946;157;15660;4697;2014-06-13T21:19:18Z;https://github.com/google/ExoPlayer.git;An extensible media player for Android
+google/gson;ceae88bd6667f4263bbe02e6b3710b8a683906a2;1485;103;17960;3494;2015-03-19T18:21:20Z;https://github.com/google/gson.git;A Java serialization/deserialization library to convert Java Objects into JSON and back
+google/guava;2b5c096ddf412241c320edccd207d089d5b79b21;5274;237;37594;8440;2014-05-29T16:23:17Z;https://github.com/google/guava.git;Google core libraries for Java
+jenkinsci/jenkins;2776f4dc77d12650e310dc10c005f95937ac3469;30023;613;15623;6260;2010-11-22T21:21:23Z;https://github.com/jenkinsci/jenkins.git;Jenkins automation server
+junit-team/junit4;50a285d3ce69b4556ac46d8633f6beb4527b4679;2432;143;7878;2987;2009-01-13T03:41:26Z;https://github.com/junit-team/junit4.git;A programmer-oriented testing framework for Java.
+libgdx/libgdx;95b054d80839b546d128f56f68f111d305fadabb;14161;344;17013;6036;2012-08-10T19:34:38Z;https://github.com/libgdx/libgdx.git;Desktop/Android/HTML5/iOS Java game development framework
+mockito/mockito;b0e814b05bde07318279a3922cfd2f3fa62f6850;5260;189;10604;1889;2012-10-13T20:27:12Z;https://github.com/mockito/mockito.git;Most popular Mocking framework for unit tests written in Java
+neo4j/neo4j;1a9468b0c3ee9c6070c68c33c6786ed01e11184c;68479;188;7817;1839;2012-11-12T08:46:15Z;https://github.com/neo4j/neo4j.git;Graphs for Everyone
+netty/netty;b559711f3e1b712c3f1dfc77d5504cd1ca58aa38;9880;359;23748;11346;2010-11-09T09:22:21Z;https://github.com/netty/netty.git;Netty project - an event-driven asynchronous network application framework
+oracle/graal;cf16c07626dada3e174a0c30e8197150eede007e;44950;174;12670;897;2016-01-14T17:11:35Z;https://github.com/oracle/graal.git;GraalVM: Run Prog1rams Faster Anywhere :rocket:
+ReactiveX/RxJava;da498c5c9b91cceaa37ca8abdaa4f914b3ec6d9c;5750;253;42828;7165;2013-01-08T20:11:48Z;https://github.com/ReactiveX/RxJava.git;RxJava – Reactive Extensions for the JVM – a library for composing asynchronous and event-based programs using observable sequences for the Java VM.
+scribejava/scribejava;fdef16c0a278711491fb87d50bae0e66ca61a102;1145;103;5044;1657;2010-09-05T19:11:40Z;https://github.com/scribejava/scribejava.git;Simple OAuth library for Java
+SeleniumHQ/selenium;3912f49c4bb00474ff29b4030b25c9d9eb63e24e;25269;390;17826;5726;2013-01-14T21:40:56Z;https://github.com/SeleniumHQ/selenium.git;A browser automation framework and ecosystem.
+spring-projects/spring-framework;a34f1e375907350cc2dd211f0c8dc59f0e4e1890;20933;391;37510;25286;2010-12-08T04:04:45Z;https://github.com/spring-projects/spring-framework.git;Spring Framework
+zxing/zxing;64ff80128d4142793b6be79cb4929d666fe49c80;3535;98;25491;8693;2011-10-12T14:07:27Z;https://github.com/zxing/zxing.git;ZXing (\"Zebra Crossing\") barcode scanning library for Java, Android
