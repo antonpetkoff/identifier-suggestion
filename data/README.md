@@ -2,6 +2,11 @@
 
 ## Data Collection
 
+Download the Java source code repositories, described in `./meta/repositories.csv`
+by executing `./scripts/download-repositories.sh`.
+
+By default they are downloaded and extracted into `./external` where external data is stored.
+
 ### Searching for GitHub Repositories
 
 GitHub exposes a REST API. One of the APIs is the [Search API](https://developer.github.com/v3/search/#search-repositories) for searching repositories.

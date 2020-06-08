@@ -3,7 +3,13 @@
 set -e # Exit immediately if a command exits with a non-zero status.
 
 REPOS_CSV=../meta/repositories.csv
-TARGET_DIR=.
+TARGET_DIR=../external/repositories/
+
+mkdir -p "${TARGET_DIR}"
+
+echo "Reading repositories meta data from: ${REPOS_CSV}"
+
+echo "Downloading and extracting repositories into: ${TARGET_DIR}"
 
 function download_repo {
   OWNER_AND_REPO="$1"
