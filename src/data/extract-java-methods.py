@@ -45,7 +45,7 @@ def get_method_body(text_lines, tokens, line, column):
     closing_bracket_position = get_matching_closing_bracket_position(filtered_tokens_copy)
 
     if closing_bracket_position is None:
-        raise ValueError('cannot find closing bracket')
+        raise ValueError(f'cannot find closing bracket: line {line}, column {column}')
 
     return get_text_between_positions(
         text_lines,
