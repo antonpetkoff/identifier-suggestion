@@ -89,15 +89,15 @@ Fundamentals:
     - [ ] Attach images of embeddings 2D plots
 
 - [ ] Increase Dataset to at least 1 million method samples for training
-  - [ ] Select a set of Java repositories
-  - [ ] Write scripts for downloading the source code repositories at specific hashes
-  - [ ] Fetch only the Java code from these repositories
+  - [x] Select a set of Java repositories
+  - [x] Write scripts for downloading the source code repositories at specific hashes
+  - [x] Fetch only the Java code from these repositories
+  - [x] Write scripts for extracting Java methods
   - [ ] Analyze the distribution of the data
-  - [ ] Split test files and everything else
-  - [ ] Write scripts for extracting Java methods
+  - [ ] Split test files and everything else (test files skew the distribution)
   - [ ] Split the dataset into train/test/validation sets
   - [ ] Preprocess data
-    - [ ] Extract the preprocessing step as a method in the model
+    - [x] Extract the preprocessing step as a method in the model
 
 - [ ] Train an optimal model
   - [ ] Do a hyperparameter sweep on
