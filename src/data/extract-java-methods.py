@@ -67,6 +67,11 @@ def get_attributes(file_name, class_name, text_lines, tokens, method_node):
         raise ValueError('The given node is not of type MethodDeclaration')
 
     node = method_node
+    modifiers = list(node.modifiers)
+
+    if 'abstract' in modifiers or 'native' in modifiers:
+        print(f'Skipping abstract/native method: {file_name}/{class_name}.{node.name}', file=sys.stderr)
+        return None
 
     return {
         'file_name': file_name,
@@ -90,7 +95,8 @@ def parse_source_code(file_name, source_code_text):
     for t, class_node in tree.filter(javalang.tree.ClassDeclaration):
         class_name = class_node.name
         parsed_methods_in_class = list(class_node.methods \
-            | map(lambda tree_node_tuple: get_attributes(file_name, class_name, text_lines, tokens, tree_node_tuple)))
+            | map(lambda tree_node_tuple: get_attributes(file_name, class_name, text_lines, tokens, tree_node_tuple)) \
+            | where(lambda x: not x is None)) # filter out None
         parsed_methods = parsed_methods + parsed_methods_in_class
 
     return parsed_methods
