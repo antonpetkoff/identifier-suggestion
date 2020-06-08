@@ -11,6 +11,16 @@ function download_repo {
 
   wget -O - "https://github.com/${OWNER_AND_REPO}/archive/${COMMIT_HASH}.tar.gz" \
     | tar xfz - -C "${TARGET_DIR}"
+
+  REPO="$(echo ${OWNER_AND_REPO} | cut -d '/' -f 2)"
+  EXTRACTED_DIR_NAME="${REPO}-${COMMIT_HASH}"
+  NEW_DIR_NAME="$(echo ${EXTRACTED_DIR_NAME} | sed -r 's/^(.*)-[^-]+$/\1/')"
+
+  echo "Downloaded and extracted: ${EXTRACTED_DIR_NAME}"
+
+  mv "${EXTRACTED_DIR_NAME}" "${NEW_DIR_NAME}"
+
+  echo "Moved ${EXTRACTED_DIR_NAME} to ${NEW_DIR_NAME}"
 }
 
 tail -n +2 "${REPOS_CSV}" \
