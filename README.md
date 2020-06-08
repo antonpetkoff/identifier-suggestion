@@ -78,6 +78,15 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 Fundamentals:
 
 - [ ] Write!
+  - [ ] Describe the dataset
+    - [ ] Add some tables and plots of the data for better understanding
+  - [ ] Describe the Seq2Seq architecture and training process
+  - [ ] Describe the evaluation metrics this project has used
+  - [ ] Summarize your research in the Literature Review section
+  - [ ] Describe your best experiment
+    - [ ] Add tables with evaluation scores
+    - [ ] Attach images of attention weights
+    - [ ] Attach images of embeddings 2D plots
 
 - [ ] Increase Dataset to at least 1 million method samples for training
   - [ ] Select a set of Java repositories
