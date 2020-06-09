@@ -94,7 +94,15 @@ Fundamentals:
   - [x] Fetch only the Java code from these repositories
   - [x] Write scripts for extracting Java methods
   - [ ] Analyze the distribution of the data
-  - [ ] Split test files and everything else (test files skew the distribution)
+    - [ ] Reduce vocabulary size
+      - [x] Replace string literals
+      - [ ] Replace number literals
+      - [ ] Cased vs uncased - the hypothesis is that cased is better
+      - [ ] Stemming? - the hypothesis is that stemming will not improve performance
+      - [ ] Include or remove test files (they skew the distribution)
+      - [ ] Token-level vs subtoken-level vs char-level vocabulary
+    - [ ] This analysis can help in choosing hyper parameters
+      - [ ] Analyze the token lengths of the sequences (max seq. length)
   - [ ] Split the dataset into train/test/validation sets
   - [ ] Preprocess data
     - [x] Extract the preprocessing step as a method in the model
