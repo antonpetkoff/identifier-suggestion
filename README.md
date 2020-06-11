@@ -78,17 +78,14 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 Fundamentals:
 
 - [ ] Write!
-  - [ ] Describe the dataset
+  - [x] Describe the dataset
     - [ ] Add some tables and plots of the data for better understanding
   - [ ] Describe the Seq2Seq architecture and training process
   - [ ] Describe the evaluation metrics this project has used
   - [ ] Summarize your research in the Literature Review section
   - [ ] Describe your best experiment
-    - [ ] Add tables with evaluation scores
-    - [ ] Attach images of attention weights
-    - [ ] Attach images of embeddings 2D plots
 
-- [ ] Increase Dataset to at least 1 million method samples for training
+- [ ] Increase Dataset to 1 million method samples for training
   - [x] Select a set of Java repositories
   - [x] Write scripts for downloading the source code repositories at specific hashes
   - [x] Fetch only the Java code from these repositories
@@ -98,11 +95,8 @@ Fundamentals:
       - [x] Replace string literals
       - [ ] Replace number literals
       - [ ] Cased vs uncased - the hypothesis is that cased is better
-      - [ ] Stemming? - the hypothesis is that stemming will not improve performance
       - [ ] Include or remove test files (they skew the distribution)
       - [ ] Token-level vs subtoken-level vs char-level vocabulary
-    - [ ] This analysis can help in choosing hyper parameters
-      - [ ] Analyze the token lengths of the sequences (max seq. length)
   - [ ] Split the dataset into train/test/validation sets
   - [ ] Preprocess data
     - [x] Extract the preprocessing step as a method in the model
@@ -114,6 +108,30 @@ Fundamentals:
     - [ ] Regularization rates (e.g. dropout)
   - [ ] Clean noise from data
     - [ ] reduce vocabulary size by removing number literals, splitting snake-case, etc.
+
+- [ ] Add Regularization
+  - [ ] L2 Regularization of all trainable variables
+  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
+  - [ ] LayerNorm vs BatchNorm
+  - [ ] Expose regularization hyper-parameters
+
+- [ ] Improve evaluation
+  - [ ] Exclude padding tokens
+    - [ ] Ensure that the metrics don't reward the model if it correctly predicts padding tokens
+  - [ ] Order-aware metrics
+    - [ ] Some type of edit distance
+    - [ ] BLEU
+      - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
+    - [ ] What about the CTC loss?
+
+- [ ] Plot embeddings
+  - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
+  - [ ] Make a 2D/3D Plot with a good (interpretable) sample
+  - [ ] Log/Upload the plot in `wandb`
+
+- [ ] Initialization
+  - [ ] Check how the embedding layers and RNNs are initialized
+  - [ ] Will Xavier or Random Normal initialization improve training time?
 
 - [x] Rewrite the Seq2Seq model without TensorFlow Addons
   - [x] Add Beam Search Decoder for making multiple suggestions
@@ -158,12 +176,7 @@ Fundamentals:
     - [x] Precision
     - [x] Recall
     - [x] F1 score
-    - [ ] Define the token position strictness of the confusion matrix metrics
-    - [ ] Order-aware metrics
-      - [ ] Some type of edit distance
-      - [ ] BLEU
-        - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
-  - [x] Run evaluation on test set after each epoch
+    - [x] Run evaluation on test set after each epoch
     - [x] Can we run the evaluation in parallel on the CPU while the model trains on the GPU? Will not do it for now
   - [x] Log evaluation metrics with `weights and biases`
 
@@ -178,17 +191,9 @@ Fundamentals:
 
 - [x] Log model summary - architecture, parameter counts, shapes
 
-- [ ] Initialization
-  - [ ] Will Xavier or Random Normal initialization improve training time?
-
-- [ ] Regularization
-  - [ ] L2 Regularization
-  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
-  - [ ] LayerNorm vs BatchNorm
-
 - [x] Fixate all random seeds for reproducible results
 
-- [ ] Run one full experiment
+- [x] Run one full experiment
   - [ ] Describe the experiment - setup, expectations (hypothesis) vs results, goals, architecture, meaning of parameters, evaluation
   - [x] Log training and evaluation
   - [x] Save configuration
@@ -196,20 +201,12 @@ Fundamentals:
   - [x] Make predictions
     - [x] Stop predicting elements once you hit the <EOS> marker
 
-- [ ] Visualizations
+- [x] Visualizations
   - [x] Log predictions into text tables for transparency on how the model performs
-  - [ ] Plot embeddings
-    - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
-    - [ ] Make a 2D/3D Plot with a good (interpretable) sample
-    - [ ] Log/Upload the plot in `wandb`
-
-  - [ ] Heat map of Attention weights during a single prediction. [see here](https://www.researchgate.net/figure/Heatmaps-of-attention-weights-a-i-j_fig1_316184919)
-
+  - [x] Heat map of Attention weights during a single prediction. [see here](https://www.researchgate.net/figure/Heatmaps-of-attention-weights-a-i-j_fig1_316184919)
   - [ ] Can we log layer weights / activations / gradients for debugging? [see here](https://www.quora.com/Are-there-any-examples-of-tensorflow-that-shows-how-to-monitor-the-jacobian-and-or-the-hessian)
     - [ ] [Tutorial](https://machinelearningmastery.com/how-to-fix-vanishing-gradients-using-the-rectified-linear-activation-function/)
     - [ ] [Question](https://stackoverflow.com/questions/42315202/understanding-tensorboard-weight-histograms)
-
-  - [ ] What other visualizations can be useful?
 
 Modelling and Feature Engineering (Creative):
 
@@ -222,6 +219,7 @@ Modelling and Feature Engineering (Creative):
   - [ ] Attention for the decoder
   - [ ] Bi-directional RNN for the encoder
   - [ ] Custom Binary/Categorical features
+
   - [ ] Transformer
   - [ ] AST features (AST path embeddings)
 
