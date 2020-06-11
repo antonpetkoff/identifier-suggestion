@@ -92,6 +92,7 @@ Fundamentals:
   - [x] Write scripts for extracting Java methods
   - [ ] Analyze the distribution of the data
     - [ ] Reduce vocabulary size
+      - [ ] Split snake_case
       - [x] Replace string literals
       - [ ] Replace number literals
       - [ ] Cased vs uncased - the hypothesis is that cased is better
@@ -101,19 +102,14 @@ Fundamentals:
   - [ ] Preprocess data
     - [x] Extract the preprocessing step as a method in the model
 
-- [ ] Train an optimal model
-  - [ ] Do a hyperparameter sweep on
-    - [ ] Layer sizes
-    - [ ] Learning rate
-    - [ ] Regularization rates (e.g. dropout)
-  - [ ] Clean noise from data
-    - [ ] reduce vocabulary size by removing number literals, splitting snake-case, etc.
-
 - [ ] Add Regularization
   - [ ] L2 Regularization of all trainable variables
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
   - [ ] LayerNorm vs BatchNorm
   - [ ] Expose regularization hyper-parameters
+
+- [ ] Train an optimal model
+  - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
 
 - [ ] Improve evaluation
   - [ ] Exclude padding tokens
@@ -132,6 +128,10 @@ Fundamentals:
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
   - [ ] Will Xavier or Random Normal initialization improve training time?
+
+- [ ] Try to replace the encoder with a Bidirectional LSTM
+
+- [ ] Use custom features like return type, parameters, class name, etc.
 
 - [x] Rewrite the Seq2Seq model without TensorFlow Addons
   - [x] Add Beam Search Decoder for making multiple suggestions
