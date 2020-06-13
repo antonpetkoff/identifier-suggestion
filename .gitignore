@@ -2,6 +2,7 @@
 /data/raw
 /data/external
 /data/interim
+/data/processed
 
 # Trained and serialized models, model predictions, or model summaries
 /models/
