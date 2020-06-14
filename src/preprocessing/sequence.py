@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -20,12 +22,11 @@ PAD_TOKEN = '<pad>'
 
 
 def preprocess_sequences(
-    csv_filename,
+    dir_data,
     max_input_seq_length = 200,
     max_output_seq_length = 8,
-    max_input_vocab_size = 30000,
-    max_output_vocab_size = 10000,
-    random_seed = 1,
+    max_input_vocab_size = 20000,
+    max_output_vocab_size = 15000,
 ):
     """This function preprocesses input and output sequences for seq2seq models.
 
@@ -54,31 +55,33 @@ def preprocess_sequences(
 
     print('Reading input files')
     # Reading the input files
-    df = pd.read_csv(csv_filename)
+    df_train = pd.read_hdf(os.path.join(dir_data, 'train.h5'), key='data')
+    df_validation = pd.read_hdf(os.path.join(dir_data, 'validation.h5'), key='data')
+    df_test = pd.read_hdf(os.path.join(dir_data, 'test.h5'), key='data')
 
-    # Cleaning, filtering the data
-    df = df.dropna()
+    def pick_columns_and_mark_outputs(df):
+        # Keep only the inputs and outputs
+        df = df[['tokenized_body', 'tokenized_method_name']]
 
-    print('Tokenizing input method bodies')
-    # Tokenize and filter input sequences
-    df['inputs'] = df['body'].progress_apply(tokenize_method)
+        # Rename columns
+        df = df.rename(columns={'tokenized_body': 'inputs', 'tokenized_method_name': 'outputs'})
 
-    print('Tokenizing output sequences')
-    # Tokenize output sequences
-    df['outputs'] = df['method_name'].progress_apply(split_subtokens)
+        # Ensure output sequences are at most max_output_seq_length long
+        # and annotate output sequences with <sos> and <eos>
+        print('Adding <start> and <end> markers to output sequences')
+        df['outputs'] = df['outputs'].progress_apply(
+            lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
+        )
 
-    # Filter out the samples which cannot be tokenized
-    df = df[df.inputs.str.len() > 0]
+        return df
 
-    # Keep only the inputs and outputs
-    df = df[['inputs', 'outputs']]
+    df_train = pick_columns_and_mark_outputs(df_train)
+    df_validation = pick_columns_and_mark_outputs(df_validation)
+    df_test = pick_columns_and_mark_outputs(df_test)
 
-    # Ensure output sequences are at most max_output_seq_length long
-    # and annotate output sequences with <sos> and <eos>
-    print('Adding <start> and <end> markers to output sequences')
-    df['outputs'] = df['outputs'].progress_apply(
-        lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
-    )
+    # we need to combine the rows (samples) from all data set splits
+    # so that the full vocabularies can be built
+    df_combined = pd.concat([df_train, df_validation, df_test], axis=0)
 
     def get_vocab_index(df, max_vocab_size):
         tokenizer = tf.keras.preprocessing.text.Tokenizer(
@@ -95,93 +98,70 @@ def preprocess_sequences(
     # Build vocabularies and their indices
     print('Building input vocabulary')
     input_tokenizer = get_vocab_index(
-        df['inputs'],
+        df_combined['inputs'],
         max_vocab_size=max_input_vocab_size
     )
     input_vocab_index = input_tokenizer.word_index
 
     print('Building output vocabulary')
     output_tokenizer = get_vocab_index(
-        df['outputs'],
+        df_combined['outputs'],
         max_vocab_size=max_output_vocab_size
     )
     output_vocab_index = output_tokenizer.word_index
 
-    print('Encoding input sequences into numbers')
-    # TODO: can tokenizer.texts_to_sequences be applied on all samples at once?
-    # Encode sequences to numbers
-    df['inputs'] = df['inputs'].progress_apply(
-        lambda seq: np.concatenate(input_tokenizer.texts_to_sequences(seq))
-    )
+    def encode_and_pad(df):
+        print('Encoding input sequences into numbers')
+        # TODO: can tokenizer.texts_to_sequences be applied on all samples at once?
+        # Encode sequences to numbers
+        df['inputs'] = df['inputs'].progress_apply(
+            lambda seq: np.concatenate(input_tokenizer.texts_to_sequences(seq))
+        )
 
-    print('inputs after tokenizer', df['inputs'].head(3))
+        print('inputs after tokenizer', df['inputs'].head(3))
 
-    print('Encoding output sequences into numbers')
-    df['outputs'] = df['outputs'].progress_apply(
-        lambda seq: np.concatenate(output_tokenizer.texts_to_sequences(seq))
-    )
+        print('Encoding output sequences into numbers')
+        df['outputs'] = df['outputs'].progress_apply(
+            lambda seq: np.concatenate(output_tokenizer.texts_to_sequences(seq))
+        )
 
-    print('outputs after tokenizer', df['outputs'].head(3))
+        print('outputs after tokenizer', df['outputs'].head(3))
 
-    print('Padding and aligning input sequences')
-    # Pad and align sequences
-    df['inputs'] = tf.keras.preprocessing.sequence.pad_sequences(
-        df['inputs'],
-        maxlen=max_input_seq_length,
-        truncating='post',
-        padding='post',
-        value=0, # index of PAD token
-        dtype='int32',
-    ).tolist()
+        print('Padding and aligning input sequences')
+        # Pad and align sequences
+        df['inputs'] = tf.keras.preprocessing.sequence.pad_sequences(
+            df['inputs'],
+            maxlen=max_input_seq_length,
+            truncating='post',
+            padding='post',
+            value=0, # index of PAD token
+            dtype='int32',
+        ).tolist()
 
-    print('inputs after padding', df['inputs'].head(3))
+        print('inputs after padding', df['inputs'].head(3))
 
-    print('Padding and aligning output sequences')
-    df['outputs'] = tf.keras.preprocessing.sequence.pad_sequences(
-        df['outputs'],
-        maxlen=max_output_seq_length,
-        truncating='post',
-        padding='post',
-        value=0, # index of PAD token
-        dtype='int32',
-    ).tolist()
+        print('Padding and aligning output sequences')
+        df['outputs'] = tf.keras.preprocessing.sequence.pad_sequences(
+            df['outputs'],
+            maxlen=max_output_seq_length,
+            truncating='post',
+            padding='post',
+            value=0, # index of PAD token
+            dtype='int32',
+        ).tolist()
 
-    print('Outputs after padding: ', df['outputs'].head(3))
+        print('Outputs after padding: ', df['outputs'].head(3))
 
-    print('Shuffling the final dataset')
-    # shuffle the samples so that we don't have only unit tests at the beginning
-    shuffle(df, random_state=random_seed)
+        return df
 
-    print('Splitting the data into train/validation/test datasets')
+    print('Encoding and padding training data...')
+    df_train = encode_and_pad(df_train)
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        df['inputs'],
-        df['outputs'],
-        test_size=0.2,
-        random_state=random_seed
-    )
+    print('Encoding and padding validation data...')
+    df_validation = encode_and_pad(df_validation)
 
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train,
-        y_train,
-        test_size=0.25, # 0.25 x 0.8 = 0.2
-        random_state=random_seed
-    )
-
-    df_train = pd.DataFrame({
-        'inputs': X_train,
-        'outputs': y_train,
-    })
-
-    df_validation = pd.DataFrame({
-        'inputs': X_val,
-        'outputs': y_val,
-    })
-
-    df_test = pd.DataFrame({
-        'inputs': X_test,
-        'outputs': y_test,
-    })
+    print('Encoding and padding testing data...')
+    df_test = encode_and_pad(df_test)
 
     print('Done preprocessing')
 

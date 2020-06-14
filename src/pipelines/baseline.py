@@ -57,7 +57,7 @@ def limit_memory():
 parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 
 # data files
-parser.add_argument('--file_data_raw', type=str, help='Raw data file used for model training', required=True)
+parser.add_argument('--dir_data', type=str, help='Directory of the dataset', required=True)
 parser.add_argument('--file_checkpoint_dir', type=str, help='Model checkpoint directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
@@ -98,12 +98,11 @@ def preprocess_data(args, logger):
         logger.log_message('Preprocessed files not found. Preprocessing...')
         # Preprocess raw data
         df_train, df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_sequences(
-            csv_filename=args.file_data_raw,
+            dir_data=args.dir_data,
             max_input_seq_length=args.max_input_length,
             max_output_seq_length=args.max_output_length,
             max_input_vocab_size=args.input_vocab_size,
             max_output_vocab_size=args.output_vocab_size,
-            random_seed=RANDOM_SEED,
         )
 
         logger.log_message('Done preprocessing. Saving...')

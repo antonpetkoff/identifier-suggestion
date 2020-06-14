@@ -1,6 +1,5 @@
 import javalang
 import re
-import numpy as np
 
 from pydash import flatten
 
@@ -107,6 +106,6 @@ def tokenize_method(
     ])
 
     if lowercase:
-        return np.asarray([token.lower() for token in processed_tokens])
+        return [token.lower() for token in processed_tokens]
 
-    return np.asarray(processed_tokens)
+    return processed_tokens
