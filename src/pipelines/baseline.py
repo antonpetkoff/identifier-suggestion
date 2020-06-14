@@ -19,6 +19,7 @@ from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 from src.preprocessing.sequence import preprocess_sequences
 from src.visualization.plot import plot_attention_weights
+from src.common.tokens import Common
 
 from src.models.seq2seq import Seq2Seq
 
@@ -195,16 +196,16 @@ def run(args):
     for test_input in test_inputs:
         without_padding = filter(lambda index: index != 0, test_input)
         input_texts.append(
-            ' '.join(list(map(lambda index: reverse_input_index.get(index, '<OOV>'), without_padding)))
+            ' '.join(list(map(lambda index: reverse_input_index.get(index, Common.OOV), without_padding)))
         )
 
     def map_raw_predictions_to_texts(raw_predictions):
         prediction_texts = []
 
         for prediction in raw_predictions:
-            before_end = takewhile(lambda index: index != output_vocab_index['<EOS>'], prediction)
+            before_end = takewhile(lambda index: index != output_vocab_index[Common.EOS], prediction)
             prediction_texts.append(
-                ''.join(list(map(lambda index: reverse_output_index.get(index, '<OOV>'), before_end)))
+                ''.join(list(map(lambda index: reverse_output_index.get(index, Common.OOV), before_end)))
             )
 
         return prediction_texts
@@ -216,14 +217,14 @@ def run(args):
             predicted_token_ids, attention_weights = model.predict_raw(input_sequence = test_input)
 
             input_tokens = [
-                reverse_input_index.get(index, '<OOV>')
+                reverse_input_index.get(index, Common.OOV)
                 for index in test_input
                 if index != 0
             ]
 
-            index_of_first_end_of_seq = predicted_token_ids.index(output_vocab_index['<EOS>'])
+            index_of_first_end_of_seq = predicted_token_ids.index(output_vocab_index[Common.EOS])
             output_tokens = [
-                reverse_output_index.get(token_id, '<OOV>')
+                reverse_output_index.get(token_id, Common.OOV)
                 for token_id in predicted_token_ids[:(index_of_first_end_of_seq + 1)]
             ]
 

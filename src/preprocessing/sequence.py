@@ -11,14 +11,9 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 tqdm.pandas()
 
+from src.common.tokens import Common
 from src.preprocessing.tokens import tokenize_method, split_subtokens
 from src.utils.pandas import lists_to_series
-
-
-OOV_TOKEN = '<oov>'
-SEQ_START_TOKEN = '<sos>'
-SEQ_END_TOKEN = '<eos>'
-PAD_TOKEN = '<pad>'
 
 
 def preprocess_sequences(
@@ -70,7 +65,7 @@ def preprocess_sequences(
         # and annotate output sequences with <sos> and <eos>
         print('Adding <start> and <end> markers to output sequences')
         df['outputs'] = df['outputs'].progress_apply(
-            lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
+            lambda seq: [Common.SOS] + seq[:max_output_seq_length] + [Common.EOS]
         )
 
         return df
@@ -88,7 +83,7 @@ def preprocess_sequences(
             num_words=max_vocab_size,
             filters='',
             lower=False,
-            oov_token=OOV_TOKEN,
+            oov_token=Common.OOV,
         )
 
         tokenizer.fit_on_texts(df.values)

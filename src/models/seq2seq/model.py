@@ -8,6 +8,7 @@ import math
 from collections import Counter
 from itertools import takewhile
 
+from src.common.tokens import Common
 from src.models.seq2seq.encoder import Encoder
 from src.models.seq2seq.decoder import Decoder
 from src.metrics.f1_score import F1Score
@@ -125,7 +126,7 @@ class Seq2Seq(tf.Module):
 
         # shape: (batch_size, 1), where the 1 is the single <start> timestep
         decoder_input = tf.expand_dims(
-            [self.output_vocab_index['<sos>']] * self.params['batch_size'],
+            [self.output_vocab_index[Common.SOS]] * self.params['batch_size'],
             axis = 1 # expand the last dimension, leave the batch_size in tact
         )
 
@@ -503,8 +504,8 @@ class Seq2Seq(tf.Module):
             along with a matrix with attention weights for plotting.
         """
 
-        start_of_seq_id = self.output_vocab_index['<sos>']
-        end_of_seq_id = self.output_vocab_index['<eos>']
+        start_of_seq_id = self.output_vocab_index[Common.SOS]
+        end_of_seq_id = self.output_vocab_index[Common.EOS]
 
         hidden = self.encoder.initialize_hidden_state(batch_size = 1)
 
@@ -559,8 +560,8 @@ class Seq2Seq(tf.Module):
 
     # TODO: add documentation
     def beam_search_predict_raw(self, input_sequence, k = 5, alpha = 0.7):
-        start_of_seq_id = self.output_vocab_index['<sos>']
-        end_of_seq_id = self.output_vocab_index['<eos>']
+        start_of_seq_id = self.output_vocab_index[Common.SOS]
+        end_of_seq_id = self.output_vocab_index[Common.EOS]
 
         encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
             tf.convert_to_tensor([input_sequence]), # the array brackets are needed for the batch_size dimension
@@ -659,17 +660,17 @@ class Seq2Seq(tf.Module):
         self.logger.log_message('Raw prediction: ', raw_prediction)
 
         output_tokens = [
-            self.reverse_output_index.get(index, '<oov>')
+            self.reverse_output_index.get(index, Common.OOV)
             for index in raw_prediction
         ]
 
         clean_raw_prediction = takewhile(
-            lambda index: index != self.output_vocab_index['<eos>'],
+            lambda index: index != self.output_vocab_index[Common.EOS],
             raw_prediction
         )
 
         predicted_text = ''.join([
-            self.reverse_output_index.get(index, '<oov>')
+            self.reverse_output_index.get(index, Common.OOV)
             for index in clean_raw_prediction
         ])
 
@@ -705,7 +706,7 @@ class Seq2Seq(tf.Module):
 
         clean_raw_predictions = [
             takewhile(
-                lambda index: index != self.output_vocab_index['<eos>'],
+                lambda index: index != self.output_vocab_index[Common.EOS],
                 raw_prediction
             )
             for raw_prediction in raw_predictions
@@ -713,7 +714,7 @@ class Seq2Seq(tf.Module):
 
         predicted_texts = [
             ''.join([
-                self.reverse_output_index.get(index, '<oov>')
+                self.reverse_output_index.get(index, Common.OOV)
                 for index in clean_raw_prediction
             ])
             for clean_raw_prediction in clean_raw_predictions
