@@ -121,11 +121,11 @@ class Seq2Seq(tf.Module):
         # initialize the decoder's hidden state with the final hidden state of the encoder
         decoder_hidden = encoder_hidden
 
-        # TODO: extract the <SOS> token in a Common module
+        # TODO: extract the <sos> token in a Common module
 
         # shape: (batch_size, 1), where the 1 is the single <start> timestep
         decoder_input = tf.expand_dims(
-            [self.output_vocab_index['<SOS>']] * self.params['batch_size'],
+            [self.output_vocab_index['<sos>']] * self.params['batch_size'],
             axis = 1 # expand the last dimension, leave the batch_size in tact
         )
 
@@ -138,8 +138,8 @@ class Seq2Seq(tf.Module):
         # feed forward through decoder using
         # the teacher forcing training algorithm - feeding the target as the next input
         # we iterate timesteps from 1, not from 0, because this way we shift the target sequences by one
-        # i.e. if we have [<SOS>, get, search, data, <EOS>] as a target sequence
-        # we first feed <SOS> (index 0) into the decoder and expect it to predict "get" (index 1)
+        # i.e. if we have [<sos>, get, search, data, <eos>] as a target sequence
+        # we first feed <sos> (index 0) into the decoder and expect it to predict "get" (index 1)
         # and on the next step the "get" (index 1) is fed into the decoder, expecting it to predict "search" (index 2)
         # and so on.
         for t in range(1, target_seq_length): # for each timestep in the output sequence
@@ -503,8 +503,8 @@ class Seq2Seq(tf.Module):
             along with a matrix with attention weights for plotting.
         """
 
-        start_of_seq_id = self.output_vocab_index['<SOS>']
-        end_of_seq_id = self.output_vocab_index['<EOS>']
+        start_of_seq_id = self.output_vocab_index['<sos>']
+        end_of_seq_id = self.output_vocab_index['<eos>']
 
         hidden = self.encoder.initialize_hidden_state(batch_size = 1)
 
@@ -559,8 +559,8 @@ class Seq2Seq(tf.Module):
 
     # TODO: add documentation
     def beam_search_predict_raw(self, input_sequence, k = 5, alpha = 0.7):
-        start_of_seq_id = self.output_vocab_index['<SOS>']
-        end_of_seq_id = self.output_vocab_index['<EOS>']
+        start_of_seq_id = self.output_vocab_index['<sos>']
+        end_of_seq_id = self.output_vocab_index['<eos>']
 
         encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
             tf.convert_to_tensor([input_sequence]), # the array brackets are needed for the batch_size dimension
@@ -659,17 +659,17 @@ class Seq2Seq(tf.Module):
         self.logger.log_message('Raw prediction: ', raw_prediction)
 
         output_tokens = [
-            self.reverse_output_index.get(index, '<OOV>')
+            self.reverse_output_index.get(index, '<oov>')
             for index in raw_prediction
         ]
 
         clean_raw_prediction = takewhile(
-            lambda index: index != self.output_vocab_index['<EOS>'],
+            lambda index: index != self.output_vocab_index['<eos>'],
             raw_prediction
         )
 
         predicted_text = ''.join([
-            self.reverse_output_index.get(index, '<OOV>')
+            self.reverse_output_index.get(index, '<oov>')
             for index in clean_raw_prediction
         ])
 
@@ -705,7 +705,7 @@ class Seq2Seq(tf.Module):
 
         clean_raw_predictions = [
             takewhile(
-                lambda index: index != self.output_vocab_index['<EOS>'],
+                lambda index: index != self.output_vocab_index['<eos>'],
                 raw_prediction
             )
             for raw_prediction in raw_predictions
@@ -713,7 +713,7 @@ class Seq2Seq(tf.Module):
 
         predicted_texts = [
             ''.join([
-                self.reverse_output_index.get(index, '<OOV>')
+                self.reverse_output_index.get(index, '<oov>')
                 for index in clean_raw_prediction
             ])
             for clean_raw_prediction in clean_raw_predictions
