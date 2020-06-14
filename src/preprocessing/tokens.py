@@ -51,16 +51,16 @@ SUBTOKEN_REGEX = re.compile(r'''
 ''', re.VERBOSE)
 
 
-def split_subtokens(code_string):
+def split_subtokens(code_string, lowercase=True):
     return [
         # NUMBER_LITERAL_TOKEN if mask_numbers and re.search(r'^\d+$', subtoken) else subtoken
-        subtoken
+        subtoken.lower() if lowercase else subtoken
         for subtoken in SUBTOKEN_REGEX.findall(code_string)
         if subtoken != ''
     ]
 
 
-def process_token(token, subtoken_level, mask_strings, mask_numbers):
+def process_token(token, subtoken_level, lowercase, mask_strings, mask_numbers):
     if mask_strings and type(token) == javalang.tokenizer.String:
         return STRING_LITERAL_TOKEN
     elif mask_strings and type(token) == javalang.tokenizer.Character:
@@ -80,7 +80,7 @@ def process_token(token, subtoken_level, mask_strings, mask_numbers):
     ]:
         return FLOAT_LITERAL_TOKEN
     elif subtoken_level and type(token) == javalang.tokenizer.Identifier:
-        return split_subtokens(token.value)
+        return split_subtokens(token.value, lowercase) # only identifiers need lowercasing
     return token.value
 
 
@@ -102,7 +102,7 @@ def tokenize_method(
 
     # split subtokens of identifiers
     processed_tokens = flatten([
-        process_token(token, subtoken_level, mask_strings, mask_numbers)
+        process_token(token, subtoken_level, lowercase, mask_strings, mask_numbers)
         for token in tokens
     ])
 
