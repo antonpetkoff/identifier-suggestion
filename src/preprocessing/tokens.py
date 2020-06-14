@@ -36,9 +36,11 @@ def tokenize_method_body(code):
     except Exception:
         return []
 
-
-STRING_LITERAL_TOKEN = '<str>' # used to mask string literals
-NUMBER_LITERAL_TOKEN = '<num>' # user to mask number literals
+# special tokens used for masking of literals
+CHARACTER_LITERAL_TOKEN = '<char>'
+STRING_LITERAL_TOKEN = '<string>'
+INTEGER_LITERAL_TOKEN = '<int>'
+FLOAT_LITERAL_TOKEN = '<float>'
 
 SUBTOKEN_REGEX = re.compile(r'''
     # Find words in a string. Order matters!
@@ -49,23 +51,46 @@ SUBTOKEN_REGEX = re.compile(r'''
 ''', re.VERBOSE)
 
 
-def split_subtokens(code_string, mask_numbers):
+def split_subtokens(code_string):
     return [
-        NUMBER_LITERAL_TOKEN if mask_numbers and re.search(r'^\d+$', subtoken) else subtoken
+        # NUMBER_LITERAL_TOKEN if mask_numbers and re.search(r'^\d+$', subtoken) else subtoken
+        subtoken
         for subtoken in SUBTOKEN_REGEX.findall(code_string)
         if subtoken != ''
     ]
 
 
-def process_token(token, mask_strings, mask_numbers):
+def process_token(token, subtoken_level, mask_strings, mask_numbers):
     if mask_strings and type(token) == javalang.tokenizer.String:
         return STRING_LITERAL_TOKEN
-    elif type(token) == javalang.tokenizer.Identifier:
-        return split_subtokens(token.value, mask_numbers)
+    elif mask_strings and type(token) == javalang.tokenizer.Character:
+        return CHARACTER_LITERAL_TOKEN
+    elif mask_numbers and type(token) in [
+        javalang.tokenizer.Integer,
+        javalang.tokenizer.OctalInteger,
+        javalang.tokenizer.BinaryInteger,
+        javalang.tokenizer.HexInteger,
+        javalang.tokenizer.DecimalInteger
+    ]:
+        return INTEGER_LITERAL_TOKEN
+    elif mask_numbers and type(token) in [
+        javalang.tokenizer.FloatingPoint,
+        javalang.tokenizer.HexFloatingPoint,
+        javalang.tokenizer.DecimalFloatingPoint,
+    ]:
+        return FLOAT_LITERAL_TOKEN
+    elif subtoken_level and type(token) == javalang.tokenizer.Identifier:
+        return split_subtokens(token.value)
     return token.value
 
 
-def tokenize_method(method_body, lowercase=False, mask_strings=True, mask_numbers=True):
+def tokenize_method(
+    method_body,
+    subtoken_level=True,
+    lowercase=True,
+    mask_strings=True,
+    mask_numbers=True
+):
     try:
         tokens = list(javalang.tokenizer.tokenize(method_body))
     except:
@@ -77,7 +102,7 @@ def tokenize_method(method_body, lowercase=False, mask_strings=True, mask_number
 
     # split subtokens of identifiers
     processed_tokens = flatten([
-        process_token(token, mask_strings, mask_numbers)
+        process_token(token, subtoken_level, mask_strings, mask_numbers)
         for token in tokens
     ])
 
