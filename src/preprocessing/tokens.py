@@ -1,6 +1,8 @@
 import javalang
 import re
-from itertools import chain
+import numpy as np
+
+from pydash import flatten
 
 """
 
@@ -23,7 +25,6 @@ def split_camel_case(str):
     return [''.join(word).lower() for word in words]
 
 
-# TODO: use a smarter identifier splitter
 def get_subtokens(token):
     return split_camel_case(token)
 
@@ -33,35 +34,38 @@ def tokenize_method_body(code):
     try:
         return list(map(lambda token: token.value, javalang.tokenizer.tokenize(code)))
     except Exception:
-        # invalid_body_count += 1
-        # if invalid_body_count % 1000 == 0:
-        #     print(f'invalid_body_count = {invalid_body_count}')
         return []
 
 
-STRING_LITERAL_TOKEN = '<STR>' # used to mask string literals
-MODIFIERS = ['public', 'private', 'protected', 'static']
+STRING_LITERAL_TOKEN = '<str>' # used to mask string literals
+NUMBER_LITERAL_TOKEN = '<num>' # user to mask number literals
 
-# TODO: add snake case splitting
 SUBTOKEN_REGEX = re.compile(r'''
     # Find words in a string. Order matters!
     [A-Z]+(?=[A-Z][a-z]) |  # All upper case before a capitalized word
     [A-Z]?[a-z]+ |  # Capitalized words / all lower case
     [A-Z]+ |  # All upper case
-    \d+ | # Numbers
-    .+
+    \d+ # Numbers
 ''', re.VERBOSE)
 
 
-def split_subtokens(code_string):
+def split_subtokens(code_string, mask_numbers):
     return [
-        subtoken
+        NUMBER_LITERAL_TOKEN if mask_numbers and re.search(r'^\d+$', subtoken) else subtoken
         for subtoken in SUBTOKEN_REGEX.findall(code_string)
-        if not subtoken == '_'
+        if subtoken != ''
     ]
 
 
-def tokenize_method(method_body):
+def process_token(token, mask_strings, mask_numbers):
+    if mask_strings and type(token) == javalang.tokenizer.String:
+        return STRING_LITERAL_TOKEN
+    elif type(token) == javalang.tokenizer.Identifier:
+        return split_subtokens(token.value, mask_numbers)
+    return token.value
+
+
+def tokenize_method(method_body, lowercase=False, mask_strings=True, mask_numbers=True):
     try:
         tokens = list(javalang.tokenizer.tokenize(method_body))
     except:
@@ -71,15 +75,13 @@ def tokenize_method(method_body):
     if len(tokens) == 0:
         return []
 
-    # mask string literals with a special <STR> token
-    tokens = map(
-        lambda token: STRING_LITERAL_TOKEN if token.value.startswith('"') else token.value,
-        tokens
-    )
-
-    # split subtokens
-    return list(chain.from_iterable([
-        split_subtokens(token)
+    # split subtokens of identifiers
+    processed_tokens = flatten([
+        process_token(token, mask_strings, mask_numbers)
         for token in tokens
-        if not token in MODIFIERS # ignore modifiers
-    ]))
+    ])
+
+    if lowercase:
+        return np.asarray([token.lower() for token in processed_tokens])
+
+    return np.asarray(processed_tokens)

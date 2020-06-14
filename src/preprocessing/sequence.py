@@ -13,10 +13,10 @@ from src.preprocessing.tokens import tokenize_method, split_subtokens
 from src.utils.pandas import lists_to_series
 
 
-OOV_TOKEN = '<OOV>'
-SEQ_START_TOKEN = '<SOS>'
-SEQ_END_TOKEN = '<EOS>'
-PAD_TOKEN = '<PAD>'
+OOV_TOKEN = '<oov>'
+SEQ_START_TOKEN = '<sos>'
+SEQ_END_TOKEN = '<eos>'
+PAD_TOKEN = '<pad>'
 
 
 def preprocess_sequences(
@@ -33,12 +33,12 @@ def preprocess_sequences(
     - Reading the input file
     - Cleaning/filtering of empty samples
     - Tokenization of the sequences
-    - Marking the sequences with special <SOS>, <EOS> tokens
+    - Marking the sequences with special <sos>, <eos> tokens
     - Building vocabularies
-        - Including <SOS>, <EOS>, <PAD> special tokens
+        - Including <sos>, <eos>, <pad> special tokens
         - Saving these vocabularies to files
     - Encoding the tokens to numbers, based on the vocabularies
-    - Pad, align and cut, using <PAD> special tokens
+    - Pad, align and cut, using <pad> special tokens
     - Save final sequences to binary data files
 
     Args:
@@ -74,7 +74,7 @@ def preprocess_sequences(
     df = df[['inputs', 'outputs']]
 
     # Ensure output sequences are at most max_output_seq_length long
-    # and annotate output sequences with <SOS> and <EOS>
+    # and annotate output sequences with <sos> and <eos>
     print('Adding <start> and <end> markers to output sequences')
     df['outputs'] = df['outputs'].progress_apply(
         lambda seq: [SEQ_START_TOKEN] + seq[:max_output_seq_length] + [SEQ_END_TOKEN]
@@ -85,7 +85,7 @@ def preprocess_sequences(
             num_words=max_vocab_size,
             filters='',
             lower=False,
-            oov_token='<OOV>',
+            oov_token=OOV_TOKEN,
         )
 
         tokenizer.fit_on_texts(df.values)
