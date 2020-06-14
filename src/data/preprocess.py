@@ -128,7 +128,7 @@ def preprocess_data(args):
 
     print('Done preprocessing each repository')
 
-    save_dir = args.dir_output
+    save_dir = os.path.join(args.dir_output, args.tokenization_level)
     os.makedirs(save_dir, exist_ok=True)
 
     for dataset_id, dataset_type in enumerate(['train', 'validation', 'test']):
