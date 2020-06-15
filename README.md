@@ -85,40 +85,41 @@ Fundamentals:
   - [ ] Summarize your research in the Literature Review section
   - [ ] Describe your best experiment
 
-- [ ] Increase Dataset to 1 million method samples for training
+- [x] Increase Dataset to 800k method samples
   - [x] Select a set of Java repositories
   - [x] Write scripts for downloading the source code repositories at specific hashes
   - [x] Fetch only the Java code from these repositories
   - [x] Write scripts for extracting Java methods
   - [ ] Analyze the distribution of the data
-    - [ ] Reduce vocabulary size
-      - [ ] Split snake_case
+    - [x] Reduce vocabulary size
+      - [x] Split snake_case
       - [x] Replace string literals
-      - [ ] Replace number literals
-      - [ ] Cased vs uncased - the hypothesis is that cased is better
+      - [x] Replace number literals
+      - [x] Cased vs uncased - the hypothesis is that cased is better
       - [ ] Include or remove test files (they skew the distribution)
       - [ ] Token-level vs subtoken-level vs char-level vocabulary
-  - [ ] Split the dataset into train/test/validation sets
-  - [ ] Preprocess data
+  - [x] Split the dataset into train/test/validation sets
+  - [x] Preprocess data
     - [x] Extract the preprocessing step as a method in the model
-
-- [ ] Add Regularization
-  - [ ] L2 Regularization of all trainable variables
-  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
-  - [ ] LayerNorm vs BatchNorm
-  - [ ] Expose regularization hyper-parameters
-
-- [ ] Train an optimal model
-  - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
 
 - [ ] Improve evaluation
   - [ ] Exclude padding tokens
     - [ ] Ensure that the metrics don't reward the model if it correctly predicts padding tokens
   - [ ] Order-aware metrics
     - [ ] Some type of edit distance
+    - [ ] ROUGE-2, ROUGE-L
     - [ ] BLEU
       - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
     - [ ] What about the CTC loss?
+
+- [ ] Add Regularization
+  - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
+  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
+  - [ ] LayerNorm vs BatchNorm
+  - [ ] Expose regularization hyper-parameters
+
+- [ ] Train an optimal model
+  - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
 
 - [ ] Plot embeddings
   - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
