@@ -8,7 +8,10 @@
 /models/
 
 # Generated information like logs, figures, images, summaries, etc.
-/reports/
+/reports/*
+
+# But do not ignore figures intended for the thesis document
+!/reports/thesis/
 
 # VSCode
 .vscode/
