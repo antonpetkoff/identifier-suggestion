@@ -14,6 +14,8 @@ from src.models.seq2seq.decoder import Decoder
 from src.metrics.f1_score import F1Score
 from src.preprocessing.tokens import tokenize_method
 
+def replace_value(tensor, old_value, new_value):
+    return tf.where(tf.equal(tensor, old_value), new_value, tensor)
 
 class Seq2Seq(tf.Module):
     def __init__(
@@ -316,7 +318,7 @@ class Seq2Seq(tf.Module):
             loss = self.loss_function(y_true, predictions)
 
             self.train_metrics['sparse_categorical_accuracy'].update_state(
-                y_true = y_true,
+                y_true = replace_value(y_true, old_value=0, new_value=-1),
                 y_pred = predictions
             )
 
@@ -364,6 +366,11 @@ class Seq2Seq(tf.Module):
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
             for (step, (input_batch, target_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
+                # replace padding (<PAD> tokens) with a value
+                # which can never be predicted
+                # so that padding tokens cannot influence the evaluation metrics
+                target_batch = replace_value(target_batch, old_value=0, new_value=-1)
+
                 batch_loss = self.train_step(
                     # the models expect tf.float32
                     tf.cast(input_batch, dtype=tf.float32),
@@ -466,6 +473,11 @@ class Seq2Seq(tf.Module):
 
         # go through the full test dataset
         for (input_batch, output_batch) in test_dataset:
+            # replace padding (<PAD> tokens) with a value
+            # which can never be predicted
+            # so that padding tokens cannot influence the evaluation metrics
+            output_batch = replace_value(output_batch, old_value=0, new_value=-1)
+
             batch_loss = self.evaluation_step(input_batch, output_batch)
             total_loss += batch_loss
 
