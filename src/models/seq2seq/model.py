@@ -317,8 +317,15 @@ class Seq2Seq(tf.Module):
             # compute loss
             loss = self.loss_function(y_true, predictions)
 
+            y_true = replace_value(y_true, old_value=0, new_value=-1)
+
+            # replace padding (<PAD> tokens) with a value
+            # which can never be predicted
+            # so that padding tokens cannot influence the evaluation metrics
+            y_true = replace_value(y_true, old_value=0, new_value=-1)
+
             self.train_metrics['sparse_categorical_accuracy'].update_state(
-                y_true = replace_value(y_true, old_value=0, new_value=-1),
+                y_true = y_true,
                 y_pred = predictions
             )
 
@@ -366,11 +373,6 @@ class Seq2Seq(tf.Module):
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
             for (step, (input_batch, target_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
-                # replace padding (<PAD> tokens) with a value
-                # which can never be predicted
-                # so that padding tokens cannot influence the evaluation metrics
-                target_batch = replace_value(target_batch, old_value=0, new_value=-1)
-
                 batch_loss = self.train_step(
                     # the models expect tf.float32
                     tf.cast(input_batch, dtype=tf.float32),
@@ -445,6 +447,11 @@ class Seq2Seq(tf.Module):
             y_pred = logits
         )
 
+        # replace padding (<PAD> tokens) with a value
+        # which can never be predicted
+        # so that padding tokens cannot influence the evaluation metrics
+        y_true = replace_value(y_true, old_value=0, new_value=-1)
+
         self.test_metrics['sparse_categorical_accuracy'].update_state(
             y_true = y_true,
             y_pred = logits
@@ -473,11 +480,6 @@ class Seq2Seq(tf.Module):
 
         # go through the full test dataset
         for (input_batch, output_batch) in test_dataset:
-            # replace padding (<PAD> tokens) with a value
-            # which can never be predicted
-            # so that padding tokens cannot influence the evaluation metrics
-            output_batch = replace_value(output_batch, old_value=0, new_value=-1)
-
             batch_loss = self.evaluation_step(input_batch, output_batch)
             total_loss += batch_loss
 
