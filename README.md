@@ -83,14 +83,13 @@ Fundamentals:
   - [ ] Describe the Seq2Seq architecture and training process
   - [ ] Describe the evaluation metrics this project has used
   - [ ] Summarize your research in the Literature Review section
-  - [ ] Describe your best experiment
+  - [ ] Describe experiments
+    - [ ] Start by describing your best experiment
+  - [ ] Add visualization of attention weights
+  - [ ] Add visualization of embeddings
 
 - [ ] Improve evaluation with order-aware metrics
-  - [ ] ROUGE-2, ROUGE-L
-  - [ ] BLEU
-    - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
-  - [ ] What about the CTC loss?
-  - [ ] Some type of edit distance?
+  - [ ] ROUGE-2, ROUGE-L, precision, recall & F1 (py-rouge + nltk)
 
 - [ ] Add Regularization
   - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
