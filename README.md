@@ -79,38 +79,18 @@ Fundamentals:
 
 - [ ] Write!
   - [x] Describe the dataset
-    - [ ] Add some tables and plots of the data for better understanding
+    - [x] Add some tables and plots of the data for better understanding
   - [ ] Describe the Seq2Seq architecture and training process
   - [ ] Describe the evaluation metrics this project has used
   - [ ] Summarize your research in the Literature Review section
   - [ ] Describe your best experiment
 
-- [x] Increase Dataset to 800k method samples
-  - [x] Select a set of Java repositories
-  - [x] Write scripts for downloading the source code repositories at specific hashes
-  - [x] Fetch only the Java code from these repositories
-  - [x] Write scripts for extracting Java methods
-  - [ ] Analyze the distribution of the data
-    - [x] Reduce vocabulary size
-      - [x] Split snake_case
-      - [x] Replace string literals
-      - [x] Replace number literals
-      - [x] Cased vs uncased - the hypothesis is that cased is better
-      - [ ] Include or remove test files (they skew the distribution)
-      - [ ] Token-level vs subtoken-level vs char-level vocabulary
-  - [x] Split the dataset into train/test/validation sets
-  - [x] Preprocess data
-    - [x] Extract the preprocessing step as a method in the model
-
-- [ ] Improve evaluation
-  - [ ] Exclude padding tokens
-    - [ ] Ensure that the metrics don't reward the model if it correctly predicts padding tokens
-  - [ ] Order-aware metrics
-    - [ ] Some type of edit distance
-    - [ ] ROUGE-2, ROUGE-L
-    - [ ] BLEU
-      - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
-    - [ ] What about the CTC loss?
+- [ ] Improve evaluation with order-aware metrics
+  - [ ] ROUGE-2, ROUGE-L
+  - [ ] BLEU
+    - [ ] BLEU score for different sequence lengths? [see Extensions here](https://machinelearningmastery.com/encoder-decoder-recurrent-neural-network-models-neural-machine-translation/)
+  - [ ] What about the CTC loss?
+  - [ ] Some type of edit distance?
 
 - [ ] Add Regularization
   - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
@@ -122,7 +102,7 @@ Fundamentals:
   - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
 
 - [ ] Plot embeddings
-  - [ ] Reduce the embedding matrices with t-SNE or other dimensionality reduction algorithms
+  - [ ] Reduce the embedding matrices with PCA / t-SNE
   - [ ] Make a 2D/3D Plot with a good (interpretable) sample
   - [ ] Log/Upload the plot in `wandb`
 
@@ -133,6 +113,23 @@ Fundamentals:
 - [ ] Try to replace the encoder with a Bidirectional LSTM
 
 - [ ] Use custom features like return type, parameters, class name, etc.
+
+- [x] Increase Dataset to 800k method samples
+  - [x] Select a set of Java repositories
+  - [x] Write scripts for downloading the source code repositories at specific hashes
+  - [x] Fetch only the Java code from these repositories
+  - [x] Write scripts for extracting Java methods
+  - [x] Analyze the distribution of the data
+    - [x] Reduce vocabulary size
+      - [x] Split snake_case
+      - [x] Replace string literals
+      - [x] Replace number literals
+      - [x] Cased vs uncased - the hypothesis is that cased is better
+      - [x] Token-level vs subtoken-level vs char-level vocabulary
+      - [ ] Include or remove test files (they skew the distribution)
+  - [x] Split the dataset into train/test/validation sets
+  - [x] Preprocess data
+    - [x] Extract the preprocessing step as a method in the model
 
 - [x] Rewrite the Seq2Seq model without TensorFlow Addons
   - [x] Add Beam Search Decoder for making multiple suggestions
