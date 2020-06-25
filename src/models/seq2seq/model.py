@@ -4,6 +4,7 @@ import os
 import time
 import json
 import math
+import rouge
 
 from collections import Counter
 from itertools import takewhile
@@ -93,6 +94,17 @@ class Seq2Seq(tf.Module):
                 dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
             ),
         }
+
+        self.rouge_evaluator = rouge.Rouge(
+            metrics=['rouge-n', 'rouge-l'],
+            max_n=2,
+            limit_length=True,
+            length_limit_type='words',
+            length_limit=100,
+            apply_avg=True,
+            alpha=0.5, # compute F1 score off of precision and recall
+            stemming=True,
+        )
 
         self.checkpoint = tf.train.Checkpoint(
             optimizer = self.optimizer,
@@ -315,6 +327,7 @@ class Seq2Seq(tf.Module):
             # compute loss
             loss = self.loss_function(y_true, predictions)
 
+            # TODO: move metric updates outside of GradientTape
             self.train_metrics['sparse_categorical_accuracy'].update_state(
                 y_true = y_true,
                 y_pred = predictions
@@ -337,7 +350,7 @@ class Seq2Seq(tf.Module):
         # adjust the weights / parameters with the computed gradients
         self.optimizer.apply_gradients(grads_and_vars)
 
-        return loss
+        return loss, predictions
 
 
     def train(self, X_train, Y_train, X_test, Y_test, epochs, on_epoch_end):
@@ -363,17 +376,43 @@ class Seq2Seq(tf.Module):
             # TODO: is this necessary?
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
+            predicted_method_names = []
+            reference_method_names = []
+
             for (step, (input_batch, target_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
-                batch_loss = self.train_step(
+                batch_loss, batch_predictions = self.train_step(
                     # the models expect tf.float32
                     tf.cast(input_batch, dtype=tf.float32),
                     tf.cast(target_batch, dtype=tf.float32),
                     encoder_hidden = encoder_hidden_state,
                 )
 
-                sparse_categorical_accuracy = self.train_metrics['sparse_categorical_accuracy'].result()
+                # select the most probable tokens from logits
+                batch_predictions = tf.argmax(batch_predictions, axis=-1)
 
-                # TODO: compute accuracy
+                # accumulate method names for ROUGE evaluation
+                for i in range(batch_size):
+                    # transform the raw predictions into strings of words suitable for ROUGE evaluation
+                    predicted_method_name = self.convert_raw_prediction_to_text(
+                        batch_predictions[i].numpy(),
+                        join_token=' ',
+                        camel_case=False,
+                    )
+
+                    predicted_method_names.append(predicted_method_name)
+
+                    # don't forget to transform the target to text, too
+                    reference_method_name = self.convert_raw_prediction_to_text(
+                        # ignore the first token which is the start of sequence marker
+                        target_batch[i, 1:].numpy(),
+                        join_token=' ',
+                        camel_case=False,
+                    )
+
+                    # there can be many reference texts when evaluating ROUGE, hence the list brackets
+                    reference_method_names.append([reference_method_name])
+
+                sparse_categorical_accuracy = self.train_metrics['sparse_categorical_accuracy'].result()
                 f1, precision, recall = self.train_metrics['f1_score'].result()
 
                 total_loss += batch_loss
@@ -393,6 +432,28 @@ class Seq2Seq(tf.Module):
                         f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}'
                     )
 
+            # an example of rouge_scores could be:
+            # {'rouge-2': {'f': 0.4, 'p': 0.34, 'r': 0.5},
+            #  'rouge-1': {'f': 0.57, 'p': 0.5, 'r': 0.67},
+            #  'rouge-l': {'f': 0.57, 'p': 0.5, 'r': 0.67}}
+            train_rouge_scores = self.rouge_evaluator.get_scores(
+                hypothesis=predicted_method_names,
+                references=reference_method_names,
+            )
+
+            self.logger.log_data({
+                'epoch': epoch,
+                'epoch_rouge_1_p':  train_rouge_scores['rouge-1']['p'],
+                'epoch_rouge_1_r':  train_rouge_scores['rouge-1']['r'],
+                'epoch_rouge_1_f1': train_rouge_scores['rouge-1']['f'],
+                'epoch_rouge_2_p':  train_rouge_scores['rouge-2']['p'],
+                'epoch_rouge_2_r':  train_rouge_scores['rouge-2']['r'],
+                'epoch_rouge_2_f1': train_rouge_scores['rouge-2']['f'],
+                'epoch_rouge_L_p':  train_rouge_scores['rouge-l']['p'],
+                'epoch_rouge_L_r':  train_rouge_scores['rouge-l']['r'],
+                'epoch_rouge_L_f1': train_rouge_scores['rouge-l']['f'],
+            })
+
             self.logger.log_message(f'epoch {epoch} training time: {time.time() - start_time} sec')
             self.logger.log_data({
                 'epoch': epoch,
@@ -403,6 +464,7 @@ class Seq2Seq(tf.Module):
                 'epoch_f1': f1,
             })
 
+
             self.evaluate(X_test, Y_test, batch_size, epoch)
 
             on_epoch_end(epoch)
@@ -412,6 +474,35 @@ class Seq2Seq(tf.Module):
             if epoch % 3 == 0:
                 save_path = self.checkpoint_manager.save()
                 self.logger.log_message("epoch {} saved checkpoint: {}".format(epoch, save_path))
+
+
+    def convert_raw_prediction_to_text(
+        self,
+        raw_prediction,
+        join_token='',
+        camel_case=True
+    ):
+        # take all tokens before the end of sequence marker
+        prediction = takewhile(
+            lambda index: index != self.output_vocab_index[Common.EOS],
+            raw_prediction
+        )
+
+        # transform indices back to readable tokens
+        prediction = [
+            self.reverse_output_index.get(index, Common.OOV)
+            for index in prediction
+        ]
+
+        if camel_case:
+            # convert tokens to camel case
+            prediction = [prediction[0]] + [
+                token[0].upper() + token[1:]
+                for token in prediction[1:]
+                if len(token) > 0
+            ]
+
+        return join_token.join(prediction)
 
 
     def evaluation_step(
