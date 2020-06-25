@@ -464,7 +464,6 @@ class Seq2Seq(tf.Module):
                 'epoch_f1': f1,
             })
 
-
             self.evaluate(X_test, Y_test, batch_size, epoch)
 
             on_epoch_end(epoch)
@@ -539,7 +538,7 @@ class Seq2Seq(tf.Module):
             y_pred = logits,
         )
 
-        return loss
+        return loss, logits
 
 
     def evaluate(self, X_test, Y_test, batch_size, epoch):
@@ -555,10 +554,60 @@ class Seq2Seq(tf.Module):
         self.test_metrics['f1_score'].reset_states()
         total_loss = 0
 
+        predicted_method_names = []
+        reference_method_names = []
+
         # go through the full test dataset
         for (input_batch, output_batch) in test_dataset:
-            batch_loss = self.evaluation_step(input_batch, output_batch)
+            batch_loss, logits = self.evaluation_step(input_batch, output_batch)
             total_loss += batch_loss
+
+            # select the most probable tokens from logits
+            batch_predictions = tf.argmax(logits, axis=-1)
+
+            # accumulate method names for ROUGE evaluation
+            for i in range(batch_size):
+                # transform the raw predictions into strings of words suitable for ROUGE evaluation
+                predicted_method_name = self.convert_raw_prediction_to_text(
+                    batch_predictions[i].numpy(),
+                    join_token=' ',
+                    camel_case=False,
+                )
+
+                predicted_method_names.append(predicted_method_name)
+
+                # don't forget to transform the target to text, too
+                reference_method_name = self.convert_raw_prediction_to_text(
+                    # ignore the first token which is the start of sequence marker
+                    output_batch[i, 1:].numpy(),
+                    join_token=' ',
+                    camel_case=False,
+                )
+
+                # there can be many reference texts when evaluating ROUGE, hence the list brackets
+                reference_method_names.append([reference_method_name])
+
+        # an example of rouge_scores could be:
+        # {'rouge-2': {'f': 0.4, 'p': 0.34, 'r': 0.5},
+        #  'rouge-1': {'f': 0.57, 'p': 0.5, 'r': 0.67},
+        #  'rouge-l': {'f': 0.57, 'p': 0.5, 'r': 0.67}}
+        test_rouge_scores = self.rouge_evaluator.get_scores(
+            hypothesis=predicted_method_names,
+            references=reference_method_names,
+        )
+
+        self.logger.log_data({
+            'epoch': epoch,
+            'epoch_test_rouge_1_p':  test_rouge_scores['rouge-1']['p'],
+            'epoch_test_rouge_1_r':  test_rouge_scores['rouge-1']['r'],
+            'epoch_test_rouge_1_f1': test_rouge_scores['rouge-1']['f'],
+            'epoch_test_rouge_2_p':  test_rouge_scores['rouge-2']['p'],
+            'epoch_test_rouge_2_r':  test_rouge_scores['rouge-2']['r'],
+            'epoch_test_rouge_2_f1': test_rouge_scores['rouge-2']['f'],
+            'epoch_test_rouge_L_p':  test_rouge_scores['rouge-l']['p'],
+            'epoch_test_rouge_L_r':  test_rouge_scores['rouge-l']['r'],
+            'epoch_test_rouge_L_f1': test_rouge_scores['rouge-l']['f'],
+        })
 
         sparse_categorical_accuracy = self.test_metrics['sparse_categorical_accuracy'].result()
         f1, precision, recall = self.test_metrics['f1_score'].result()
