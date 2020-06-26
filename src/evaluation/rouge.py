@@ -1,6 +1,6 @@
 import os
-import multiprocessing as mp
 
+from pathos.multiprocessing import ProcessingPool as Pool
 from rouge_score import rouge_scorer
 
 class Score:
@@ -47,6 +47,8 @@ class RougeEvaluator:
         self.target_batches = []
         self.prediction_batches = []
 
+        self.pool = Pool()
+
 
     def enable_cache(self):
         self.use_cache = True
@@ -69,18 +71,21 @@ class RougeEvaluator:
             self.target_batches.append(target_batch)
 
 
-    def evaluate_batch(self, predictions, targets):
+    # the single argument is a tuple of the predictions and targets
+    # this makes it easier for parallel processing
+    def evaluate_batch(self, batches):
+        predictions, targets = batches
         batch_score = Score()
 
         # accumulate method names for ROUGE evaluation
         for i in range(self.batch_size):
             # transform the raw predictions into strings of words suitable for ROUGE evaluation
-            predicted_method_name = self.sequence_transform_fn(predictions[i])
+            predicted_method_name = self.sequence_transform_fn(predictions[i].numpy())
 
             # don't forget to transform the target to text, too
             reference_method_name = self.sequence_transform_fn(
                 # ignore the first token which is the start of sequence marker
-                targets[i, 1:],
+                targets[i, 1:].numpy(),
             )
 
             # an example of the scores returned by rouge_score is:
@@ -104,10 +109,11 @@ class RougeEvaluator:
 
         # sum together all scores per score_type (e.g. rouge_3_f1, rouge_L_p, etc.)
         for score in scores:
-            for score_type in score.keys():
+            for score_type in score.score.keys():
                 avg_scores.score[score_type] += score.score[score_type]
 
-        for score_type in score.keys():
+        # TODO: spare the .score redundancy
+        for score_type in score.score.keys():
             avg_scores.score[score_type] /= total_length
 
         return avg_scores
@@ -117,10 +123,9 @@ class RougeEvaluator:
         if len(self.prediction_batches) != len(self.target_batches):
             raise ValueError('The number of prediction and target batches must match')
 
-        with mp.Pool(pool_size or os.cpu_count()) as pool:
-            scores = pool.starmap(
-                self.evaluate_batch,
-                zip(self.prediction_batches, self.target_batches),
-            )
+        scores = self.pool.map(
+            self.evaluate_batch,
+            zip(self.prediction_batches, self.target_batches),
+        )
 
-            return self.average_scores(scores)
+        return self.average_scores(scores)
