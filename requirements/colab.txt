@@ -3,3 +3,4 @@ pydash==4.8.0
 python-dotenv==0.13.0
 wandb==0.8.35
 tables==3.6.1
+rouge-score==0.0.4
