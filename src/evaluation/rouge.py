@@ -27,9 +27,9 @@ class Score:
         self.score['rouge_2_p']  += scores['rouge2'].precision
         self.score['rouge_2_r']  += scores['rouge2'].recall
         self.score['rouge_2_f1'] += scores['rouge2'].fmeasure
-        self.score['rouge_3_p']  += scores['rouge2'].precision
-        self.score['rouge_3_r']  += scores['rouge2'].recall
-        self.score['rouge_3_f1'] += scores['rouge2'].fmeasure
+        self.score['rouge_3_p']  += scores['rouge3'].precision
+        self.score['rouge_3_r']  += scores['rouge3'].recall
+        self.score['rouge_3_f1'] += scores['rouge3'].fmeasure
         self.score['rouge_L_p']  += scores['rougeL'].precision
         self.score['rouge_L_r']  += scores['rougeL'].recall
         self.score['rouge_L_f1'] += scores['rougeL'].fmeasure
