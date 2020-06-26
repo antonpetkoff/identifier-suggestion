@@ -4,7 +4,6 @@ import os
 import time
 import json
 import math
-import rouge
 
 from collections import Counter
 from itertools import takewhile
@@ -13,6 +12,11 @@ from src.common.tokens import Common
 from src.models.seq2seq.encoder import Encoder
 from src.models.seq2seq.decoder import Decoder
 from src.preprocessing.tokens import tokenize_method
+from src.evaluation.rouge import RougeEvaluator
+
+
+def prefix_dict_keys(dict, prefix):
+    return {f'{prefix}{key}': value for key, value in dict.items()}
 
 
 class Seq2Seq(tf.Module):
@@ -73,15 +77,16 @@ class Seq2Seq(tf.Module):
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
         self.optimizer = tf.keras.optimizers.Adam()
 
-        self.rouge_evaluator = rouge.Rouge(
-            metrics=['rouge-n', 'rouge-l'],
-            max_n=2,
-            limit_length=True,
-            length_limit_type='words',
-            length_limit=100,
-            apply_avg=True,
-            alpha=0.5, # compute F1 score off of precision and recall
-            stemming=True,
+        seq_transform_fn = lambda seq: self.convert_raw_prediction_to_text(seq, join_token=' ', camel_case=False)
+
+        self.training_evaluator = RougeEvaluator(
+            sequence_transform_fn=seq_transform_fn,
+            batch_size=self.params['batch_size'],
+        )
+
+        self.test_evaluator = RougeEvaluator(
+            sequence_transform_fn=seq_transform_fn,
+            batch_size=self.params['batch_size'],
         )
 
         self.checkpoint = tf.train.Checkpoint(
@@ -317,6 +322,9 @@ class Seq2Seq(tf.Module):
         # adjust the weights / parameters with the computed gradients
         self.optimizer.apply_gradients(grads_and_vars)
 
+        # select the most probable tokens from logits
+        predictions = tf.argmax(predictions, axis=-1)
+
         return loss, predictions
 
 
@@ -338,8 +346,12 @@ class Seq2Seq(tf.Module):
 
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
-            predicted_method_names = []
-            reference_method_names = []
+            if epoch == 2: # enable evaluation cache after first epoch
+                self.training_evaluator.enable_cache()
+                self.test_evaluator.enable_cache()
+
+            self.training_evaluator.reset_state()
+            self.test_evaluator.reset_state()
 
             for (step, (input_batch, target_batch)) in enumerate(train_dataset.take(steps_per_epoch)):
                 batch_loss, batch_predictions = self.train_step(
@@ -349,30 +361,7 @@ class Seq2Seq(tf.Module):
                     encoder_hidden = encoder_hidden_state,
                 )
 
-                # select the most probable tokens from logits
-                batch_predictions = tf.argmax(batch_predictions, axis=-1)
-
-                # accumulate method names for ROUGE evaluation
-                for i in range(batch_size):
-                    # transform the raw predictions into strings of words suitable for ROUGE evaluation
-                    predicted_method_name = self.convert_raw_prediction_to_text(
-                        batch_predictions[i].numpy(),
-                        join_token=' ',
-                        camel_case=False,
-                    )
-
-                    predicted_method_names.append(predicted_method_name)
-
-                    # don't forget to transform the target to text, too
-                    reference_method_name = self.convert_raw_prediction_to_text(
-                        # ignore the first token which is the start of sequence marker
-                        target_batch[i, 1:].numpy(),
-                        join_token=' ',
-                        camel_case=False,
-                    )
-
-                    # there can be many reference texts when evaluating ROUGE, hence the list brackets
-                    reference_method_names.append([reference_method_name])
+                self.training_evaluator.add_batch(batch_predictions, target_batch)
 
                 total_loss += batch_loss
 
@@ -387,36 +376,13 @@ class Seq2Seq(tf.Module):
                         f'epoch {epoch} - batch {step + 1} - loss {batch_loss}'
                     )
 
-                # TODO: REMOVEME
-                self.evaluate(X_test, Y_test, batch_size, epoch)
-                on_epoch_end(epoch)
-
-            # an example of rouge_scores could be:
-            # {'rouge-2': {'f': 0.4, 'p': 0.34, 'r': 0.5},
-            #  'rouge-1': {'f': 0.57, 'p': 0.5, 'r': 0.67},
-            #  'rouge-l': {'f': 0.57, 'p': 0.5, 'r': 0.67}}
-            train_rouge_scores = self.rouge_evaluator.get_scores(
-                hypothesis=predicted_method_names,
-                references=reference_method_names,
-            )
-
-            self.logger.log_data({
-                'epoch': epoch,
-                'epoch_rouge_1_p':  train_rouge_scores['rouge-1']['p'],
-                'epoch_rouge_1_r':  train_rouge_scores['rouge-1']['r'],
-                'epoch_rouge_1_f1': train_rouge_scores['rouge-1']['f'],
-                'epoch_rouge_2_p':  train_rouge_scores['rouge-2']['p'],
-                'epoch_rouge_2_r':  train_rouge_scores['rouge-2']['r'],
-                'epoch_rouge_2_f1': train_rouge_scores['rouge-2']['f'],
-                'epoch_rouge_L_p':  train_rouge_scores['rouge-l']['p'],
-                'epoch_rouge_L_r':  train_rouge_scores['rouge-l']['r'],
-                'epoch_rouge_L_f1': train_rouge_scores['rouge-l']['f'],
-            })
+            train_rouge_scores = self.training_evaluator.evaluate()
 
             self.logger.log_message(f'epoch {epoch} training time: {time.time() - start_time} sec')
             self.logger.log_data({
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
+                **train_rouge_scores.score,
             })
 
             self.evaluate(X_test, Y_test, batch_size, epoch)
@@ -483,7 +449,10 @@ class Seq2Seq(tf.Module):
             y_pred = logits
         )
 
-        return loss, logits
+        # select the most probable tokens from logits
+        predictions = tf.argmax(logits, axis=-1)
+
+        return loss, predictions
 
 
     def evaluate(self, X_test, Y_test, batch_size, epoch):
@@ -496,66 +465,21 @@ class Seq2Seq(tf.Module):
 
         total_loss = 0
 
-        predicted_method_names = []
-        reference_method_names = []
-
         # go through the full test dataset
         for (input_batch, output_batch) in test_dataset:
-            batch_loss, logits = self.evaluation_step(input_batch, output_batch)
+            batch_loss, batch_predictions = self.evaluation_step(input_batch, output_batch)
             total_loss += batch_loss
 
-            # select the most probable tokens from logits
-            batch_predictions = tf.argmax(logits, axis=-1)
+            self.test_evaluator.add_batch(batch_predictions, output_batch)
 
-            # accumulate method names for ROUGE evaluation
-            for i in range(batch_size):
-                # transform the raw predictions into strings of words suitable for ROUGE evaluation
-                predicted_method_name = self.convert_raw_prediction_to_text(
-                    batch_predictions[i].numpy(),
-                    join_token=' ',
-                    camel_case=False,
-                )
-
-                predicted_method_names.append(predicted_method_name)
-
-                # don't forget to transform the target to text, too
-                reference_method_name = self.convert_raw_prediction_to_text(
-                    # ignore the first token which is the start of sequence marker
-                    output_batch[i, 1:].numpy(),
-                    join_token=' ',
-                    camel_case=False,
-                )
-
-                # there can be many reference texts when evaluating ROUGE, hence the list brackets
-                reference_method_names.append([reference_method_name])
-
-        # an example of rouge_scores could be:
-        # {'rouge-2': {'f': 0.4, 'p': 0.34, 'r': 0.5},
-        #  'rouge-1': {'f': 0.57, 'p': 0.5, 'r': 0.67},
-        #  'rouge-l': {'f': 0.57, 'p': 0.5, 'r': 0.67}}
-        test_rouge_scores = self.rouge_evaluator.get_scores(
-            hypothesis=predicted_method_names,
-            references=reference_method_names,
-        )
-
-        self.logger.log_data({
-            'epoch': epoch,
-            'epoch_test_rouge_1_p':  test_rouge_scores['rouge-1']['p'],
-            'epoch_test_rouge_1_r':  test_rouge_scores['rouge-1']['r'],
-            'epoch_test_rouge_1_f1': test_rouge_scores['rouge-1']['f'],
-            'epoch_test_rouge_2_p':  test_rouge_scores['rouge-2']['p'],
-            'epoch_test_rouge_2_r':  test_rouge_scores['rouge-2']['r'],
-            'epoch_test_rouge_2_f1': test_rouge_scores['rouge-2']['f'],
-            'epoch_test_rouge_L_p':  test_rouge_scores['rouge-l']['p'],
-            'epoch_test_rouge_L_r':  test_rouge_scores['rouge-l']['r'],
-            'epoch_test_rouge_L_f1': test_rouge_scores['rouge-l']['f'],
-        })
+        test_rouge_scores = self.test_evaluator.evaluate()
 
         self.logger.log_message(f'epoch {epoch} evaluation time: {time.time() - start_time} sec')
 
         test_results = {
             'epoch': epoch,
             'epoch_test_loss': total_loss / steps_per_epoch,
+            **prefix_dict_keys(test_rouge_scores.score, 'test_'),
         }
 
         self.logger.log_data(test_results)
