@@ -12,7 +12,6 @@ from itertools import takewhile
 from src.common.tokens import Common
 from src.models.seq2seq.encoder import Encoder
 from src.models.seq2seq.decoder import Decoder
-from src.metrics.f1_score import F1Score
 from src.preprocessing.tokens import tokenize_method
 
 
@@ -73,27 +72,6 @@ class Seq2Seq(tf.Module):
 
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
         self.optimizer = tf.keras.optimizers.Adam()
-
-        self.train_metrics = {
-            'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
-            'f1_score': F1Score(
-                num_classes=self.params['output_vocab_size'],
-                from_logits=True,
-                averaging=self.params['eval_averaging'], # TODO: micro vs macro averaging?
-                dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
-            ),
-        }
-
-        # TODO: reduce code duplication with train_metrics
-        self.test_metrics = {
-            'sparse_categorical_accuracy': tf.keras.metrics.SparseCategoricalAccuracy(),
-            'f1_score': F1Score(
-                num_classes=self.params['output_vocab_size'],
-                from_logits=True,
-                averaging=self.params['eval_averaging'], # TODO: micro vs macro averaging?
-                dtype=tf.int32, # TODO: shouldn't the dtype be handled inside the metric?
-            ),
-        }
 
         self.rouge_evaluator = rouge.Rouge(
             metrics=['rouge-n', 'rouge-l'],
@@ -327,17 +305,6 @@ class Seq2Seq(tf.Module):
             # compute loss
             loss = self.loss_function(y_true, predictions)
 
-            # TODO: move metric updates outside of GradientTape
-            self.train_metrics['sparse_categorical_accuracy'].update_state(
-                y_true = y_true,
-                y_pred = predictions
-            )
-
-            self.train_metrics['f1_score'].update_state(
-                y_true = y_true,
-                y_pred = predictions,
-            )
-
         # get the list of all trainable weights (variables)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
 
@@ -369,11 +336,6 @@ class Seq2Seq(tf.Module):
             start_time = time.time()
             total_loss = 0.0
 
-            # reset accumulated metrics
-            self.train_metrics['sparse_categorical_accuracy'].reset_states()
-            self.train_metrics['f1_score'].reset_states()
-
-            # TODO: is this necessary?
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
             predicted_method_names = []
@@ -412,25 +374,22 @@ class Seq2Seq(tf.Module):
                     # there can be many reference texts when evaluating ROUGE, hence the list brackets
                     reference_method_names.append([reference_method_name])
 
-                sparse_categorical_accuracy = self.train_metrics['sparse_categorical_accuracy'].result()
-                f1, precision, recall = self.train_metrics['f1_score'].result()
-
                 total_loss += batch_loss
 
                 self.logger.log_data({
                     'batch': step,
                     'loss': round(batch_loss.numpy(), 3),
-                    'sparse_categorical_accuracy': round(sparse_categorical_accuracy.numpy(), 3),
-                    'precision': round(precision.numpy(), 3),
-                    'recall': round(recall.numpy(), 3),
-                    'f1': round(f1.numpy(), 3),
                 })
 
                 if (step + 1) % 10 == 0:
                     # TODO: just log the dict above? also format the numbers to 2 decimal places?
                     self.logger.log_message(
-                        f'epoch {epoch} - batch {step + 1} - loss {batch_loss} - precision {precision} - recall {recall} - f1 {f1} - sparse_categorical_accuracy {sparse_categorical_accuracy}'
+                        f'epoch {epoch} - batch {step + 1} - loss {batch_loss}'
                     )
+
+                # TODO: REMOVEME
+                self.evaluate(X_test, Y_test, batch_size, epoch)
+                on_epoch_end(epoch)
 
             # an example of rouge_scores could be:
             # {'rouge-2': {'f': 0.4, 'p': 0.34, 'r': 0.5},
@@ -458,10 +417,6 @@ class Seq2Seq(tf.Module):
             self.logger.log_data({
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
-                'epoch_sparse_categorical_accuracy': sparse_categorical_accuracy,
-                'epoch_precision': precision,
-                'epoch_recall': recall,
-                'epoch_f1': f1,
             })
 
             self.evaluate(X_test, Y_test, batch_size, epoch)
@@ -528,16 +483,6 @@ class Seq2Seq(tf.Module):
             y_pred = logits
         )
 
-        self.test_metrics['sparse_categorical_accuracy'].update_state(
-            y_true = y_true,
-            y_pred = logits
-        )
-
-        self.test_metrics['f1_score'].update_state(
-            y_true = y_true,
-            y_pred = logits,
-        )
-
         return loss, logits
 
 
@@ -549,9 +494,6 @@ class Seq2Seq(tf.Module):
         test_dataset = tf.data.Dataset.from_tensor_slices((X_test, Y_test))
         test_dataset = test_dataset.batch(batch_size, drop_remainder=True)
 
-        # reset accumulated metrics
-        self.test_metrics['sparse_categorical_accuracy'].reset_states()
-        self.test_metrics['f1_score'].reset_states()
         total_loss = 0
 
         predicted_method_names = []
@@ -609,18 +551,11 @@ class Seq2Seq(tf.Module):
             'epoch_test_rouge_L_f1': test_rouge_scores['rouge-l']['f'],
         })
 
-        sparse_categorical_accuracy = self.test_metrics['sparse_categorical_accuracy'].result()
-        f1, precision, recall = self.test_metrics['f1_score'].result()
-
         self.logger.log_message(f'epoch {epoch} evaluation time: {time.time() - start_time} sec')
 
         test_results = {
             'epoch': epoch,
             'epoch_test_loss': total_loss / steps_per_epoch,
-            'epoch_test_sparse_categorical_accuracy': sparse_categorical_accuracy,
-            'epoch_test_precision': precision,
-            'epoch_test_recall': recall,
-            'epoch_test_f1': f1,
         }
 
         self.logger.log_data(test_results)
