@@ -222,4 +222,6 @@ Modelling and Feature Engineering (Creative):
 
 Optional:
 
+- [ ] Add timestamps to each log statement
+- [ ] Add setup.py
 - [ ] Add types with [typing](https://docs.python.org/3/library/typing.html)

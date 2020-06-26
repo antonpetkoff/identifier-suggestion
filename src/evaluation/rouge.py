@@ -1,6 +1,6 @@
 import os
+import time
 
-from pathos.multiprocessing import ProcessingPool as Pool
 from rouge_score import rouge_scorer
 
 class Score:
@@ -47,8 +47,6 @@ class RougeEvaluator:
         self.target_batches = []
         self.prediction_batches = []
 
-        self.pool = Pool()
-
 
     def enable_cache(self):
         self.use_cache = True
@@ -74,8 +72,10 @@ class RougeEvaluator:
     # the single argument is a tuple of the predictions and targets
     # this makes it easier for parallel processing
     def evaluate_batch(self, batches):
-        predictions, targets = batches
+        batch_id, (predictions, targets) = batches
         batch_score = Score()
+
+        start_time = time.time()
 
         # accumulate method names for ROUGE evaluation
         for i in range(self.batch_size):
@@ -100,6 +100,9 @@ class RougeEvaluator:
 
             batch_score.add(scores)
 
+        if (batch_id % 100) == 0:
+            print(f'evaluation of batch {batch_id} took: {time.time() - start_time}')
+
         return batch_score
 
 
@@ -119,13 +122,13 @@ class RougeEvaluator:
         return avg_scores
 
 
-    def evaluate(self, pool_size=None):
+    def evaluate(self):
         if len(self.prediction_batches) != len(self.target_batches):
             raise ValueError('The number of prediction and target batches must match')
 
-        scores = self.pool.map(
+        scores = list(map(
             self.evaluate_batch,
-            zip(self.prediction_batches, self.target_batches),
-        )
+            enumerate(zip(self.prediction_batches, self.target_batches)),
+        ))
 
         return self.average_scores(scores)
