@@ -1,6 +1,7 @@
 javalang==0.13.0
+py-rouge==1.1
 pydash==4.8.0
 python-dotenv==0.13.0
-py-rouge==1.1
-wandb==0.8.35
+swifter==0.305
 tables==3.6.1
+wandb==0.8.35
