@@ -3,42 +3,29 @@ import time
 
 from rouge_score import rouge_scorer
 
+ROUGE_VARIATIONS = ['1', '2', '3', 'L']
+
 class Score:
     def __init__(self):
-        self.score = {
-            'rouge_1_p':  0.0,
-            'rouge_1_r':  0.0,
-            'rouge_1_f1': 0.0,
-            'rouge_2_p':  0.0,
-            'rouge_2_r':  0.0,
-            'rouge_2_f1': 0.0,
-            'rouge_3_p':  0.0,
-            'rouge_3_r':  0.0,
-            'rouge_3_f1': 0.0,
-            'rouge_L_p':  0.0,
-            'rouge_L_r':  0.0,
-            'rouge_L_f1': 0.0,
-        }
+        self.score = {}
+        for i in ROUGE_VARIATIONS:
+            self.score[f'rouge_{i}_p']  = 0.0
+            self.score[f'rouge_{i}_r']  = 0.0
+            self.score[f'rouge_{i}_f1'] = 0.0
+
 
     def add(self, scores):
-        self.score['rouge_1_p']  += scores['rouge1'].precision
-        self.score['rouge_1_r']  += scores['rouge1'].recall
-        self.score['rouge_1_f1'] += scores['rouge1'].fmeasure
-        self.score['rouge_2_p']  += scores['rouge2'].precision
-        self.score['rouge_2_r']  += scores['rouge2'].recall
-        self.score['rouge_2_f1'] += scores['rouge2'].fmeasure
-        self.score['rouge_3_p']  += scores['rouge3'].precision
-        self.score['rouge_3_r']  += scores['rouge3'].recall
-        self.score['rouge_3_f1'] += scores['rouge3'].fmeasure
-        self.score['rouge_L_p']  += scores['rougeL'].precision
-        self.score['rouge_L_r']  += scores['rougeL'].recall
-        self.score['rouge_L_f1'] += scores['rougeL'].fmeasure
+        # iterate over each ROUGE variation that is evaluated
+        for i in ROUGE_VARIATIONS:
+            self.score[f'rouge_{i}_p']  += scores[f'rouge{i}'].precision
+            self.score[f'rouge_{i}_r']  += scores[f'rouge{i}'].recall
+            self.score[f'rouge_{i}_f1'] += scores[f'rouge{i}'].fmeasure
 
 
 class RougeEvaluator:
     def __init__(self, sequence_transform_fn, batch_size):
         self.scorer = rouge_scorer.RougeScorer(
-            ['rouge1', 'rouge2', 'rouge3', 'rougeL'],
+            [f'rouge{i}' for i in ROUGE_VARIATIONS],
             use_stemmer=True,
         )
         self.sequence_transform_fn = sequence_transform_fn
