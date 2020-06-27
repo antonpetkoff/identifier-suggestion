@@ -43,30 +43,18 @@ class RougeEvaluator:
         )
         self.sequence_transform_fn = sequence_transform_fn
         self.batch_size = batch_size
-        self.use_cache = False
         self.target_batches = []
         self.prediction_batches = []
 
 
-    def enable_cache(self):
-        self.use_cache = True
-
-
-    def disable_cache(self):
-        self.use_cache = False
-
-
     def reset_state(self):
         self.prediction_batches = []
-        if not self.use_cache:
-            self.target_batches = []
+        self.target_batches = []
 
 
     def add_batch(self, prediction_batch, target_batch):
         self.prediction_batches.append(prediction_batch)
-
-        if not self.use_cache:
-            self.target_batches.append(target_batch)
+        self.target_batches.append(target_batch)
 
 
     # the single argument is a tuple of the predictions and targets
@@ -77,30 +65,33 @@ class RougeEvaluator:
 
         start_time = time.time()
 
+        # transform the raw predictions into strings of words suitable for ROUGE evaluation
+        predicted_method_names = list(map(
+            self.sequence_transform_fn,
+            predictions.numpy(),
+        ))
+
+        # don't forget to transform the target to text, too
+        reference_method_names = list(map(
+            # ignore the first token which is the start of sequence marker
+            lambda target: self.sequence_transform_fn(target[1:]),
+            targets.numpy()
+        ))
+
         # accumulate method names for ROUGE evaluation
         for i in range(self.batch_size):
-            # transform the raw predictions into strings of words suitable for ROUGE evaluation
-            predicted_method_name = self.sequence_transform_fn(predictions[i].numpy())
-
-            # don't forget to transform the target to text, too
-            reference_method_name = self.sequence_transform_fn(
-                # ignore the first token which is the start of sequence marker
-                targets[i, 1:].numpy(),
-            )
-
             # an example of the scores returned by rouge_score is:
             # {'rouge1': Score(precision=0.5, recall=0.44, fmeasure=0.47),
             #  'rouge2': Score(precision=0.29, recall=0.25, fmeasure=0.27),
             #  'rouge3': Score(precision=0.17, recall=0.14, fmeasure=0.15),
             #  'rougeL': Score(precision=0.5, recall=0.45, fmeasure=0.47)}
             scores = self.scorer.score(
-                reference_method_name,
-                predicted_method_name,
+                reference_method_names[i],
+                predicted_method_names[i],
             )
-
             batch_score.add(scores)
 
-        if (batch_id % 100) == 0:
+        if batch_id % 50 == 0:
             print(f'evaluation of batch {batch_id} took: {time.time() - start_time}')
 
         return batch_score

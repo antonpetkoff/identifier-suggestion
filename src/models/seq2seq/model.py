@@ -346,10 +346,6 @@ class Seq2Seq(tf.Module):
 
             encoder_hidden_state = self.encoder.initialize_hidden_state()
 
-            if epoch == 2: # enable evaluation cache after first epoch
-                self.training_evaluator.enable_cache()
-                self.test_evaluator.enable_cache()
-
             self.training_evaluator.reset_state()
             self.test_evaluator.reset_state()
 
