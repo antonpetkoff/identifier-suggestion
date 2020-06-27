@@ -59,6 +59,7 @@ class Seq2Seq(tf.Module):
         self.reverse_output_index = dict(
             (i, token) for token, i in output_vocab_index.items()
         )
+        self.eos_index = self.output_vocab_index[Common.EOS]
 
         self.encoder = Encoder(
             input_vocab_size=self.params['input_vocab_size'],
@@ -398,11 +399,9 @@ class Seq2Seq(tf.Module):
         join_token='',
         camel_case=True
     ):
-        eos_index = self.output_vocab_index[Common.EOS]
-
         prediction = [
             self.reverse_output_index.get(index, Common.OOV)
-            for index in takewhile(lambda index: index != eos_index, raw_prediction)
+            for index in takewhile(lambda index: index != self.eos_index, raw_prediction)
         ]
 
         if camel_case:
