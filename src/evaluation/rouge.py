@@ -59,11 +59,11 @@ class RougeEvaluator:
         ))
 
         # don't forget to transform the target to text, too
-        reference_method_names = list(map(
+        reference_method_names = [
             # ignore the first token which is the start of sequence marker
-            lambda target: self.sequence_transform_fn(target[1:]),
-            targets.numpy()
-        ))
+            self.sequence_transform_fn(target[1:])
+            for target in targets.numpy()
+        ]
 
         # accumulate method names for ROUGE evaluation
         for i in range(self.batch_size):

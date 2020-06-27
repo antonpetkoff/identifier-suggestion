@@ -398,16 +398,11 @@ class Seq2Seq(tf.Module):
         join_token='',
         camel_case=True
     ):
-        # take all tokens before the end of sequence marker
-        prediction = takewhile(
-            lambda index: index != self.output_vocab_index[Common.EOS],
-            raw_prediction
-        )
+        eos_index = self.output_vocab_index[Common.EOS]
 
-        # transform indices back to readable tokens
         prediction = [
             self.reverse_output_index.get(index, Common.OOV)
-            for index in prediction
+            for index in takewhile(lambda index: index != eos_index, raw_prediction)
         ]
 
         if camel_case:
