@@ -373,9 +373,12 @@ class Seq2Seq(tf.Module):
                         f'epoch {epoch} - batch {step + 1} - loss {batch_loss}'
                     )
 
-            train_rouge_scores = self.training_evaluator.evaluate()
-
             self.logger.log_message(f'epoch {epoch} training time: {time.time() - start_time} sec')
+
+            start_time = time.time()
+            train_rouge_scores = self.training_evaluator.evaluate()
+            self.logger.log_message(f'epoch {epoch} evaluation on training data time: {time.time() - start_time} sec')
+
             self.logger.log_data({
                 'epoch': epoch,
                 'epoch_loss': total_loss / steps_per_epoch,
@@ -464,7 +467,7 @@ class Seq2Seq(tf.Module):
 
         test_rouge_scores = self.test_evaluator.evaluate()
 
-        self.logger.log_message(f'epoch {epoch} evaluation time: {time.time() - start_time} sec')
+        self.logger.log_message(f'epoch {epoch} evaluation on test data time: {time.time() - start_time} sec')
 
         test_results = {
             'epoch': epoch,
