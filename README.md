@@ -98,6 +98,8 @@ Fundamentals:
   - [ ] Camel case
   - [ ] Adjust short sequence penalty - prefer longer sequences
 
+- [ ] Consider scheduling custom learning rate decay
+
 - [ ] Hyperparameter optimization using random search
   - [ ] Sample parameter values (layer sizes, learning rate, regularization rates, etc.)
   - [ ] Execute 10-20 experiments in parallel (4 at a time)
@@ -113,7 +115,7 @@ Fundamentals:
 
 - [ ] Consider More Regularization
   - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
-  - [ ] Expose regularization hyper-parameters
+    - [ ] Isn't Early Stopping equivalent to L2 Weight Decay?
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
   - [ ] LayerNorm vs BatchNorm
 
