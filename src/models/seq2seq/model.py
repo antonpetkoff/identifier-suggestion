@@ -418,14 +418,14 @@ class Seq2Seq(tf.Module):
                 self.logger.log_message("epoch {} saved checkpoint: {}".format(epoch, save_path))
 
             # early stopping
-            if test_results['test_rouge_L_f1'] > best_rouge_l_f1 + self.config['min_delta']:
+            if test_results['test_rouge_L_f1'] > best_rouge_l_f1 + self.params['min_delta']:
                 best_rouge_l_f1 = test_results['test_rouge_L_f1']
                 best_epoch = epoch
                 epochs_without_improvement = 0
             else:
                 epochs_without_improvement += 1
 
-            if epochs_without_improvement > self.config['patience']:
+            if epochs_without_improvement > self.params['patience']:
                 self.logger.log_message(
                     f'Early stopping of training after {epochs_without_improvement} epochs without improvement'
                 )
