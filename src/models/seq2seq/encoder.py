@@ -7,7 +7,8 @@ class Encoder(tf.keras.Model):
         input_vocab_size,
         embedding_dims,
         rnn_units,
-        batch_size, # TODO: can we not pass the batch_size?
+        batch_size,
+        dropout_rate,
         *args,
         **kwargs,
     ):
@@ -18,6 +19,7 @@ class Encoder(tf.keras.Model):
             'embedding_dims': embedding_dims,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
+            'dropout_rate': dropout_rate,
         }
 
         self.embedding = tf.keras.layers.Embedding(
@@ -31,6 +33,7 @@ class Encoder(tf.keras.Model):
             return_sequences=True,
             return_state=True,
             name='EncoderLSTM',
+            dropout=self.config['dropout_rate'],
             # default kernel_initializer is 'glorot_uniform',
             # default recurrent_initializer is 'orthogonal'
             # default bias_initializer is 'zeros'
@@ -46,13 +49,14 @@ class Encoder(tf.keras.Model):
         ]
 
 
-    def call(self, input_batch, hidden = None):
+    def call(self, input_batch, hidden=None, training=False):
         if hidden is None:
             hidden = self.initialize_hidden_state()
 
         output, last_step_hidden_state, last_step_memory_state = self.encoder_rnn(
             self.embedding(input_batch),
-            initial_state = hidden,
+            training=training,
+            initial_state=hidden,
         )
 
         return (

@@ -73,6 +73,7 @@ parser.add_argument('--output_embedding_dim', type=int, help='Output embedding d
 parser.add_argument('--latent_dim', type=int, help='Encoder-Decoder latent space dimensionality', required=True)
 parser.add_argument('--learning_rate', type=float, help='Learning Rate', required=True)
 
+parser.add_argument('--dropout_rate', type=float, help='Dropout rate of LSTM linear activations. Varies from 0.0 to 1.0, where 0.0 means no dropout', required=True)
 parser.add_argument('--evaluation_dataset', choices=['validation', 'test'], help='Type of dataset to use for evaluation. Can be: test or validation', required=True)
 parser.add_argument('--epochs', type=int, help='Maximum number of training epochs', required=True)
 parser.add_argument('--early_stopping_patience', type=int, help='Maximum number of epochs without improvement before stopping training', required=True)
@@ -171,6 +172,7 @@ def run(args):
         output_embedding_dim=args.output_embedding_dim,
         rnn_units=args.latent_dim,
         batch_size=args.batch_size,
+        dropout_rate=args.dropout_rate,
         patience=args.early_stopping_patience,
         min_delta=args.early_stopping_min_delta,
     )

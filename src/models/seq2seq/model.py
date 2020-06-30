@@ -34,6 +34,7 @@ class Seq2Seq(tf.Module):
         output_embedding_dim = 256,
         rnn_units = 1024,
         batch_size = 64,
+        dropout_rate = 0.0,
         patience = 3,
         min_delta = 0.001,
     ):
@@ -49,6 +50,7 @@ class Seq2Seq(tf.Module):
             'output_embedding_dim': output_embedding_dim,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
+            'dropout_rate': dropout_rate,
             'patience': patience,
             'min_delta': min_delta,
         }
@@ -68,6 +70,7 @@ class Seq2Seq(tf.Module):
             embedding_dims=self.params['input_embedding_dim'],
             rnn_units=self.params['rnn_units'],
             batch_size=self.params['batch_size'],
+            dropout_rate=self.params['dropout_rate'],
         )
 
         self.decoder = Decoder(
@@ -75,6 +78,7 @@ class Seq2Seq(tf.Module):
             embedding_dims=self.params['output_embedding_dim'],
             rnn_units=self.params['rnn_units'],
             batch_size=self.params['batch_size'],
+            dropout_rate=self.params['dropout_rate'],
         )
 
         # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
@@ -115,7 +119,11 @@ class Seq2Seq(tf.Module):
         input_batch, target_batch = inputs
 
         # feed forward through encoder
-        encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(input_batch, encoder_hidden)
+        encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
+            input_batch,
+            encoder_hidden,
+            training,
+        )
 
         # initialize the decoder's hidden state with the final hidden state of the encoder
         decoder_hidden = encoder_hidden
@@ -147,7 +155,8 @@ class Seq2Seq(tf.Module):
             timestep_predictions, decoder_hidden, _attention_weights = self.decoder(
                 decoder_input,
                 decoder_hidden,
-                encoder_outputs
+                encoder_outputs,
+                training,
             )
 
             y_true = target_batch[:, t]
@@ -249,8 +258,9 @@ class Seq2Seq(tf.Module):
             output_embedding_dim = config['output_embedding_dim'],
             rnn_units = config['rnn_units'],
             batch_size = config['batch_size'],
-            patience = config['patience'] or 3,
-            min_delta = config['min_delta'] or 0.001,
+            dropout_rate = config.get('dropout_rate', 0.0),
+            patience = config.get('patience', 3),
+            min_delta = config.get('min_delta', 0.001),
         )
 
         model.restore_latest_checkpoint()
@@ -527,7 +537,8 @@ class Seq2Seq(tf.Module):
 
         encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
             tf.convert_to_tensor([input_sequence]), # the array brackets are needed for the batch_size dimension
-            hidden
+            hidden,
+            training=False,
         )
 
         # initialize the decoder hidden state with the hidden state of the encoder
@@ -547,7 +558,8 @@ class Seq2Seq(tf.Module):
             predictions, decoder_hidden, attention_weights = self.decoder(
                 decoder_input,
                 decoder_hidden,
-                encoder_outputs
+                encoder_outputs,
+                training=False
             )
 
             predicted_id = tf.argmax(predictions[0]).numpy()
@@ -581,7 +593,8 @@ class Seq2Seq(tf.Module):
 
         encoder_outputs, encoder_hidden, _encoder_cell_state = self.encoder(
             tf.convert_to_tensor([input_sequence]), # the array brackets are needed for the batch_size dimension
-            self.encoder.initialize_hidden_state(batch_size = 1)
+            hidden=self.encoder.initialize_hidden_state(batch_size = 1),
+            training=False,
         )
 
         # initialize the decoder hidden state with the hidden state of the encoder
@@ -608,7 +621,8 @@ class Seq2Seq(tf.Module):
                 predictions, decoder_hidden, _attention_weights = self.decoder(
                     decoder_input,
                     decoder_hidden,
-                    encoder_outputs
+                    encoder_outputs,
+                    training=False,
                 )
 
                 # the predictions are raw, so we use softmax to normalize to probabilities

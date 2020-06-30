@@ -10,6 +10,7 @@ class Decoder(tf.keras.Model):
         embedding_dims,
         rnn_units,
         batch_size,
+        dropout_rate,
         *args,
         **kwargs,
     ):
@@ -20,6 +21,7 @@ class Decoder(tf.keras.Model):
             'embedding_dims': embedding_dims,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
+            'dropout_rate': dropout_rate,
         }
 
         self.embedding = tf.keras.layers.Embedding(
@@ -33,7 +35,8 @@ class Decoder(tf.keras.Model):
             return_sequences = True,
             return_state = True,
             # recurrent_initializer is 'glorot_uniform' by default
-            name='DecoderLSTM'
+            name='DecoderLSTM',
+            dropout_rate=self.config['dropout_rate'],
         )
 
         self.output_layer = tf.keras.layers.Dense(
@@ -53,8 +56,9 @@ class Decoder(tf.keras.Model):
     def call(
         self,
         input_batch,
-        hidden_state = None,
-        encoder_outputs = None,
+        hidden_state=None,
+        encoder_outputs=None,
+        training=False,
     ):
         if hidden_state is None:
             hidden_state = self.hidden_state
@@ -83,7 +87,10 @@ class Decoder(tf.keras.Model):
         )
 
         # decoder output shape is (batch_size, 1, rnn_units)
-        decoder_output, decoder_hidden_state, _decoder_cell_state = self.decoder_rnn(decoder_input)
+        decoder_output, decoder_hidden_state, _decoder_cell_state = self.decoder_rnn(
+            decoder_input,
+            training=training,
+        )
 
         # squash the timestep dimension of the decoder_output, because we have a single timestep
         # thus the shape becomes (batch_size, rnn_units)
