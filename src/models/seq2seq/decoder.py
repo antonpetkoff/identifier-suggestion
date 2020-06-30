@@ -36,7 +36,7 @@ class Decoder(tf.keras.Model):
             return_state = True,
             # recurrent_initializer is 'glorot_uniform' by default
             name='DecoderLSTM',
-            dropout_rate=self.config['dropout_rate'],
+            dropout=self.config['dropout_rate'],
         )
 
         self.output_layer = tf.keras.layers.Dense(
