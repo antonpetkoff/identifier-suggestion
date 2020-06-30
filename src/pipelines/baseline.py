@@ -62,21 +62,17 @@ parser.add_argument('--dir_data', type=str, help='Directory of the dataset', req
 parser.add_argument('--file_checkpoint_dir', type=str, help='Model checkpoint directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
-# evaluation
-parser.add_argument('--eval_averaging', type=str, help='Type of averaging for F1, precision, recall evaluation metrics', required=True)
-
 # hyper parameters
 parser.add_argument('--max_input_length', type=int, help='Max input sequence length', required=True)
-
-# TODO: should we include <start> and <end>? we will add the <start> and <end> tokens which will effectively increase the seq length to 10 during training and prediction
 parser.add_argument('--max_output_length', type=int, help='Max output sequence length', required=True)
 parser.add_argument('--input_vocab_size', type=int, help='Input vocabulary size', required=True)
 parser.add_argument('--input_embedding_dim', type=int, help='Input embedding dimensionality', required=True)
 
-# TODO: maybe we should name this max_output_vocab_size, since we can compute it from the input data set?
 parser.add_argument('--output_vocab_size', type=int, help='Output vocabulary size', required=True)
 parser.add_argument('--output_embedding_dim', type=int, help='Output embedding dimensionality', required=True)
 parser.add_argument('--latent_dim', type=int, help='Encoder-Decoder latent space dimensionality', required=True)
+parser.add_argument('--bidirectional', action='store_true', help='Use Bidirectional encoder')
+
 parser.add_argument('--learning_rate', type=float, help='Learning Rate', required=True)
 parser.add_argument('--epochs', type=int, help='Number of training epochs', required=True)
 parser.add_argument('--batch_size', type=int, help='Batch Size', required=True)
@@ -171,7 +167,7 @@ def run(args):
         output_embedding_dim=args.output_embedding_dim,
         rnn_units=args.latent_dim,
         batch_size=args.batch_size,
-        eval_averaging=args.eval_averaging,
+        bidirectional=args.bidirectional,
     )
 
     model.summary()

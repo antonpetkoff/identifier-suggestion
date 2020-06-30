@@ -34,7 +34,7 @@ class Seq2Seq(tf.Module):
         output_embedding_dim = 256,
         rnn_units = 1024,
         batch_size = 64,
-        eval_averaging = 'micro',
+        bidirectional = True,
     ):
         self.logger = logger
 
@@ -48,7 +48,7 @@ class Seq2Seq(tf.Module):
             'output_embedding_dim': output_embedding_dim,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
-            'eval_averaging': eval_averaging,
+            'bidirectional': bidirectional
         }
 
         self.input_vocab_index = input_vocab_index
@@ -66,6 +66,7 @@ class Seq2Seq(tf.Module):
             embedding_dims=self.params['input_embedding_dim'],
             rnn_units=self.params['rnn_units'],
             batch_size=self.params['batch_size'],
+            bidirectional=self.params['bidirectional'],
         )
 
         self.decoder = Decoder(
@@ -247,7 +248,7 @@ class Seq2Seq(tf.Module):
             output_embedding_dim = config['output_embedding_dim'],
             rnn_units = config['rnn_units'],
             batch_size = config['batch_size'],
-            eval_averaging = config['eval_averaging'],
+            bidirectional = config['bidirectional'],
         )
 
         model.restore_latest_checkpoint()

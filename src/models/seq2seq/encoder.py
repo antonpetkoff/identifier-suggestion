@@ -7,7 +7,8 @@ class Encoder(tf.keras.Model):
         input_vocab_size,
         embedding_dims,
         rnn_units,
-        batch_size, # TODO: can we not pass the batch_size?
+        batch_size,
+        bidirectional,
         *args,
         **kwargs,
     ):
@@ -18,6 +19,7 @@ class Encoder(tf.keras.Model):
             'embedding_dims': embedding_dims,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
+            'bidirectional': bidirectional,
         }
 
         self.embedding = tf.keras.layers.Embedding(
@@ -35,6 +37,12 @@ class Encoder(tf.keras.Model):
             # default recurrent_initializer is 'orthogonal'
             # default bias_initializer is 'zeros'
         )
+
+        if self.config['bidirectional']:
+            self.encoder_rnn = tf.keras.layers.Bidirectional(
+                self.encoder_rnn,
+                merge_mode='concat',
+            )
 
 
     def initialize_hidden_state(self, batch_size=None):

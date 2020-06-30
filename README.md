@@ -88,9 +88,6 @@ Fundamentals:
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Improve evaluation with order-aware metrics
-  - [ ] ROUGE-2, ROUGE-L, precision, recall & F1 (py-rouge + nltk)
-
 - [ ] Add Regularization
   - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
@@ -112,6 +109,9 @@ Fundamentals:
 - [ ] Try to replace the encoder with a Bidirectional LSTM
 
 - [ ] Use custom features like return type, parameters, class name, etc.
+
+- [x] Improve evaluation with order-aware metrics
+  - [x] ROUGE-2, ROUGE-L, precision, recall & F1 (py-rouge + nltk)
 
 - [x] Increase Dataset to 800k method samples
   - [x] Select a set of Java repositories
