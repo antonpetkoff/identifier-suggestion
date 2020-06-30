@@ -34,7 +34,8 @@ class Seq2Seq(tf.Module):
         output_embedding_dim = 256,
         rnn_units = 1024,
         batch_size = 64,
-        eval_averaging = 'micro',
+        patience = 3,
+        min_delta = 0.001,
     ):
         self.logger = logger
 
@@ -48,7 +49,8 @@ class Seq2Seq(tf.Module):
             'output_embedding_dim': output_embedding_dim,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
-            'eval_averaging': eval_averaging,
+            'patience': patience,
+            'min_delta': min_delta,
         }
 
         self.input_vocab_index = input_vocab_index
@@ -247,7 +249,8 @@ class Seq2Seq(tf.Module):
             output_embedding_dim = config['output_embedding_dim'],
             rnn_units = config['rnn_units'],
             batch_size = config['batch_size'],
-            eval_averaging = config['eval_averaging'],
+            patience = config['patience'] or 3,
+            min_delta = config['min_delta'] or 0.001,
         )
 
         model.restore_latest_checkpoint()
@@ -341,6 +344,9 @@ class Seq2Seq(tf.Module):
         train_dataset = train_dataset.shuffle(BUFFER_SIZE)
         train_dataset = train_dataset.batch(batch_size, drop_remainder=True)
 
+        epochs_without_improvement = 0
+        best_rouge_l_f1 = 0
+
         for epoch in range(1, epochs + 1):
             start_time = time.time()
             total_loss = 0.0
@@ -385,7 +391,7 @@ class Seq2Seq(tf.Module):
                 **train_rouge_scores.score,
             })
 
-            self.evaluate(X_test, Y_test, batch_size, epoch)
+            test_results = self.evaluate(X_test, Y_test, batch_size, epoch)
 
             on_epoch_end(epoch)
 
@@ -394,6 +400,19 @@ class Seq2Seq(tf.Module):
             if epoch % 3 == 0:
                 save_path = self.checkpoint_manager.save()
                 self.logger.log_message("epoch {} saved checkpoint: {}".format(epoch, save_path))
+
+            # early stopping
+            if test_results['test_rouge_L_f1'] > best_rouge_l_f1 + self.config['min_delta']:
+                best_rouge_l_f1 = test_results['test_rouge_L_f1']
+                epochs_without_improvement = 0
+            else:
+                epochs_without_improvement += 1
+
+            if epochs_without_improvement > self.config['patience']:
+                self.logger.log_message(
+                    f'Early stopping of training after {epochs_without_improvement} epochs without improvement'
+                )
+                return
 
 
     def convert_raw_prediction_to_text(

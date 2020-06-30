@@ -78,7 +78,10 @@ parser.add_argument('--output_vocab_size', type=int, help='Output vocabulary siz
 parser.add_argument('--output_embedding_dim', type=int, help='Output embedding dimensionality', required=True)
 parser.add_argument('--latent_dim', type=int, help='Encoder-Decoder latent space dimensionality', required=True)
 parser.add_argument('--learning_rate', type=float, help='Learning Rate', required=True)
-parser.add_argument('--epochs', type=int, help='Number of training epochs', required=True)
+
+parser.add_argument('--epochs', type=int, help='Maximum number of training epochs', required=True)
+parser.add_argument('--early_stopping_patience', type=int, help='Maximum number of epochs without improvement before stopping training', required=True)
+parser.add_argument('--early_stopping_min_delta', type=float, help='Minimum amount of improvement required in the score for early stopping', required=True)
 parser.add_argument('--batch_size', type=int, help='Batch Size', required=True)
 parser.add_argument('--random_seed', type=int, help='Random Seed', required=True)
 
@@ -171,7 +174,8 @@ def run(args):
         output_embedding_dim=args.output_embedding_dim,
         rnn_units=args.latent_dim,
         batch_size=args.batch_size,
-        eval_averaging=args.eval_averaging,
+        patience=args.early_stopping_patience,
+        min_delta=args.early_stopping_min_delta,
     )
 
     model.summary()
