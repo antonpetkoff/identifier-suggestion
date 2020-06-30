@@ -88,14 +88,14 @@ Fundamentals:
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Improve evaluation with order-aware metrics
-  - [ ] ROUGE-2, ROUGE-L, precision, recall & F1 (py-rouge + nltk)
-
 - [ ] Add Regularization
   - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
+  - [ ] Expose regularization hyper-parameters
+  - [ ] Add Dropout
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
   - [ ] LayerNorm vs BatchNorm
-  - [ ] Expose regularization hyper-parameters
+
+- [ ] Add Early Stopping with a Patience hyperparameter
 
 - [ ] Train an optimal model
   - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
@@ -105,13 +105,16 @@ Fundamentals:
   - [ ] Make a 2D/3D Plot with a good (interpretable) sample
   - [ ] Log/Upload the plot in `wandb`
 
+- [ ] Try to replace the encoder with a Bidirectional LSTM
+
+- [ ] Use custom features like return type, parameters, class name, etc.
+
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
   - [ ] Will Xavier or Random Normal initialization improve training time?
 
-- [ ] Try to replace the encoder with a Bidirectional LSTM
-
-- [ ] Use custom features like return type, parameters, class name, etc.
+- [x] Improve evaluation with order-aware metrics
+  - [x] ROUGE-2, ROUGE-L, precision, recall & F1 (py-rouge + nltk)
 
 - [x] Increase Dataset to 800k method samples
   - [x] Select a set of Java repositories
