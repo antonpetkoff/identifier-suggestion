@@ -95,10 +95,21 @@ Fundamentals:
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
   - [ ] LayerNorm vs BatchNorm
 
-- [ ] Add Early Stopping with a Patience hyperparameter
+- [ ] Add Early Stopping with Patience and Min Delta hyperparameters
+
+- [ ] Add the ability to test on the dev dataset
 
 - [ ] Train an optimal model
   - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
+
+- [ ] Format predicted method names
+  - [ ] Remove Start of Sequence marker
+  - [ ] Camel case
+  - [ ] Adjust short sequence penalty - prefer longer sequences
+
+- [ ] Enhance attention plot
+  - [ ] Save attention matrices so that prettier plots can be made later
+  - [ ] Wandb attention plots are broken, fix them
 
 - [ ] Plot embeddings
   - [ ] Reduce the embedding matrices with PCA / t-SNE
