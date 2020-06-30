@@ -80,36 +80,33 @@ Fundamentals:
 - [ ] Write!
   - [x] Describe the dataset
     - [x] Add some tables and plots of the data for better understanding
-  - [ ] Describe the Seq2Seq architecture and training process
-  - [ ] Describe the evaluation metrics this project has used
   - [ ] Summarize your research in the Literature Review section
+  - [ ] Describe the evaluation metrics this project has used
+  - [ ] Describe the Seq2Seq architecture and training process
   - [ ] Describe experiments
     - [ ] Start by describing your best experiment
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Add Regularization
-  - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
-  - [ ] Expose regularization hyper-parameters
-  - [ ] Add Dropout
-  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
-  - [ ] LayerNorm vs BatchNorm
-
 - [ ] Add Early Stopping with Patience and Min Delta hyperparameters
 
 - [ ] Add the ability to test on the dev dataset
 
-- [ ] Train an optimal model
-  - [ ] Do a hyperparameter sweep on layer sizes, learning rate, regularization rates, etc.
+- [ ] Add Dropout
+
+- [ ] Enhance attention plot
+  - [ ] Save attention matrices so that prettier plots can be made later
+    - [ ] Consider using wandb Artifacts
+  - [ ] Wandb attention plots are broken, fix them (a GIF would be cool) or remove them
 
 - [ ] Format predicted method names
   - [ ] Remove Start of Sequence marker
   - [ ] Camel case
   - [ ] Adjust short sequence penalty - prefer longer sequences
 
-- [ ] Enhance attention plot
-  - [ ] Save attention matrices so that prettier plots can be made later
-  - [ ] Wandb attention plots are broken, fix them
+- [ ] Hyperparameter optimization using random search
+  - [ ] Sample parameter values (layer sizes, learning rate, regularization rates, etc.)
+  - [ ] Execute 10-20 experiments in parallel (4 at a time)
 
 - [ ] Plot embeddings
   - [ ] Reduce the embedding matrices with PCA / t-SNE
@@ -119,6 +116,12 @@ Fundamentals:
 - [ ] Try to replace the encoder with a Bidirectional LSTM
 
 - [ ] Use custom features like return type, parameters, class name, etc.
+
+- [ ] Consider More Regularization
+  - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
+  - [ ] Expose regularization hyper-parameters
+  - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
+  - [ ] LayerNorm vs BatchNorm
 
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
