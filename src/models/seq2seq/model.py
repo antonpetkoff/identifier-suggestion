@@ -34,6 +34,7 @@ class Seq2Seq(tf.Module):
         output_embedding_dim = 256,
         rnn_units = 1024,
         batch_size = 64,
+        learning_rate = 0.001,
         dropout_rate = 0.0,
         patience = 3,
         min_delta = 0.001,
@@ -50,6 +51,7 @@ class Seq2Seq(tf.Module):
             'output_embedding_dim': output_embedding_dim,
             'rnn_units': rnn_units,
             'batch_size': batch_size,
+            'learning_rate': learning_rate,
             'dropout_rate': dropout_rate,
             'patience': patience,
             'min_delta': min_delta,
@@ -81,8 +83,10 @@ class Seq2Seq(tf.Module):
             dropout_rate=self.params['dropout_rate'],
         )
 
-        # TODO: expose the optimizer as a hyper parameter? where do we give the learning rate? is it adaptive? can we log it?
-        self.optimizer = tf.keras.optimizers.Adam()
+        # TODO: experiment with a custom learning rate scheduler
+        self.optimizer = tf.keras.optimizers.Adam(
+            learning_rate=self.params['learning_rate'],
+        )
 
         seq_transform_fn = lambda seq: self.convert_raw_prediction_to_text(seq, join_token=' ', camel_case=False)
 
@@ -258,6 +262,7 @@ class Seq2Seq(tf.Module):
             output_embedding_dim = config['output_embedding_dim'],
             rnn_units = config['rnn_units'],
             batch_size = config['batch_size'],
+            learning_rate = config.get('learning_rate', 0.001),
             dropout_rate = config.get('dropout_rate', 0.0),
             patience = config.get('patience', 3),
             min_delta = config.get('min_delta', 0.001),

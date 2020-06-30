@@ -88,8 +88,6 @@ Fundamentals:
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Add Dropout
-
 - [ ] Enhance attention plot
   - [ ] Save attention matrices so that prettier plots can be made later
     - [ ] Consider using wandb Artifacts
@@ -122,6 +120,8 @@ Fundamentals:
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
   - [ ] Will Xavier or Random Normal initialization improve training time?
+
+- [x] Add Dropout
 
 - [x] Add Early Stopping with Patience and Min Delta hyperparameters
 
