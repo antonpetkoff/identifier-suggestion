@@ -346,6 +346,7 @@ class Seq2Seq(tf.Module):
 
         epochs_without_improvement = 0
         best_rouge_l_f1 = 0
+        best_epoch = 0
 
         for epoch in range(1, epochs + 1):
             start_time = time.time()
@@ -404,6 +405,7 @@ class Seq2Seq(tf.Module):
             # early stopping
             if test_results['test_rouge_L_f1'] > best_rouge_l_f1 + self.config['min_delta']:
                 best_rouge_l_f1 = test_results['test_rouge_L_f1']
+                best_epoch = epoch
                 epochs_without_improvement = 0
             else:
                 epochs_without_improvement += 1
@@ -411,6 +413,9 @@ class Seq2Seq(tf.Module):
             if epochs_without_improvement > self.config['patience']:
                 self.logger.log_message(
                     f'Early stopping of training after {epochs_without_improvement} epochs without improvement'
+                )
+                self.logger.log_message(
+                    f'Best epoch was: {best_epoch}, Best Rouge-L F1 was: {best_rouge_l_f1}'
                 )
                 return
 
