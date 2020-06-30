@@ -62,23 +62,18 @@ parser.add_argument('--dir_data', type=str, help='Directory of the dataset', req
 parser.add_argument('--file_checkpoint_dir', type=str, help='Model checkpoint directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
 
-# evaluation
-parser.add_argument('--eval_averaging', type=str, help='Type of averaging for F1, precision, recall evaluation metrics', required=True)
-
 # hyper parameters
 parser.add_argument('--max_input_length', type=int, help='Max input sequence length', required=True)
-
-# TODO: should we include <start> and <end>? we will add the <start> and <end> tokens which will effectively increase the seq length to 10 during training and prediction
 parser.add_argument('--max_output_length', type=int, help='Max output sequence length', required=True)
 parser.add_argument('--input_vocab_size', type=int, help='Input vocabulary size', required=True)
 parser.add_argument('--input_embedding_dim', type=int, help='Input embedding dimensionality', required=True)
 
-# TODO: maybe we should name this max_output_vocab_size, since we can compute it from the input data set?
 parser.add_argument('--output_vocab_size', type=int, help='Output vocabulary size', required=True)
 parser.add_argument('--output_embedding_dim', type=int, help='Output embedding dimensionality', required=True)
 parser.add_argument('--latent_dim', type=int, help='Encoder-Decoder latent space dimensionality', required=True)
 parser.add_argument('--learning_rate', type=float, help='Learning Rate', required=True)
 
+parser.add_argument('--evaluation_dataset', choices=['validation', 'test'], help='Type of dataset to use for evaluation. Can be: test or validation', required=True)
 parser.add_argument('--epochs', type=int, help='Maximum number of training epochs', required=True)
 parser.add_argument('--early_stopping_patience', type=int, help='Maximum number of epochs without improvement before stopping training', required=True)
 parser.add_argument('--early_stopping_min_delta', type=float, help='Minimum amount of improvement required in the score for early stopping', required=True)
@@ -159,7 +154,9 @@ def run(args):
 
     logger.log_message('Experiment parameters: ', args)
 
-    df_train, _df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args, logger)
+    df_train, df_validation, df_test, input_vocab_index, output_vocab_index = preprocess_data(args, logger)
+
+    evaluation_dataset = df_test if args.evaluation_dataset == 'test' else df_validation
 
     model = Seq2Seq(
         logger=logger,
@@ -249,8 +246,8 @@ def run(args):
     model.train(
         X_train=np.stack(df_train['inputs'].values),
         Y_train=np.stack(df_train['outputs'].values),
-        X_test=np.stack(df_test['inputs'].values),
-        Y_test=np.stack(df_test['outputs'].values),
+        X_test=np.stack(evaluation_dataset['inputs'].values),
+        Y_test=np.stack(evaluation_dataset['outputs'].values),
         epochs=args.epochs,
         on_epoch_end=on_epoch_end,
     )

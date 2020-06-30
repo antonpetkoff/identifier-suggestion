@@ -15,5 +15,6 @@ PYTHONPATH=. python src/pipelines/baseline.py \
   --epochs 1 \
   --early_stopping_patience 3 \
   --early_stopping_min_delta 0.001 \
+  --evaluation_dataset validation \
   --batch_size 64 \
   --random_seed 1

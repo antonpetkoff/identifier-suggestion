@@ -88,10 +88,6 @@ Fundamentals:
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Add Early Stopping with Patience and Min Delta hyperparameters
-
-- [ ] Add the ability to test on the dev dataset
-
 - [ ] Add Dropout
 
 - [ ] Enhance attention plot
@@ -126,6 +122,10 @@ Fundamentals:
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
   - [ ] Will Xavier or Random Normal initialization improve training time?
+
+- [x] Add Early Stopping with Patience and Min Delta hyperparameters
+
+- [x] Add the ability to test on the dev dataset
 
 - [x] Improve evaluation with order-aware metrics
   - [x] ROUGE-2, ROUGE-L, precision, recall & F1 (py-rouge + nltk)
