@@ -228,7 +228,8 @@ def run(args):
                 attention_weights.numpy(),
                 input_tokens,
                 output_tokens,
-                save_name = f'id-{sample_id}-epoch-{epoch}'
+                save_name = f'id-{sample_id}-epoch-{epoch}',
+                save_to_wandb = False, # temporarily disable wandb heatmaps until W&B fix the dashboards
             )
 
             predicted_texts.append(

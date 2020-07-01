@@ -86,7 +86,8 @@ class Logger:
         attention_weights,
         input_tokens,
         output_tokens,
-        save_name = None
+        save_name = None,
+        save_to_wandb = True,
     ):
         matrix_values = attention_weights[:len(input_tokens), :len(output_tokens)]
 
@@ -114,7 +115,7 @@ class Logger:
 
             plt.close()
 
-        if self.data_save_dir:
+        if save_to_wandb and self.data_save_dir:
             # save the data itself as JSON for further plotting afterwards
             with open(os.path.join(self.data_save_dir, save_name + '.json'), 'w', encoding='utf-8') as f:
                 data = {
