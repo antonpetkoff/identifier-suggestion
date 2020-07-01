@@ -27,7 +27,7 @@ class Logger:
             wandb.init(
                 dir = wandb_save_dir,
                 config = experiment_config,
-                name = experiment_config['experiment_name'],
+                name = experiment_config.experiment_name,
             )
 
         if self.image_save_dir:
