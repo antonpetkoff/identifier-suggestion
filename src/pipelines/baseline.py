@@ -62,6 +62,7 @@ parser = argparse.ArgumentParser(description='Baseline Seq2Seq model')
 parser.add_argument('--dir_data', type=str, help='Directory of the dataset', required=True)
 parser.add_argument('--file_checkpoint_dir', type=str, help='Model checkpoint directory name', required=True)
 parser.add_argument('--dir_preprocessed_data', type=str, help='Directory for preprocessed data', required=True)
+parser.add_argument('--experiment_name', type=str, help='Name of the experiment', required=True)
 
 # hyper parameters
 parser.add_argument('--max_input_length', type=int, help='Max input sequence length', required=True)
