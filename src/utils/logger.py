@@ -19,11 +19,16 @@ class Logger:
         self.data_save_dir = data_save_dir
 
         self.log_message('Initializing logger')
+        self.log_message(f'Current working directory: {os.getcwd()}')
 
         if wandb_save_dir:
             self.wandb_enabled = True
 
-            wandb.init(dir = wandb_save_dir, config = experiment_config)
+            wandb.init(
+                dir = wandb_save_dir,
+                config = experiment_config,
+                name = experiment_config['experiment_name'],
+            )
 
         if self.image_save_dir:
             os.makedirs(self.image_save_dir, exist_ok = True)

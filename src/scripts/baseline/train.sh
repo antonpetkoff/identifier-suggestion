@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PYTHONPATH=. python src/pipelines/baseline.py \
+  --experiment_name baseline_experiment
   --dir_data data/processed/subtoken/ \
   --file_checkpoint_dir models/checkpoints/baseline/ \
   --dir_preprocessed_data data/processed/seq2seq/ \
