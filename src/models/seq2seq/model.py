@@ -13,6 +13,7 @@ from src.models.seq2seq.encoder import Encoder
 from src.models.seq2seq.decoder import Decoder
 from src.preprocessing.tokens import tokenize_method
 from src.evaluation.rouge import RougeEvaluator
+from src.utils.strings import seq_to_camel_case
 
 
 def prefix_dict_keys(dict, prefix):
@@ -451,11 +452,7 @@ class Seq2Seq(tf.Module):
 
         if camel_case:
             # convert tokens to camel case
-            prediction = [prediction[0]] + [
-                token[0].upper() + token[1:]
-                for token in prediction[1:]
-                if len(token) > 0
-            ]
+            prediction = seq_to_camel_case(prediction)
 
         return join_token.join(prediction)
 

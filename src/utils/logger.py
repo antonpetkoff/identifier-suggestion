@@ -28,6 +28,9 @@ class Logger:
         if self.image_save_dir:
             os.makedirs(self.image_save_dir, exist_ok = True)
 
+        if self.data_save_dir:
+            os.makedirs(self.data_save_dir, exist_ok = True)
+
 
     def log_message(self, message, *params):
         print(message, *params)
@@ -108,12 +111,13 @@ class Logger:
 
         if self.data_save_dir:
             # save the data itself as JSON for further plotting afterwards
-            with open(os.path.join(self.data_save_dir, save_name + '.json'), mode='w') as f:
-                f.write(json.dumps({
+            with open(os.path.join(self.data_save_dir, save_name + '.json'), 'w', encoding='utf-8') as f:
+                data = {
                     'input_tokens': input_tokens,
                     'output_tokens': output_tokens,
                     'weights': matrix_values.tolist(),
-                }))
+                }
+                json.dump(data, f, ensure_ascii=False)
 
     def persist_data(self, data_path):
         if self.wandb_enabled:

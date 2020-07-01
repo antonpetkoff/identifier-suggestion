@@ -19,6 +19,7 @@ from src.evaluation.sequence import compute_f1_score
 from src.preprocessing.tokens import tokenize_method_body, get_subtokens
 from src.preprocessing.sequence import preprocess_sequences
 from src.visualization.plot import plot_attention_weights
+from src.utils.strings import seq_to_camel_case
 from src.common.tokens import Common
 
 from src.models.seq2seq import Seq2Seq
@@ -195,25 +196,15 @@ def run(args):
     test_inputs = np.stack(test_samples['inputs'])
     test_outputs = np.stack(test_samples['outputs'])
 
-    # TODO: extract index to text conversion logic
-    # convert raw inputs to texts
-    input_texts = []
-    for test_input in test_inputs:
-        without_padding = filter(lambda index: index != 0, test_input)
-        input_texts.append(
-            ' '.join(list(map(lambda index: reverse_input_index.get(index, Common.OOV), without_padding)))
-        )
-
-    def map_raw_predictions_to_texts(raw_predictions):
-        prediction_texts = []
-
-        for prediction in raw_predictions:
-            before_end = takewhile(lambda index: index != output_vocab_index[Common.EOS], prediction)
-            prediction_texts.append(
-                ''.join(list(map(lambda index: reverse_output_index.get(index, Common.OOV), before_end)))
-            )
-
-        return prediction_texts
+    # convert raw inputs to human-readable text strings
+    input_texts = [
+        ' '.join([
+            reverse_input_index.get(index, Common.OOV)
+            for index in test_input
+            if index != 0 # without padding
+        ])
+        for test_input in test_inputs
+    ]
 
     def on_epoch_end(epoch):
         predicted_texts = []
@@ -234,16 +225,18 @@ def run(args):
             ]
 
             logger.log_attention_heatmap(
-                attention_weights,
+                attention_weights.numpy(),
                 input_tokens,
                 output_tokens,
                 save_name = f'id-{sample_id}-epoch-{epoch}'
             )
 
-            predicted_texts.append(''.join(output_tokens))
+            predicted_texts.append(
+                '' if len(output_tokens) == 1 else seq_to_camel_case(output_tokens[:-1]) # without the <eos> marker
+            )
 
         # log tables
-        expected_texts = map_raw_predictions_to_texts(test_outputs)
+        expected_texts = list(map(model.convert_raw_prediction_to_text, test_outputs))
         logger.log_examples_table(input_texts, predicted_texts, expected_texts)
 
     model.train(
