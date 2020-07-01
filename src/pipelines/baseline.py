@@ -236,7 +236,10 @@ def run(args):
             )
 
         # log tables
-        expected_texts = list(map(model.convert_raw_prediction_to_text, test_outputs))
+        expected_texts = [
+            model.convert_raw_prediction_to_text(seq[1:]) # ignore <sos> marker in testing data
+            for seq in test_outputs
+        ]
         logger.log_examples_table(input_texts, predicted_texts, expected_texts)
 
     model.train(
