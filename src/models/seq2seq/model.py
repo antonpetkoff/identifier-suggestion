@@ -592,7 +592,7 @@ class Seq2Seq(tf.Module):
 
 
     # TODO: add documentation
-    def beam_search_predict_raw(self, input_sequence, k = 5, alpha = 0.7):
+    def beam_search_predict_raw(self, input_sequence, k = 10, alpha = 0.5):
         start_of_seq_id = self.output_vocab_index[Common.SOS]
         end_of_seq_id = self.output_vocab_index[Common.EOS]
 
@@ -739,20 +739,9 @@ class Seq2Seq(tf.Module):
 
         self.logger.log_message('Raw predictions: ', raw_predictions)
 
-        clean_raw_predictions = [
-            takewhile(
-                lambda index: index != self.output_vocab_index[Common.EOS],
-                raw_prediction
-            )
-            for raw_prediction in raw_predictions
-        ]
-
         predicted_texts = [
-            ''.join([
-                self.reverse_output_index.get(index, Common.OOV)
-                for index in clean_raw_prediction
-            ])
-            for clean_raw_prediction in clean_raw_predictions
+            self.convert_raw_prediction_to_text(seq[1:]) # ignore the <sos> marker
+            for seq in raw_predictions
         ]
 
         self.logger.log_message('Predicted texts: ', predicted_texts)

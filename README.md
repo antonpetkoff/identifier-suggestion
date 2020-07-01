@@ -88,11 +88,6 @@ Fundamentals:
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Format predicted method names
-  - [ ] Remove Start of Sequence marker
-  - [ ] Camel case
-  - [ ] Adjust short sequence penalty - prefer longer sequences
-
 - [ ] Hyperparameter optimization using random search
   - [ ] Sample parameter values (layer sizes, learning rate, regularization rates, etc.)
   - [ ] Execute 10-20 experiments in parallel (4 at a time)
@@ -117,6 +112,11 @@ Fundamentals:
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
   - [ ] Will Xavier or Random Normal initialization improve training time?
+
+- [x] Format predicted method names
+  - [x] Remove Start of Sequence marker
+  - [x] Camel case
+  - [x] Adjust short sequence penalty - prefer longer sequences
 
 - [x] Enhance attention plot
   - [x] Save attention matrices so that prettier plots can be made later
