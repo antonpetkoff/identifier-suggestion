@@ -232,7 +232,7 @@ def run(args):
             )
 
             predicted_texts.append(
-                '' if len(output_tokens) == 1 else seq_to_camel_case(output_tokens[:-1]) # without the <eos> marker
+                '' if len(output_tokens) == 1 else ''.join(seq_to_camel_case(output_tokens[:-1])) # without the <eos> marker
             )
 
         # log tables
