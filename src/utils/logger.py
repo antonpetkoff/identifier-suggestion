@@ -1,4 +1,5 @@
 import os
+import json
 import wandb
 import numpy as np
 
@@ -10,10 +11,12 @@ class Logger:
         self,
         experiment_config,
         wandb_save_dir = None,
-        image_save_dir = None
+        image_save_dir = None,
+        data_save_dir = None,
     ):
         self.wandb_enabled = False
         self.image_save_dir = image_save_dir
+        self.data_save_dir = data_save_dir
 
         self.log_message('Initializing logger')
 
@@ -75,22 +78,23 @@ class Logger:
         attention_weights,
         input_tokens,
         output_tokens,
-        id,
         save_name = None
     ):
+        matrix_values = attention_weights[:len(input_tokens), :len(output_tokens)]
+
         if self.wandb_enabled:
             wandb.log({
-                f'attention_heatmap_{id}': wandb.plots.HeatMap(
+                save_name: wandb.plots.HeatMap(
                     x_labels = output_tokens,
                     y_labels = input_tokens,
-                    matrix_values = attention_weights,
+                    matrix_values = matrix_values,
                     show_text = False
                 )
             })
 
         if self.image_save_dir and save_name:
             plt = plot_attention_weights(
-                attention_weights[:len(input_tokens), :len(output_tokens)],
+                matrix_values,
                 input_tokens,
                 output_tokens,
             )
@@ -102,6 +106,14 @@ class Logger:
 
             plt.close()
 
+        if self.data_save_dir:
+            # save the data itself as JSON for further plotting afterwards
+            with open(os.path.join(self.data_save_dir, save_name + '.json'), mode='w') as f:
+                f.write(json.dumps({
+                    'input_tokens': input_tokens,
+                    'output_tokens': output_tokens,
+                    'weights': matrix_values.tolist(),
+                }))
 
     def persist_data(self, data_path):
         if self.wandb_enabled:

@@ -150,7 +150,8 @@ def run(args):
     logger = Logger(
         experiment_config = args,
         wandb_save_dir = './reports',
-        image_save_dir = f'./reports/figures/train-{timestamp}'
+        image_save_dir = f'./reports/figures/train-{timestamp}',
+        data_save_dir = f'./reports/dumps/train-{timestamp}',
     )
 
     logger.log_message('Experiment parameters: ', args)
@@ -236,7 +237,6 @@ def run(args):
                 attention_weights,
                 input_tokens,
                 output_tokens,
-                id = sample_id,
                 save_name = f'id-{sample_id}-epoch-{epoch}'
             )
 

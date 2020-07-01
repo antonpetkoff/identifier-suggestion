@@ -424,6 +424,9 @@ class Seq2Seq(tf.Module):
                 epochs_without_improvement = 0
             else:
                 epochs_without_improvement += 1
+                self.logger.log_message(
+                    f'Increasing epochs without improvement to: {epochs_without_improvement}'
+                )
 
             if epochs_without_improvement > self.params['patience']:
                 self.logger.log_message(

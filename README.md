@@ -88,21 +88,16 @@ Fundamentals:
   - [ ] Add visualization of attention weights
   - [ ] Add visualization of embeddings
 
-- [ ] Enhance attention plot
-  - [ ] Save attention matrices so that prettier plots can be made later
-    - [ ] Consider using wandb Artifacts
-  - [ ] Wandb attention plots are broken, fix them (a GIF would be cool) or remove them
-
 - [ ] Format predicted method names
   - [ ] Remove Start of Sequence marker
   - [ ] Camel case
   - [ ] Adjust short sequence penalty - prefer longer sequences
 
-- [ ] Consider scheduling custom learning rate decay
-
 - [ ] Hyperparameter optimization using random search
   - [ ] Sample parameter values (layer sizes, learning rate, regularization rates, etc.)
   - [ ] Execute 10-20 experiments in parallel (4 at a time)
+
+- [ ] Consider scheduling custom learning rate decay
 
 - [ ] Plot embeddings
   - [ ] Reduce the embedding matrices with PCA / t-SNE
@@ -122,6 +117,11 @@ Fundamentals:
 - [ ] Initialization
   - [ ] Check how the embedding layers and RNNs are initialized
   - [ ] Will Xavier or Random Normal initialization improve training time?
+
+- [x] Enhance attention plot
+  - [x] Save attention matrices so that prettier plots can be made later
+  - [x] Fix wandb attention plots are broken
+  - [ ] Generate a GIF with the attention plots for each epoch
 
 - [x] Add Dropout
 
