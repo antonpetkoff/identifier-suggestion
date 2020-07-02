@@ -219,7 +219,8 @@ def run(args):
                 if index != 0
             ]
 
-            index_of_first_end_of_seq = predicted_token_ids.index(output_vocab_index[Common.EOS])
+            eos_key = output_vocab_index[Common.EOS]
+            index_of_first_end_of_seq = predicted_token_ids.index(eos_key) if eos_key in predicted_token_ids else (len(predicted_token_ids) - 1)
             output_tokens = [
                 reverse_output_index.get(token_id, Common.OOV)
                 for token_id in predicted_token_ids[:(index_of_first_end_of_seq + 1)]
