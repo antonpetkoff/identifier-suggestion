@@ -1,0 +1,202 @@
+{
+  "experiment_0": {
+    "batch_size": 512,
+    "dropout_rate": 0.118569,
+    "embedding_dim": 32,
+    "latent_dim": 640,
+    "learning_rate": 0.000192,
+    "max_input_seq_length": 75,
+    "max_output_seq_length": 8,
+    "vocabulary_size": 7000
+  },
+  "experiment_1": {
+    "batch_size": 128,
+    "dropout_rate": 0.087517,
+    "embedding_dim": 128,
+    "latent_dim": 256,
+    "learning_rate": 0.000118,
+    "max_input_seq_length": 100,
+    "max_output_seq_length": 6,
+    "vocabulary_size": 2000
+  },
+  "experiment_2": {
+    "batch_size": 64,
+    "dropout_rate": 0.185119,
+    "embedding_dim": 112,
+    "latent_dim": 256,
+    "learning_rate": 0.006695,
+    "max_input_seq_length": 125,
+    "max_output_seq_length": 5,
+    "vocabulary_size": 5000
+  },
+  "experiment_3": {
+    "batch_size": 1024,
+    "dropout_rate": 0.155631,
+    "embedding_dim": 32,
+    "latent_dim": 512,
+    "learning_rate": 0.001129,
+    "max_input_seq_length": 75,
+    "max_output_seq_length": 8,
+    "vocabulary_size": 7000
+  },
+  "experiment_4": {
+    "batch_size": 256,
+    "dropout_rate": 0.135776,
+    "embedding_dim": 32,
+    "latent_dim": 384,
+    "learning_rate": 0.005168,
+    "max_input_seq_length": 50,
+    "max_output_seq_length": 8,
+    "vocabulary_size": 4000
+  },
+  "experiment_5": {
+    "batch_size": 512,
+    "dropout_rate": 0.09472,
+    "embedding_dim": 128,
+    "latent_dim": 640,
+    "learning_rate": 0.000336,
+    "max_input_seq_length": 150,
+    "max_output_seq_length": 7,
+    "vocabulary_size": 2000
+  },
+  "experiment_6": {
+    "batch_size": 32,
+    "dropout_rate": 0.064828,
+    "embedding_dim": 112,
+    "latent_dim": 1024,
+    "learning_rate": 0.003592,
+    "max_input_seq_length": 75,
+    "max_output_seq_length": 8,
+    "vocabulary_size": 6000
+  },
+  "experiment_7": {
+    "batch_size": 64,
+    "dropout_rate": 0.08999,
+    "embedding_dim": 32,
+    "latent_dim": 384,
+    "learning_rate": 0.000402,
+    "max_input_seq_length": 75,
+    "max_output_seq_length": 6,
+    "vocabulary_size": 5000
+  },
+  "experiment_8": {
+    "batch_size": 256,
+    "dropout_rate": 0.042077,
+    "embedding_dim": 80,
+    "latent_dim": 256,
+    "learning_rate": 0.00234,
+    "max_input_seq_length": 175,
+    "max_output_seq_length": 5,
+    "vocabulary_size": 3000
+  },
+  "experiment_9": {
+    "batch_size": 128,
+    "dropout_rate": 0.08772,
+    "embedding_dim": 96,
+    "latent_dim": 1024,
+    "learning_rate": 0.00625,
+    "max_input_seq_length": 150,
+    "max_output_seq_length": 8,
+    "vocabulary_size": 6000
+  },
+  "experiment_10": {
+    "batch_size": 512,
+    "dropout_rate": 0.11637,
+    "embedding_dim": 128,
+    "latent_dim": 768,
+    "learning_rate": 0.003245,
+    "max_input_seq_length": 175,
+    "max_output_seq_length": 6,
+    "vocabulary_size": 7000
+  },
+  "experiment_11": {
+    "batch_size": 32,
+    "dropout_rate": 0.027637,
+    "embedding_dim": 48,
+    "latent_dim": 640,
+    "learning_rate": 0.00183,
+    "max_input_seq_length": 175,
+    "max_output_seq_length": 7,
+    "vocabulary_size": 2000
+  },
+  "experiment_12": {
+    "batch_size": 64,
+    "dropout_rate": 0.167589,
+    "embedding_dim": 64,
+    "latent_dim": 256,
+    "learning_rate": 0.000111,
+    "max_input_seq_length": 100,
+    "max_output_seq_length": 7,
+    "vocabulary_size": 7000
+  },
+  "experiment_13": {
+    "batch_size": 32,
+    "dropout_rate": 0.120969,
+    "embedding_dim": 48,
+    "latent_dim": 256,
+    "learning_rate": 0.001308,
+    "max_input_seq_length": 125,
+    "max_output_seq_length": 7,
+    "vocabulary_size": 5000
+  },
+  "experiment_14": {
+    "batch_size": 128,
+    "dropout_rate": 0.137732,
+    "embedding_dim": 128,
+    "latent_dim": 640,
+    "learning_rate": 0.000146,
+    "max_input_seq_length": 125,
+    "max_output_seq_length": 7,
+    "vocabulary_size": 5000
+  },
+  "experiment_15": {
+    "batch_size": 512,
+    "dropout_rate": 0.053078,
+    "embedding_dim": 80,
+    "latent_dim": 1024,
+    "learning_rate": 0.006488,
+    "max_input_seq_length": 75,
+    "max_output_seq_length": 5,
+    "vocabulary_size": 4000
+  },
+  "experiment_16": {
+    "batch_size": 256,
+    "dropout_rate": 0.001871,
+    "embedding_dim": 64,
+    "latent_dim": 640,
+    "learning_rate": 0.000508,
+    "max_input_seq_length": 50,
+    "max_output_seq_length": 7,
+    "vocabulary_size": 5000
+  },
+  "experiment_17": {
+    "batch_size": 128,
+    "dropout_rate": 0.110564,
+    "embedding_dim": 96,
+    "latent_dim": 256,
+    "learning_rate": 0.001821,
+    "max_input_seq_length": 50,
+    "max_output_seq_length": 6,
+    "vocabulary_size": 4000
+  },
+  "experiment_18": {
+    "batch_size": 256,
+    "dropout_rate": 0.140747,
+    "embedding_dim": 80,
+    "latent_dim": 896,
+    "learning_rate": 0.00136,
+    "max_input_seq_length": 50,
+    "max_output_seq_length": 8,
+    "vocabulary_size": 2000
+  },
+  "experiment_19": {
+    "batch_size": 128,
+    "dropout_rate": 0.11445,
+    "embedding_dim": 96,
+    "latent_dim": 640,
+    "learning_rate": 0.000124,
+    "max_input_seq_length": 50,
+    "max_output_seq_length": 5,
+    "vocabulary_size": 5000
+  }
+}
