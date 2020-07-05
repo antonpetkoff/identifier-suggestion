@@ -75,33 +75,57 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 ## Tasks
 
+Thesis:
+
+- Guidelines:
+  - Explain what each section is about at the start of the section
+  - Emphasize on your contributions
+
+- [ ] Evaluation
+  - [ ] Uni-gram Precision, Recall, F1
+  - [ ] n-gram ROUGE
+- [ ] Model
+  - [ ] Seq2Seq Architecture
+    - [ ] 1 or 2 diagrams of it
+  - [ ] Teacher Forcing
+- [ ] Related Work / Literature Review
+- [ ] Experiments
+  - [ ] Explain the table
+  - [ ] Plot learning curves
+  - [ ] Add a snapshot of the embeddings - e.g. t-SNE plot of nearest neighbours of 'stream'
+- [ ] Demonstrate how the IDE extension works
+  - [ ] Add screenshot of the suggestions
+- [ ] Conclusion
+  - [ ] List of contributions
+  - [ ] Future Work
+- [ ] Add references
+- [ ] Abstract
+- [ ] Thesis Goals and Tasks
+- [ ] Thesis Structure for easier navigation
+- [ ] Summary in native language
+
+- [ ] Clean up remaining TODOs and comments
+- [ ] Ensure that the Figures, Formulas, Tables and References are matching
+- [ ] Final source code and documentation review
+  - [ ] Update this README.md
+- [ ] Final review corrections
+- [ ] Final formatting
+- [ ] Submit
+
 Fundamentals:
 
-- [ ] Write!
-  - [x] Describe the dataset
-    - [x] Add some tables and plots of the data for better understanding
-  - [ ] Summarize your research in the Literature Review section
-  - [ ] Describe the evaluation metrics this project has used
-  - [ ] Describe the Seq2Seq architecture and training process
-  - [ ] Describe experiments
-    - [ ] Start by describing your best experiment
-  - [ ] Add visualization of attention weights
-  - [ ] Add visualization of embeddings
+- [ ] Try to replace the encoder with a Bidirectional LSTM
 
-- [ ] Hyperparameter optimization using random search
-  - [ ] Sample parameter values (layer sizes, learning rate, regularization rates, etc.)
-  - [ ] Execute 10-20 experiments in parallel (4 at a time)
+- [ ] Use custom features like return type, parameters, class name, etc.
 
-- [ ] Consider scheduling custom learning rate decay
+- [ ] Initialization
+  - [ ] Check how the embedding layers and RNNs are initialized
+  - [ ] Will Xavier or Random Normal initialization improve training time?
 
 - [ ] Plot embeddings
   - [ ] Reduce the embedding matrices with PCA / t-SNE
   - [ ] Make a 2D/3D Plot with a good (interpretable) sample
   - [ ] Log/Upload the plot in `wandb`
-
-- [ ] Try to replace the encoder with a Bidirectional LSTM
-
-- [ ] Use custom features like return type, parameters, class name, etc.
 
 - [ ] Consider More Regularization
   - [ ] [L2 Regularization of all trainable variables](https://stackoverflow.com/questions/37571514/regularization-for-lstm-in-tensorflow)
@@ -109,9 +133,9 @@ Fundamentals:
   - [ ] [Dropout vs Batch Normalization](https://arxiv.org/abs/1502.03167)
   - [ ] LayerNorm vs BatchNorm
 
-- [ ] Initialization
-  - [ ] Check how the embedding layers and RNNs are initialized
-  - [ ] Will Xavier or Random Normal initialization improve training time?
+- [x] Hyperparameter optimization using random search
+  - [x] Sample parameter values (layer sizes, learning rate, regularization rates, etc.)
+  - [x] Execute 10-20 experiments in parallel (4 at a time)
 
 - [x] Format predicted method names
   - [x] Remove Start of Sequence marker
