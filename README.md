@@ -102,6 +102,7 @@ Thesis:
 - [ ] Abstract
 - [ ] Thesis Goals and Tasks
 - [ ] Thesis Structure for easier navigation
+- [ ] Cover page
 - [ ] Summary in native language
 
 - [ ] Clean up remaining TODOs and comments
