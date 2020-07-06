@@ -81,13 +81,8 @@ Thesis:
   - Explain what each section is about at the start of the section
   - Emphasize on your contributions
 
-- [ ] Evaluation
-  - [ ] Uni-gram Precision, Recall, F1
-  - [ ] n-gram ROUGE
-- [ ] Model
-  - [ ] Seq2Seq Architecture
-    - [ ] 1 or 2 diagrams of it
-  - [ ] Teacher Forcing
+Tasks:
+
 - [ ] Related Work / Literature Review
 - [ ] Experiments
   - [ ] Explain the table
@@ -102,7 +97,6 @@ Thesis:
 - [ ] Abstract
 - [ ] Thesis Goals and Tasks
 - [ ] Thesis Structure for easier navigation
-- [ ] Cover page
 - [ ] Summary in native language
 
 - [ ] Clean up remaining TODOs and comments
