@@ -99,6 +99,10 @@ Tasks:
 - [ ] Thesis Structure for easier navigation
 - [ ] Summary in native language
 
+- [ ] Fix the VSCode extension
+  - [ ] Save attention plots to the file system, instead of plotting interactively
+  - [ ] Select just the method name, instead of the method body
+  - [ ] Extract the method body in a smarter way
 - [ ] Clean up remaining TODOs and comments
 - [ ] Ensure that the Figures, Formulas, Tables and References are matching
 - [ ] Final source code and documentation review
