@@ -83,7 +83,8 @@ Thesis:
 
 Tasks:
 
-- [ ] Related Work / Literature Review
+- [ ] Thesis Goals and Tasks
+- [ ] Summary in native language
 - [ ] Experiments
   - [ ] Explain the table
   - [ ] Plot learning curves
@@ -93,11 +94,8 @@ Tasks:
 - [ ] Conclusion
   - [ ] List of contributions
   - [ ] Future Work
+- [ ] Related Work / Literature Review
 - [ ] Add references
-- [ ] Abstract
-- [ ] Thesis Goals and Tasks
-- [ ] Thesis Structure for easier navigation
-- [ ] Summary in native language
 
 - [ ] Fix the VSCode extension
   - [ ] Save attention plots to the file system, instead of plotting interactively
