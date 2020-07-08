@@ -6,4 +6,4 @@ node_modules/
 */.vs/
 
 # Ignore VSCode Integrated eXtensions
-*.vsix
+# *.vsix

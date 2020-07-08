@@ -40,15 +40,13 @@ export class MethodNameRecommender implements vscode.CodeActionProvider {
       { params: { input: selectedText } }
     );
 
-    const currentMethodNameEnd = selectedText.indexOf('(');
-
-    const currentMethodNameRange = new vscode.Range(
+    const insertionRange = new vscode.Range(
       selectedRange.start,
-      selectedRange.start.translate(0, currentMethodNameEnd)
+      selectedRange.start,
     );
 
     const fixes = predictions.map(
-      suggestion => this.createFix(document, currentMethodNameRange, suggestion)
+      suggestion => this.createFix(document, insertionRange, suggestion)
     )
 
     // Marking a single fix as `preferred` means that users can apply it with a
