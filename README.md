@@ -83,24 +83,16 @@ Thesis:
 
 Tasks:
 
-- [ ] Thesis Goals and Tasks
-- [ ] Summary in native language
+- [ ] Conclusion
+  - [ ] List of contributions
+  - [ ] Future Work
+- [ ] Summary in 2 languages
 - [ ] Experiments
   - [ ] Explain the table
   - [ ] Plot learning curves
   - [ ] Add a snapshot of the embeddings - e.g. t-SNE plot of nearest neighbours of 'stream'
-- [ ] Demonstrate how the IDE extension works
-  - [ ] Add screenshot of the suggestions
-- [ ] Conclusion
-  - [ ] List of contributions
-  - [ ] Future Work
 - [ ] Related Work / Literature Review
-- [ ] Add references
 
-- [ ] Fix the VSCode extension
-  - [ ] Save attention plots to the file system, instead of plotting interactively
-  - [ ] Select just the method name, instead of the method body
-  - [ ] Extract the method body in a smarter way
 - [ ] Clean up remaining TODOs and comments
 - [ ] Ensure that the Figures, Formulas, Tables and References are matching
 - [ ] Final source code and documentation review

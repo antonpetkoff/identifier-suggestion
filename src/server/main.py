@@ -82,12 +82,13 @@ def predict():
 
     print('prediction: ', prediction)
 
-    logger.log_attention_heatmap(
-        attention_weights,
-        input_tokens,
-        output_tokens,
-        save_name=get_current_timestamp()
-    )
+    # log attention weights for interpretability
+    # logger.log_attention_heatmap(
+    #     attention_weights,
+    #     input_tokens,
+    #     output_tokens,
+    #     save_name=get_current_timestamp()
+    # )
 
     predictions = model.predict_beam_search(input_text=input_text)
 
