@@ -36,13 +36,16 @@ def load_vocabularies(vocab_path):
     return input_vocab_index, output_vocab_index
 
 
+def get_current_timestamp():
+    return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
 
 def initialize_model(args):
     input_vocab_index, output_vocab_index = load_vocabularies(
         vocab_path=args.vocab_path
     )
 
-    timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    timestamp = get_current_timestamp()
 
     logger = Logger(
         experiment_config = args,
@@ -57,11 +60,11 @@ def initialize_model(args):
         output_vocab_index
     )
 
-    return model
+    return model, logger
 
 
 args = parser.parse_args()
-model = initialize_model(args)
+model, logger = initialize_model(args)
 app = Flask(__name__)
 
 @app.route('/')
@@ -79,7 +82,12 @@ def predict():
 
     print('prediction: ', prediction)
 
-    plot_attention_weights(attention_weights, input_tokens, output_tokens).show()
+    logger.log_attention_heatmap(
+        attention_weights,
+        input_tokens,
+        output_tokens,
+        save_name=get_current_timestamp()
+    )
 
     predictions = model.predict_beam_search(input_text=input_text)
 
