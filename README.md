@@ -54,16 +54,17 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 ├── src                <- Source code of the project.
 │   ├── common         <- Module with common values and procedures
 │   ├── data           <- Scripts for Java method name parsing and data preprocessing
-│   ├── features       <- Scripts to turn raw data into features for modeling
-│   │   └── build_features.py
-│   │
-│   ├── models         <- Scripts to train models and then use trained models to make
-│   │   │                 predictions
-│   │
+│   ├── evaluation     <- Logic for evaluating model performance
+│   ├── metrics        <- Metrics for evaluation of models
+│   ├── models         <- Scripts to train models and then use trained models to make predictions
+│   ├── pipelines      <- Training pipelines
+│   ├── preprocessing  <- Data preprocessing logic
+│   ├── scripts        <- Scripts for running model training or serving
+│   ├── server         <- Model server
+│   ├── utils          <- Utility functions
 │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
 │
-└── requirements.txt   <- The requirements file for reproducing this environment.
-                          The list with dependencies and their versions
+└── vscode-extension   <- Extension for VSCode
 ```
 
 ## Tasks
