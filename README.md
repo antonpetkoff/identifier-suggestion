@@ -24,6 +24,14 @@ For example, you can use the standard `venv`:
 
 1. Run `pip install -r requirements/dev.txt` to install all Python package dependencies.
 
+### Training the model
+
+1. Run `./src/scripts/baseline/train.sh` from this directory with all necessary packages pre-installed.
+
+### Serving the model
+
+1. Run `./src/scripts/baseline/serve.sh` from this directory with all necessary packages pre-installed.
+
 ## Project Structure
 
 Follows the [Cookiecutter Data Science project structure](https://drivendata.github.io/cookiecutter-data-science/).
