@@ -30,7 +30,6 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 
 ```text
 ├── LICENSE
-├── Makefile           <- Makefile with commands like `make data` or `make train`
 ├── README.md          <- The top-level README for developers using this project.
 ├── data
 │   ├── external       <- Data from third party sources.
@@ -38,20 +37,15 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 │   ├── processed      <- The final, canonical data sets for modeling.
 │   └── raw            <- The original, immutable data dump.
 │
-├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-│
 ├── models             <- Trained and serialized models, model predictions, or model summaries
 │
 ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
 │                         the creator's initials, and a short `-` delimited description, e.g.
 │                         `1.0-jqp-initial-data-exploration`.
 │
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-│
 ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
 │   └── figures        <- Generated graphics and figures to be used in reporting
 │
-├── setup.py           <- Make this project pip installable with `pip install -e`
 ├── src                <- Source code for use in this project.
 │   ├── __init__.py    <- Makes src a Python module
 │   │
@@ -74,32 +68,6 @@ Follows the [Cookiecutter Data Science project structure](https://drivendata.git
 ```
 
 ## Tasks
-
-Thesis:
-
-- Guidelines:
-  - Explain what each section is about at the start of the section
-  - Emphasize on your contributions
-
-Tasks:
-
-- [ ] Conclusion
-  - [ ] List of contributions
-  - [ ] Future Work
-- [ ] Summary in 2 languages
-- [ ] Experiments
-  - [ ] Explain the table
-  - [ ] Plot learning curves
-  - [ ] Add a snapshot of the embeddings - e.g. t-SNE plot of nearest neighbours of 'stream'
-- [ ] Related Work / Literature Review
-
-- [ ] Clean up remaining TODOs and comments
-- [ ] Ensure that the Figures, Formulas, Tables and References are matching
-- [ ] Final source code and documentation review
-  - [ ] Update this README.md
-- [ ] Final review corrections
-- [ ] Final formatting
-- [ ] Submit
 
 Fundamentals:
 
