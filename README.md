@@ -2,6 +2,16 @@
 
 Models for source code identifier suggestion built by learning from Big Code.
 
+## Architecture
+
+![Seq2Seq](reports/thesis/images/06-01-seq2seq-architecture.png)
+
+## VSCode Extension Demo
+
+![Demo 1](reports/thesis/images/09-01-extension-example.png)
+
+![Demo 1](reports/thesis/images/09-03-extension-example.png)
+
 ## Setup
 
 ### Requirements
