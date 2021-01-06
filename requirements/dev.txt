@@ -156,6 +156,7 @@ terminado==0.8.3
 testpath==0.4.4
 thinc==7.4.0
 toolz==0.10.0
+torch==1.7.1+cpu
 tornado==6.0.4
 tqdm==4.45.0
 traitlets==4.3.3
@@ -164,6 +165,7 @@ typeguard==2.7.1
 typing-extensions==3.7.4.2
 urllib3==1.25.9
 wandb==0.9.1
+wandb-summarizer==0.1.2
 wasabi==0.6.0
 watchdog==0.10.2
 wcwidth==0.1.9
