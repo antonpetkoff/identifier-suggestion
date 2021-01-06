@@ -157,6 +157,7 @@ testpath==0.4.4
 thinc==7.4.0
 toolz==0.10.0
 torch==1.7.1+cpu
+torchtext==0.8.1
 tornado==6.0.4
 tqdm==4.45.0
 traitlets==4.3.3
