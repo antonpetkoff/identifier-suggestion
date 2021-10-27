@@ -15,7 +15,7 @@ cloudpickle==1.4.1
 configparser==5.0.0
 cycler==0.10.0
 cymem==2.0.3
-dask==2.19.0
+dask==2021.10.0
 decorator==4.4.2
 defusedxml==0.6.0
 dill==0.3.2
